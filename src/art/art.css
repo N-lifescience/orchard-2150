@@ -1,0 +1,821 @@
+/* ───────────────────────────────────────────────────────────
+   씨앗 아틀리에 2150 — 그림 스타일 (src/art 전용)
+   모든 선택자는 .sa-* 로 시작한다. 전역 요소(body 등)는 건드리지 않는다.
+   폰트는 index.ts 에서 import 한다 (@import 금지).
+   ─────────────────────────────────────────────────────────── */
+
+:root {
+  --sa-ivory: #f3ead6;
+  --sa-ivory-deep: #e2d1ac;
+  --sa-ink: #1b1f1d;
+  --sa-foil-1: #8a6a2b;
+  --sa-foil-2: #e6c77a;
+  --sa-foil-3: #b8923f;
+  --sa-foil: linear-gradient(135deg, #8a6a2b 0%, #e6c77a 35%, #fff1c1 50%, #b8923f 70%, #8a6a2b 100%);
+  --sa-ruby-1: #7a0d24;
+  --sa-ruby-2: #d7263d;
+  --sa-ruby-3: #ff7a8a;
+  --sa-gold-1: #9a6a06;
+  --sa-gold-2: #f2b632;
+  --sa-gold-3: #ffe9a3;
+  --sa-chip: #2fd4c4;
+  --sa-mult: #ff4f8b;
+  --sa-lmo: #5ff8ff;
+  --sa-serif: 'Gowun Batang', 'Noto Serif KR', 'Nanum Myeongjo', serif;
+  --sa-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --sa-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+  /* 종이 섬유 (feTurbulence) */
+  --sa-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='f' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .4 0 0 0 0 .3 0 0 0 0 .14 .8 0 0 0 -.33'/%3E%3C/filter%3E%3Cfilter id='g' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.03' numOctaves='3' seed='9' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .36 0 0 0 0 .14 .55 0 0 0 -.2'/%3E%3C/filter%3E%3Cfilter id='h' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.35 1.6' numOctaves='1' seed='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .33 0 0 0 0 .16 1.2 0 0 0 -.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3Crect width='100%25' height='100%25' filter='url(%23h)'/%3E%3C/svg%3E");
+  /* 가죽 결 */
+  --sa-leather: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='f' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.55' numOctaves='4' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -1.3 0 0 0 .78'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+  /* 서리 */
+  --sa-frost: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='f' x='0' y='0'%3E%3CfeTurbulence type='turbulence' baseFrequency='.045' numOctaves='4' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 1.6 0 0 0 -.25'/%3E%3C/filter%3E%3Cfilter id='g' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 2.4 0 0 0 -1.35'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)' opacity='.55'/%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+
+@property --sa-gx {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 50%;
+}
+@property --sa-gy {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 30%;
+}
+
+/* ─────────────────────────── 카드류 공통 뼈대 ─────────────────────────── */
+.sa-tiltable {
+  --_rx: 0deg;
+  --_ry: 0deg;
+  --_lift: 0%;
+  position: relative;
+  display: inline-block;
+  vertical-align: top;
+  flex: none;
+  width: var(--_w);
+  height: calc(var(--_w) * 1.5);
+  font-size: calc(var(--_w) / 10);
+  line-height: 1.2;
+  perspective: 44em;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: --sa-gx 0.35s ease, --sa-gy 0.35s ease;
+}
+.sa-card { --_w: var(--card-w, 132px); }
+.sa-plant { --_w: calc(var(--card-w, 132px) * 1.15); }
+.sa-joker { --_w: var(--joker-w, var(--card-w, 132px)); }
+.sa-reagent { --_w: var(--reagent-w, var(--card-w, 132px)); }
+.sa-pack { --_w: var(--pack-w, var(--card-w, 132px)); }
+
+.sa-body {
+  position: absolute;
+  inset: 0;
+  border-radius: 0.72em;
+  transform: rotateX(var(--rx, var(--_rx))) rotateY(var(--ry, var(--_ry)));
+  translate: 0 var(--_lift);
+  transition:
+    transform 0.3s cubic-bezier(0.2, 0.8, 0.3, 1),
+    translate 0.3s cubic-bezier(0.2, 0.8, 0.3, 1),
+    box-shadow 0.3s ease;
+  box-shadow:
+    0 0.3em 0.6em rgba(0, 0, 0, 0.42),
+    0 0.06em 0.14em rgba(0, 0, 0, 0.35);
+}
+.sa-face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+.sa-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  display: block;
+}
+
+/* 마우스 쪽 눈부심 */
+.sa-body::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(circle at var(--sa-gx) var(--sa-gy), rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0) 45%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+/* 광택 스윕 */
+.sa-body::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+      108deg,
+      rgba(255, 255, 255, 0) 40%,
+      rgba(255, 248, 225, 0.35) 46%,
+      rgba(255, 255, 255, 0.8) 50%,
+      rgba(255, 236, 190, 0.35) 54%,
+      rgba(255, 255, 255, 0) 60%
+    )
+    no-repeat;
+  background-size: 300% 100%;
+  background-position: 115% 0;
+  mix-blend-mode: overlay;
+}
+.sa-tiltable:hover .sa-body::after {
+  background-position: -15% 0;
+  transition: background-position 0.95s cubic-bezier(0.3, 0.6, 0.3, 1);
+}
+.sa-tiltable:hover .sa-body::before { opacity: 1; }
+
+/* 3×3 투명 칸 → CSS 만으로 기울기 (UI 가 --rx/--ry 를 주면 그 값이 이긴다) */
+.sa-tilt {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+}
+.sa-tilt > i { display: block; }
+.sa-tiltable:hover { --_lift: -5%; }
+.sa-tiltable:hover .sa-body {
+  box-shadow:
+    0 1em 1.5em rgba(0, 0, 0, 0.5),
+    0 0.2em 0.4em rgba(0, 0, 0, 0.35);
+}
+.sa-tiltable:has(> .sa-tilt > i:nth-child(1):hover) { --_rx: 7deg; --_ry: -7deg; --sa-gx: 20%; --sa-gy: 14%; }
+.sa-tiltable:has(> .sa-tilt > i:nth-child(2):hover) { --_rx: 8deg; --_ry: 0deg; --sa-gx: 50%; --sa-gy: 10%; }
+.sa-tiltable:has(> .sa-tilt > i:nth-child(3):hover) { --_rx: 7deg; --_ry: 7deg; --sa-gx: 80%; --sa-gy: 14%; }
+.sa-tiltable:has(> .sa-tilt > i:nth-child(4):hover) { --_rx: 0deg; --_ry: -8deg; --sa-gx: 14%; --sa-gy: 50%; }
+.sa-tiltable:has(> .sa-tilt > i:nth-child(5):hover) { --_rx: 0deg; --_ry: 0deg; --sa-gx: 50%; --sa-gy: 42%; }
+.sa-tiltable:has(> .sa-tilt > i:nth-child(6):hover) { --_rx: 0deg; --_ry: 8deg; --sa-gx: 86%; --sa-gy: 50%; }
+.sa-tiltable:has(> .sa-tilt > i:nth-child(7):hover) { --_rx: -7deg; --_ry: -7deg; --sa-gx: 20%; --sa-gy: 86%; }
+.sa-tiltable:has(> .sa-tilt > i:nth-child(8):hover) { --_rx: -8deg; --_ry: 0deg; --sa-gx: 50%; --sa-gy: 90%; }
+.sa-tiltable:has(> .sa-tilt > i:nth-child(9):hover) { --_rx: -7deg; --_ry: 7deg; --sa-gx: 80%; --sa-gy: 86%; }
+
+/* 선택 */
+.sa-tiltable.is-selected { --_lift: -13%; }
+.sa-tiltable.is-selected:hover { --_lift: -15%; }
+.sa-tiltable.is-selected .sa-body {
+  box-shadow:
+    0 0 0 0.14em #e6c77a,
+    0 0 0 0.26em rgba(255, 241, 193, 0.35),
+    0 0 1.3em 0.25em rgba(230, 199, 122, 0.6),
+    0 1.1em 1.6em rgba(0, 0, 0, 0.5);
+}
+/* 발동 흔들림 (rotate/scale 속성은 transform 과 따로 합성된다) */
+.sa-tiltable.is-trigger .sa-body { animation: sa-shake 0.5s cubic-bezier(0.3, 0.7, 0.4, 1); }
+@keyframes sa-shake {
+  0% { rotate: 0deg; scale: 1; }
+  14% { rotate: -7deg; scale: 1.12; }
+  34% { rotate: 6deg; scale: 1.09; }
+  54% { rotate: -4deg; scale: 1.05; }
+  76% { rotate: 2deg; scale: 1.02; }
+  100% { rotate: 0deg; scale: 1; }
+}
+@keyframes sa-flash {
+  0% { filter: brightness(1.5); }
+  100% { filter: brightness(1); }
+}
+
+/* ─────────────────────────── 모종 카드 ─────────────────────────── */
+.sa-card { --_suit-ink: #9c1230; }
+.sa-card[data-color='gold'] { --_suit-ink: #875800; }
+.sa-card.is-male { --_suit-ink: #4a524e; }
+.sa-card .sa-face {
+  background:
+    radial-gradient(90% 60% at 50% 42%, rgba(255, 253, 244, 0.95), rgba(255, 253, 244, 0) 70%),
+    radial-gradient(140% 100% at 50% 50%, rgba(0, 0, 0, 0) 55%, rgba(120, 88, 30, 0.2) 100%),
+    var(--sa-grain),
+    linear-gradient(165deg, #f8f1e1 0%, #f0e5c9 55%, #e4d3ae 100%);
+  background-size: auto, auto, 12em 12em, auto;
+}
+.sa-card__brix {
+  position: absolute;
+  left: 0.6em;
+  top: 0.62em;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.06em;
+  line-height: 1;
+  z-index: 2;
+}
+.sa-card__brixnum {
+  font-family: var(--sa-serif);
+  font-weight: 700;
+  font-size: 2.3em;
+  letter-spacing: -0.04em;
+  color: var(--_suit-ink);
+  text-shadow:
+    0 0.03em 0 rgba(255, 255, 255, 0.85),
+    0 -0.015em 0 rgba(60, 30, 0, 0.25);
+}
+.sa-card__brixnum.is-none { font-size: 1.9em; opacity: 0.8; }
+.sa-card__brixunit {
+  font-family: var(--sa-serif);
+  font-weight: 700;
+  font-size: 0.6em;
+  margin-top: 0.35em;
+  color: #8a6a2b;
+  letter-spacing: 0.02em;
+}
+.sa-card__brix.is-env-up .sa-card__brixnum,
+.sa-card__brix.is-env-down .sa-card__brixnum {
+  text-decoration: underline dotted;
+  text-decoration-thickness: 0.05em;
+  text-underline-offset: 0.08em;
+}
+.sa-card__brix.is-env-up .sa-card__brixnum { text-decoration-color: #2e8a4a; }
+.sa-card__brix.is-env-down .sa-card__brixnum { text-decoration-color: #9a4a12; }
+.sa-card__suit {
+  position: absolute;
+  right: 0.62em;
+  top: 0.7em;
+  width: 2.05em;
+  height: 2.05em;
+  z-index: 2;
+  filter: drop-shadow(0 0.06em 0.08em rgba(60, 30, 0, 0.35));
+}
+.sa-card__suit svg { width: 100%; height: 100%; display: block; }
+.sa-card__edited {
+  position: absolute;
+  left: 0.72em;
+  top: 3.15em;
+  width: 1.55em;
+  height: 1.55em;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  z-index: 2;
+  color: #fff;
+  background: radial-gradient(circle at 35% 30%, #ffc2d6, #ff4f8b 50%, #7a0f3c);
+  box-shadow: 0 0 0 0.08em #e6c77a, 0 0.08em 0.18em rgba(0, 0, 0, 0.35);
+}
+.sa-card__edited svg { width: 0.95em; height: 0.95em; }
+.sa-card__art {
+  position: absolute;
+  left: 15%;
+  width: 70%;
+  top: 2.2em;
+  aspect-ratio: 1;
+  z-index: 1;
+}
+.sa-card__art svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.sa-card__art img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 0.15em 0.22em rgba(41, 27, 16, 0.25));
+}
+.sa-card.is-lmo .sa-card__art img {
+  filter: drop-shadow(0 0 0.38em rgba(67, 255, 243, 0.9));
+}
+.sa-card__badges {
+  position: absolute;
+  left: 0.55em;
+  right: 0.55em;
+  top: 9.45em;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: flex-start;
+  gap: 0.2em 0.22em;
+  z-index: 3;
+}
+.sa-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22em;
+  padding: 0.3em 0.55em 0.28em 0.5em;
+  border-radius: 99em;
+  font-family: var(--sa-sans);
+  font-size: 0.64em;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  color: #f7efdc;
+  background: #1b1f1d;
+  box-shadow:
+    inset 0 0 0 0.09em rgba(230, 199, 122, 0.75),
+    0 0.1em 0.2em rgba(0, 0, 0, 0.28);
+}
+.sa-badge .sa-mini { width: 1.15em; height: 1.15em; flex: none; }
+.sa-badge--seedless { background: linear-gradient(#135a52, #0b3a35); }
+.sa-badge--giant { background: linear-gradient(#1f7a4d, #0f4a2c); }
+.sa-badge--bitter { background: linear-gradient(#66722a, #3d4512); }
+.sa-badge--aneu { background: linear-gradient(#a8174f, #5e0a30); }
+.sa-badge--male { background: linear-gradient(#3d52b0, #1d2a70); }
+.sa-badge--lmo {
+  color: #03262a;
+  background: linear-gradient(#b8fdff, #5ff8ff);
+  box-shadow:
+    inset 0 0 0 0.09em rgba(255, 255, 255, 0.8),
+    0 0 0.55em rgba(95, 248, 255, 0.85);
+  animation: sa-lmo 2.4s ease-in-out infinite;
+}
+.sa-badge--env {
+  color: #1f6a34;
+  background: rgba(255, 252, 240, 0.9);
+  box-shadow: 0 0.08em 0.16em rgba(0, 0, 0, 0.18);
+  outline: 0.1em dashed currentColor;
+  outline-offset: -0.14em;
+}
+.sa-badge--env.is-down { color: #8a3f0e; }
+@keyframes sa-lmo {
+  50% { box-shadow: inset 0 0 0 0.09em rgba(255, 255, 255, 0.8), 0 0 1em rgba(95, 248, 255, 1); }
+}
+.sa-fruit__lmo { animation: sa-lmo-fruit 2.4s ease-in-out infinite; }
+@keyframes sa-lmo-fruit { 50% { opacity: 0.7; } }
+
+.sa-card__geno {
+  position: absolute;
+  left: 1.1em;
+  right: 1.1em;
+  top: 12.55em;
+  height: 1.5em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3em;
+  z-index: 2;
+  color: #262b28;
+}
+.sa-geno__text {
+  font-family: var(--sa-mono);
+  font-size: 0.6em;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  text-align: center;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: keep-all;
+}
+.sa-card__geno .sa-mini { width: 0.95em; height: 0.95em; flex: none; color: #9a7a35; }
+.sa-card__geno.is-hidden .sa-geno__text {
+  font-family: var(--sa-serif);
+  font-size: 0.9em;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #8a6a2b;
+}
+.sa-card__geno.is-partial .sa-geno__text { color: #3d4a44; }
+.sa-card__geno.is-partial .sa-mini { color: #1f7a6e; }
+
+/* 무효 */
+.sa-card.is-debuffed .sa-face { filter: grayscale(1) contrast(0.9) brightness(0.9); }
+.sa-card__hatch {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  border-radius: inherit;
+  pointer-events: none;
+  background: repeating-linear-gradient(135deg, rgba(27, 31, 29, 0.24) 0 0.12em, rgba(27, 31, 29, 0) 0.12em 0.6em);
+}
+.sa-card__stamp {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  z-index: 5;
+  width: 5.2em;
+  height: 5.2em;
+  translate: -50% -50%;
+  rotate: -16deg;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 0.24em double #c21d3a;
+  color: #c21d3a;
+  background: rgba(255, 240, 240, 0.45);
+  mix-blend-mode: multiply;
+  box-shadow: inset 0 0 0 0.2em rgba(194, 29, 58, 0.25);
+}
+.sa-card__stamp span {
+  font-family: var(--sa-serif);
+  font-weight: 700;
+  font-size: 1.9em;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+/* 온실 부모 카드 */
+.sa-plant .sa-card__art { top: 2.05em; left: 18%; width: 64%; }
+.sa-plant .sa-card__badges { top: 8.55em; }
+.sa-plant__ribbon {
+  position: absolute;
+  left: 0.42em;
+  right: 0.42em;
+  top: 10.05em;
+  height: 1.55em;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #fff1c1 0%, #e6c77a 28%, #c9a24a 62%, #8a6a2b 100%);
+  clip-path: polygon(0 0, 100% 0, 95% 50%, 100% 100%, 0 100%, 5% 50%);
+}
+.sa-plant__ribbon::before {
+  content: '';
+  position: absolute;
+  inset: 0.12em 6%;
+  border-top: 0.05em solid rgba(90, 60, 15, 0.55);
+  border-bottom: 0.05em solid rgba(90, 60, 15, 0.55);
+}
+.sa-plant__title {
+  position: relative;
+  max-width: 84%;
+  font-family: var(--sa-serif);
+  font-weight: 700;
+  font-size: 0.8em;
+  color: #2a1a05;
+  text-shadow: 0 0.06em 0 rgba(255, 245, 210, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sa-plant__subtitle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 77.6%;
+  z-index: 2;
+  text-align: center;
+  font-family: var(--sa-sans);
+  font-size: 0.56em;
+  font-weight: 600;
+  color: #6b5a3a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 1em;
+}
+
+/* ─────────────────────────── 비법(조커) ─────────────────────────── */
+.sa-joker .sa-body { border-radius: 0.75em; }
+.sa-joker .sa-face {
+  background:
+    radial-gradient(110% 75% at 50% 30%, rgba(40, 110, 96, 0.55), rgba(0, 0, 0, 0) 70%),
+    var(--sa-leather),
+    linear-gradient(170deg, #143a33 0%, #0b221e 50%, #050f0d 100%);
+  background-size: auto, 10em 10em, auto;
+}
+.sa-joker__icon {
+  position: absolute;
+  left: 50%;
+  top: 36.7%;
+  width: 5.5em;
+  height: 5.5em;
+  translate: -50% -50%;
+  z-index: 2;
+  filter: drop-shadow(0 0.1em 0.16em rgba(0, 0, 0, 0.65));
+}
+.sa-joker__icon svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.sa-joker__name {
+  position: absolute;
+  left: 1.25em;
+  right: 1.25em;
+  top: 62%;
+  height: 9%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-family: var(--sa-serif);
+  font-weight: 700;
+  font-size: 0.92em;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: #f8ebc4;
+  text-shadow: 0 0.07em 0 #000, 0 0 0.6em rgba(230, 199, 122, 0.4);
+  word-break: keep-all;
+}
+.sa-joker__name.is-long { font-size: 0.78em; }
+.sa-joker__name.is-xlong { font-size: 0.68em; line-height: 1.1; }
+.sa-joker__desc {
+  position: absolute;
+  left: 0.95em;
+  right: 0.95em;
+  top: 75.5%;
+  bottom: 5.5%;
+  z-index: 2;
+  font-family: var(--sa-sans);
+  font-weight: 500;
+  font-size: 0.64em;
+  line-height: 1.33;
+  text-align: center;
+  color: rgba(243, 234, 214, 0.88);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  word-break: keep-all;
+}
+.sa-joker__rarity {
+  position: absolute;
+  top: 8.6%;
+  right: 1.35em;
+  z-index: 2;
+  font-family: var(--sa-serif);
+  font-weight: 700;
+  font-size: 0.5em;
+  letter-spacing: 0.2em;
+  color: var(--_rar, #2fd4c4);
+  text-shadow: 0 0 0.6em currentColor;
+}
+.sa-rarity--common { --_rar: #6ff0e2; }
+.sa-rarity--uncommon { --_rar: #8fb4ff; }
+.sa-rarity--rare { --_rar: #ff8ab4; }
+.sa-rarity--legendary { --_rar: #ffe08a; }
+.sa-rarity--legendary .sa-face::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    rgba(255, 122, 184, 0) 15%,
+    rgba(255, 122, 184, 0.2) 30%,
+    rgba(122, 255, 216, 0.2) 45%,
+    rgba(122, 184, 255, 0.2) 60%,
+    rgba(255, 226, 122, 0.22) 75%,
+    rgba(255, 122, 184, 0) 90%
+  );
+  background-size: 300% 300%;
+  mix-blend-mode: color-dodge;
+  animation: sa-legend 7s linear infinite;
+}
+@keyframes sa-legend {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 100% 100%; }
+  100% { background-position: 0% 0%; }
+}
+.sa-gem__iri,
+.sa-holo {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: sa-spin 5s linear infinite;
+}
+@keyframes sa-spin { to { transform: rotate(360deg); } }
+
+/* ─────────────────────────── 시약 ─────────────────────────── */
+.sa-reagent .sa-body { border-radius: 1em; }
+.sa-reagent .sa-face {
+  background:
+    radial-gradient(80% 50% at 30% 15%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 70%),
+    var(--sa-frost),
+    linear-gradient(165deg, rgba(238, 251, 248, 0.9) 0%, rgba(196, 232, 226, 0.8) 55%, rgba(146, 198, 192, 0.86) 100%);
+  background-size: auto, 11em 11em, auto;
+  -webkit-backdrop-filter: blur(6px) saturate(1.25);
+  backdrop-filter: blur(6px) saturate(1.25);
+}
+.sa-reagent__icon {
+  position: absolute;
+  left: 50%;
+  top: 34.7%;
+  width: 5.5em;
+  height: 5.5em;
+  translate: -50% -50%;
+  z-index: 2;
+  filter: drop-shadow(0 0.1em 0.14em rgba(8, 40, 36, 0.4));
+}
+.sa-reagent__icon svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.sa-reagent__name {
+  position: absolute;
+  left: 0.9em;
+  right: 0.9em;
+  top: 55%;
+  height: 7.4%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--sa-serif);
+  font-weight: 700;
+  font-size: 0.92em;
+  color: #0c2a26;
+  text-shadow: 0 0.06em 0 rgba(255, 255, 255, 0.7);
+  text-align: center;
+  word-break: keep-all;
+}
+.sa-reagent__name.is-long { font-size: 0.8em; }
+.sa-reagent__desc {
+  position: absolute;
+  left: 1em;
+  right: 1em;
+  top: 65%;
+  bottom: 6%;
+  z-index: 2;
+  font-family: var(--sa-sans);
+  font-weight: 500;
+  font-size: 0.64em;
+  line-height: 1.33;
+  text-align: center;
+  color: rgba(10, 38, 34, 0.86);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  word-break: keep-all;
+}
+
+/* ─────────────────────────── 봉투·상자 ─────────────────────────── */
+.sa-pack .sa-body,
+.sa-tiltable.sa-pack:hover .sa-body {
+  box-shadow: none;
+}
+.sa-pack .sa-face { overflow: visible; }
+.sa-pack .sa-body::after { inset: 11% 9.5% 7.5% 9.5%; border-radius: 0.4em; }
+.sa-pack .sa-body::before { inset: 11% 9.5% 7.5% 9.5%; border-radius: 0.4em; }
+.sa-pack__art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; }
+.sa-pack__label {
+  position: absolute;
+  left: 50%;
+  bottom: -0.35em;
+  translate: -50% 0;
+  z-index: 3;
+  padding: 0.32em 0.8em 0.3em;
+  border-radius: 99em;
+  font-family: var(--sa-serif);
+  font-weight: 700;
+  font-size: 0.72em;
+  white-space: nowrap;
+  color: #f6e7bd;
+  background: linear-gradient(#1f2a27, #0c1311);
+  box-shadow: inset 0 0 0 0.09em rgba(230, 199, 122, 0.8), 0 0.15em 0.35em rgba(0, 0, 0, 0.5);
+}
+.sa-holo-sweep { animation: sa-holo 4.5s ease-in-out infinite alternate; }
+@keyframes sa-holo {
+  from { transform: translateX(-160px); }
+  to { transform: translateX(160px); }
+}
+
+/* ─────────────────────────── 가격표 · 누적 ─────────────────────────── */
+.sa-price {
+  position: absolute;
+  top: -0.55em;
+  right: -0.45em;
+  z-index: 10;
+  display: flex;
+  align-items: baseline;
+  gap: 0.04em;
+  padding: 0.28em 0.5em 0.3em 0.78em;
+  border-radius: 0.2em 0.5em 0.5em 0.2em;
+  font-family: var(--sa-serif);
+  font-weight: 700;
+  font-size: 1.05em;
+  line-height: 1;
+  color: #2a1a05;
+  background: linear-gradient(170deg, #fffaf0, #eadbb4);
+  box-shadow:
+    inset 0 0 0 0.06em rgba(138, 106, 43, 0.75),
+    0 0.14em 0.32em rgba(0, 0, 0, 0.45);
+  rotate: 7deg;
+}
+.sa-price::before {
+  content: '';
+  position: absolute;
+  left: 0.26em;
+  top: 50%;
+  width: 0.26em;
+  height: 0.26em;
+  translate: 0 -50%;
+  border-radius: 50%;
+  background: #3a2a10;
+  box-shadow: 0 0 0 0.06em #b8923f;
+}
+.sa-price__cur { font-size: 0.68em; color: #8a6a2b; }
+.sa-counter {
+  position: absolute;
+  right: -0.4em;
+  bottom: -0.4em;
+  z-index: 10;
+  width: 2.4em;
+  height: 2.4em;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.08em;
+  color: #fff;
+  background: radial-gradient(circle at 35% 30%, #ffc2d6, #ff4f8b 45%, #7a0f3c);
+  box-shadow:
+    0 0 0 0.12em #e6c77a,
+    0 0.15em 0.35em rgba(0, 0, 0, 0.5);
+}
+.sa-counter__num { font-family: var(--sa-serif); font-weight: 700; font-size: 0.95em; line-height: 1; }
+.sa-counter__lbl { font-family: var(--sa-sans); font-weight: 700; font-size: 0.42em; line-height: 1; opacity: 0.9; }
+
+/* ─────────────────────────── 휘장·메달·핵형 ─────────────────────────── */
+.sa-boss, .sa-order, .sa-medal, .sa-suit, .sa-karyo, .sa-icon, .sa-fruit { display: inline-block; vertical-align: middle; overflow: visible; }
+
+/* ─────────────────────────── 로고 ─────────────────────────── */
+.sa-logo {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: var(--logo-size, 56px);
+  line-height: 1;
+  user-select: none;
+}
+.sa-logo__crest {
+  width: 2.1em;
+  height: 2.1em;
+  margin-bottom: 0.08em;
+  filter: drop-shadow(0 0 0.25em rgba(47, 212, 196, 0.35)) drop-shadow(0 0.08em 0.12em rgba(0, 0, 0, 0.6));
+}
+.sa-logo__title {
+  display: flex;
+  gap: 0.28em;
+  font-family: var(--sa-serif);
+  font-weight: 700;
+  font-size: 1em;
+  letter-spacing: 0.01em;
+  padding: 0.05em 0.1em 0.12em;
+  background: linear-gradient(
+    100deg,
+    #8a6a2b 0%,
+    #e6c77a 16%,
+    #fff5d2 24%,
+    #c9a24a 34%,
+    #e6c77a 50%,
+    #fff1c1 58%,
+    #b8923f 70%,
+    #e6c77a 86%,
+    #8a6a2b 100%
+  );
+  background-size: 260% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0.035em 0 #3d2a0a) drop-shadow(0 0.06em 0.12em rgba(0, 0, 0, 0.7)) drop-shadow(0 0 0.35em rgba(230, 199, 122, 0.28));
+  animation: sa-shimmer 6s ease-in-out infinite alternate;
+}
+@keyframes sa-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: 0% 0; }
+}
+.sa-logo__year {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  margin-top: 0.22em;
+  font-family: var(--sa-serif);
+  font-weight: 700;
+  font-size: 0.3em;
+  color: #e6c77a;
+  text-shadow: 0 0 0.6em rgba(230, 199, 122, 0.4);
+}
+.sa-logo__num { letter-spacing: 0.5em; margin-right: -0.5em; }
+.sa-logo__rule { display: block; width: 3.2em; height: 0.06em; background: linear-gradient(90deg, rgba(230, 199, 122, 0), #e6c77a); }
+.sa-logo__rule:last-child { background: linear-gradient(90deg, #e6c77a, rgba(230, 199, 122, 0)); }
+
+/* ─────────────────────────── 배경 ─────────────────────────── */
+.sa-bg { display: block; background: #020d0b; }
+.sa-bg-fallback {
+  --sa-bg-mid: #0b3e36;
+  --sa-bg-glow: #2fd4c4;
+  --sa-bg-deep: #020d0b;
+  background:
+    radial-gradient(55% 45% at 28% 30%, color-mix(in srgb, var(--sa-bg-glow) 22%, transparent), transparent 70%),
+    radial-gradient(70% 60% at 72% 72%, color-mix(in srgb, var(--sa-bg-mid) 90%, transparent), transparent 75%),
+    radial-gradient(130% 110% at 50% 50%, var(--sa-bg-mid), var(--sa-bg-deep) 70%);
+  transition: background 1.5s ease;
+}
+.sa-bg-fallback.is-boss { box-shadow: inset 0 0 18vmax rgba(150, 6, 28, 0.6); animation: sa-bossbeat 2.6s ease-in-out infinite; }
+.sa-bg-fallback.is-pulse { animation: sa-flash 0.7s ease-out; }
+@keyframes sa-bossbeat { 50% { box-shadow: inset 0 0 26vmax rgba(190, 10, 40, 0.75); } }
+
+/* ─────────────────────────── 동작 줄이기 ─────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .sa-body { transform: none !important; transition: box-shadow 0.2s ease, translate 0.2s ease !important; }
+  .sa-tiltable:hover { --_lift: -2%; }
+  .sa-tiltable.is-trigger .sa-body { animation: sa-flash 0.4s ease-out; }
+  .sa-body::after, .sa-body::before { display: none; }
+  .sa-logo__title, .sa-holo-sweep, .sa-gem__iri, .sa-holo, .sa-badge--lmo, .sa-fruit__lmo,
+  .sa-rarity--legendary .sa-face::after, .sa-bg-fallback { animation: none !important; }
+}
+/* UI 설정의 '동작 줄이기' — 조상에 .sa-reduced-motion 을 달면 같은 효과 */
+.sa-reduced-motion .sa-body { transform: none !important; transition: box-shadow 0.2s ease, translate 0.2s ease !important; }
+.sa-reduced-motion .sa-tiltable:hover { --_lift: -2%; }
+.sa-reduced-motion .sa-tiltable.is-trigger .sa-body { animation: sa-flash 0.4s ease-out; }
+.sa-reduced-motion .sa-body::after, .sa-reduced-motion .sa-body::before { display: none; }
+.sa-reduced-motion :is(.sa-logo__title, .sa-holo-sweep, .sa-gem__iri, .sa-holo, .sa-badge--lmo, .sa-fruit__lmo) { animation: none !important; }
+.sa-reduced-motion .sa-rarity--legendary .sa-face::after { animation: none !important; }

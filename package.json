@@ -1,0 +1,24 @@
+{
+  "name": "seed-atelier-2150",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "씨앗 아틀리에 2150 — 「생물의 유전」 수업용 로그라이크 덱빌딩 게임",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.3.1",
+    "vitest": "^5.0.2"
+  },
+  "dependencies": {
+    "@fontsource/gowun-batang": "^5.3.0",
+    "pretendard": "^1.3.9"
+  }
+}
