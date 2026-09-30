@@ -1,5 +1,5 @@
 // 편집 작업대: 코딩 DNA 를 바꾸고, 바뀐 서열이 단백질에 무슨 일을 하는지 판정한다.
-// 原作: 동의·과오·난센스 치환과 틀 이동은 실제 돌연변이 분류. 虛: '핵심 자리 밖 과오 치환은 기능 유지'는 게임 단순화.
+// 동의·과오·난센스 치환과 틀 이동은 실제 돌연변이 분류다. '핵심 자리 밖 과오 치환은 기능 유지'는 게임 규칙을 단순화한 것이다.
 import type { AminoAcid, EditResult, Genome, HomologGroup, LocusId, SpeciesId } from '../contract/genetics';
 import { translate } from './codons';
 import { cloneGenome } from './genome';

@@ -29,6 +29,7 @@ export interface Ctx {
   /** 모달 여는 곳 모음 */
   open: {
     settings(): void;
+    tutorial(): void;
     notes(): void;
     teacher(): void;
     greenhouse(): void;

@@ -56,7 +56,7 @@ export function openReagent(ctx: Ctx, index: number): void {
   if (!PHASE_OK.includes(s.phase)) why = '지금은 시약을 쓸 수 없어요.';
   else if (id === 'brush' && s.phase !== 'play') why = '출하 중에만 쓸 수 있어요.';
   else if (id === 'fertilizer' && s.phase !== 'play') why = '손에 든 모종에 써요. 출하 중에 쓸 수 있어요.';
-  else if (id === 'scissors' && s.policy === 'heritage') why = '전통 육종 아틀리에는 유전자 가위를 쓰지 않아요.';
+  else if (id === 'scissors' && s.policy === 'heritage') why = '전통 육종팀은 유전자 가위를 쓸 수 없어요.';
   else if (id === 'vector' && s.policy !== 'biotech') why = '이 브랜드 철학에서는 형질전환을 하지 않아요.';
   const how: Record<string, string> = {
     genetest: '온실 포기나 손에 든 모종을 1~2개 골라 유전자형을 봐요.',

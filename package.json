@@ -1,9 +1,9 @@
 {
-  "name": "seed-atelier-2150",
+  "name": "orchard-2150",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "씨앗 아틀리에 2150 — 「생물의 유전」 수업용 로그라이크 덱빌딩 게임",
+  "description": "오차드 2150 — 유전 육종 전략 게임",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

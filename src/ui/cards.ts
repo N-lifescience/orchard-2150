@@ -78,7 +78,7 @@ export function seedView(c: SeedCard, o: ViewOpts): CardView {
 }
 
 export function lineageText(p: Plant, find: (id: string) => Plant | undefined): string {
-  if (p.origin === 'starter') return '할머니의 온실에서 물려받음';
+  if (p.origin === 'starter') return '처음부터 온실에 있던 포기';
   if (p.origin === 'market') return '시장에서 들인 품종';
   const parents = p.parents;
   if (!parents) return `${p.generation}세대`;

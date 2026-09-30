@@ -11,6 +11,7 @@ import { fx, between } from '../rng';
 export class Sidebar {
   readonly el: HTMLElement;
   private brandEl: HTMLElement;
+  private managerEl: HTMLElement;
   private orderBox: HTMLElement;
   private emblemBox: HTMLElement;
   private orderName: HTMLElement;
@@ -45,6 +46,7 @@ export class Sidebar {
       h('button', { type: 'button', class: 'btn btn--ghost side__menu', 'aria-label': label, 'aria-keyshortcuts': key || undefined, onclick: () => !ctx.isBusy() && fn() }, label);
 
     this.brandEl = h('div', { class: 'side__brand' });
+    this.managerEl = h('p', { class: 'side__manager' });
     this.emblemBox = h('div', { class: 'side__emblem', 'aria-hidden': 'true' });
     this.orderName = h('div', { class: 'side__ordername' });
     this.orderClient = h('div', { class: 'side__client' });
@@ -84,6 +86,7 @@ export class Sidebar {
         }, { class: 'btn--ghost side__home', 'aria-label': '홈으로 돌아가기', title: '진행을 저장하고 홈으로 돌아가기' }),
       ),
       this.orderBox,
+      this.managerEl,
       h('div', { class: 'side__target' }, h('div', { class: 'side__label' }, '목표 점수'), h('div', { class: 'side__target-row' }, this.targetEl, this.rewardEl)),
       this.roundBox,
       h(
@@ -110,13 +113,23 @@ export class Sidebar {
         menu('주문 정보', '', () => ctx.open.orders()),
         menu('온실', '', () => ctx.open.greenhouse()),
         menu('연구 노트', '', () => ctx.open.notes()),
+        menu('플레이 방법', '', () => ctx.open.tutorial()),
         menu('설정', '', () => ctx.open.settings()),
       ),
     );
   }
 
   update(s: RunState): void {
-    setText(this.brandEl, this.ctx.brand ? `${this.ctx.brand} 아틀리에` : '할머니의 온실');
+    setText(this.brandEl, this.ctx.brand || '오차드 2150');
+    const briefing: Record<RunState['phase'], string> = {
+      title: '', cross: '레아 · 같은 종의 부모 두 포기를 고르세요.',
+      play: '레아 · 모종 1~5장을 골라 출하하세요.',
+      cashout: '레아 · 계약 완료. 보상을 받고 품종을 고르세요.',
+      select: '레아 · 다음 계약에 쓸 포기를 남기세요.',
+      shop: '레아 · 다음 계약을 보고 필요한 것만 사세요.',
+      gameover: '', victory: '',
+    };
+    setText(this.managerEl, briefing[s.phase]);
     const o = s.orders[s.orderIdx];
     const key = `${s.ante}:${s.orderIdx}:${o.name}:${o.boss?.desc ?? ''}`;
     if (key !== this.orderKey) {

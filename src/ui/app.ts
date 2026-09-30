@@ -3,7 +3,7 @@ import { audio } from '../audio';
 import { createBackground } from '../art';
 import type { BackgroundHandle } from '../contract/art';
 import type { PolicyId, RunMode, RunState } from '../contract/game';
-import { createGame, type GameImpl } from '../game';
+import { createGame, SAVE_KEY, type GameImpl } from '../game';
 import { decide, applyDirect, type BotAction } from './bot';
 import type { Ctx } from './ctx';
 import { button, h } from './h';
@@ -12,8 +12,10 @@ import { openGreenhouse, openOrders, openPod } from './modals/info';
 import { openJoker, openReagent } from './modals/items';
 import { openNotes, openTeacher, showDiscoveries } from './modals/notes';
 import { openSettings } from './modals/settings';
+import { openTutorial } from './modals/tutorial';
 import { Modals, Tips, Toaster } from './overlay';
 import { loadBrand, loadPrefs, type UiPrefs } from './prefs';
+import { activeRunSlot, createRunSlot, listRunSlots, migrateLegacySave, removeRunSlot, selectRunSlot, touchRunSlot, tutorialSeen, type RunSlot } from './runSlots';
 import { RunScreen } from './run/runscreen';
 import { EndScreen } from './screens/end';
 import { TitleScreen } from './screens/title';
@@ -34,6 +36,7 @@ export class App implements Ctx {
 
   private screenBox: HTMLElement;
   private title: TitleScreen;
+  private activeSlot: RunSlot | null = null;
   private end: EndScreen;
   private run: RunScreen | null = null;
   private mode: Mode = 'title';
@@ -41,6 +44,7 @@ export class App implements Ctx {
   private dirty = false;
   private discoveryOpen = false;
   private toastFlush = false;
+  private sessionRuns = 0;
   private ambientKey = '';
   private sysReduced: MediaQueryList | null = null;
 
@@ -50,13 +54,19 @@ export class App implements Ctx {
     this.game = createGame();
     this.prefs = loadPrefs();
     this.brand = loadBrand();
+    migrateLegacySave(this.brand);
+    this.activeSlot = activeRunSlot();
+    if (this.activeSlot) {
+      this.game.setSaveKey(this.activeSlot.key);
+      this.brand = this.activeSlot.brand;
+    }
 
     const canvas = h('canvas', { class: 'bgcanvas', 'aria-hidden': 'true' });
     this.stage = h('div', { id: 'stage', class: 'stage' });
     this.screenBox = h('div', { class: 'screens' });
     this.stage.appendChild(this.screenBox);
     const viewport = h('div', { class: 'viewport' }, this.stage);
-    const rotate = h('div', { class: 'rotate-hint', role: 'alert' }, h('div', { class: 'rotate-hint__icon', 'aria-hidden': 'true' }), h('p', null, '가로로 돌려 주세요'), h('p', { class: 'hint' }, '씨앗 아틀리에는 가로 화면에서 해요.'));
+    const rotate = h('div', { class: 'rotate-hint', role: 'alert' }, h('div', { class: 'rotate-hint__icon', 'aria-hidden': 'true' }), h('p', null, '가로로 돌려 주세요'), h('p', { class: 'hint' }, '오차드 2150은 가로 화면에서 플레이해요.'));
     root.replaceChildren(canvas, viewport, rotate);
 
     this.modals = new Modals(this.stage);
@@ -74,6 +84,7 @@ export class App implements Ctx {
 
     this.open = {
       settings: () => openSettings(this),
+      tutorial: () => openTutorial(this),
       notes: () => openNotes(this),
       teacher: () => openTeacher(this),
       greenhouse: () => openGreenhouse(this),
@@ -85,6 +96,8 @@ export class App implements Ctx {
 
     this.title = new TitleScreen(this);
     this.title.onStart = (mode, policy) => this.newRun(mode, policy);
+    this.title.onResume = (id) => this.resumeRun(id);
+    this.title.onRemove = (id) => this.removeRun(id);
     this.end = new EndScreen(this);
     this.end.onAgain = () => {
       const s = this.game.state;
@@ -97,7 +110,7 @@ export class App implements Ctx {
 
     this.game.subscribe(() => this.render());
     // 저장이 있으면 불러 둔다 (연구 노트가 이번 연대기의 발견을 보여 주도록). 화면은 타이틀.
-    if (this.game.hasSave()) this.game.load();
+    if (this.activeSlot && this.game.hasSave()) this.game.load();
 
     this.fit();
     window.addEventListener('resize', () => this.fit());
@@ -175,6 +188,7 @@ export class App implements Ctx {
   goTitle(): void {
     if (this.mode === 'run') {
       this.game.save();
+      if (this.activeSlot) touchRunSlot(this.activeSlot.id);
       if (!this.game.hasSave()) {
         const warning = this.modals.open({
           title: '진행을 저장할 수 없어요',
@@ -225,8 +239,65 @@ export class App implements Ctx {
   }
 
   private newRun(mode: RunMode, policy: PolicyId): void {
+    const slot = createRunSlot(this.brand, mode, policy);
+    if (!slot) {
+      const warning = this.modals.open({
+        title: '진행을 저장할 수 없어요',
+        content: h('p', { class: 'hint' }, '브라우저 저장 공간을 사용할 수 없습니다. 지금은 플레이할 수 있지만, 홈으로 나가면 이어할 수 없어요.'),
+        actions: [
+          button('취소', () => warning.close(), { class: 'btn--ghost' }),
+          button('저장 없이 시작', () => {
+            warning.close();
+            this.activeSlot = null;
+            this.game.setSaveKey(`${SAVE_KEY}:slot:session-${++this.sessionRuns}`);
+            this.game.newRun({ mode, policy });
+            this.startRun();
+            if (!tutorialSeen()) queueMicrotask(() => openTutorial(this));
+          }, { class: 'btn--play' }),
+        ],
+      });
+      return;
+    }
+    this.activeSlot = slot;
+    this.game.setSaveKey(slot.key);
     this.game.newRun({ mode, policy });
     this.startRun();
+    if (!tutorialSeen()) queueMicrotask(() => openTutorial(this));
+  }
+
+  private resumeRun(id: string): void {
+    const slot = listRunSlots().find((s) => s.id === id);
+    if (!slot) {
+      this.toast.error('저장된 연대기를 찾지 못했어요.');
+      this.title.show();
+      return;
+    }
+    this.game.setSaveKey(slot.key);
+    if (!this.game.load()) {
+      this.toast.error('저장된 연대기를 불러오지 못했어요.');
+      return;
+    }
+    this.activeSlot = slot;
+    this.brand = slot.brand;
+    selectRunSlot(id);
+    this.startRun();
+  }
+
+  private removeRun(id: string): void {
+    removeRunSlot(id);
+    if (this.activeSlot?.id === id) {
+      this.activeSlot = activeRunSlot();
+      if (this.activeSlot) {
+        this.game.setSaveKey(this.activeSlot.key);
+        this.brand = this.activeSlot.brand;
+        this.game.load();
+      } else {
+        this.game.setSaveKey(SAVE_KEY);
+        this.game.reset();
+        this.brand = loadBrand();
+      }
+    }
+    this.title.show();
   }
 
   // ─────────────────────────────────────── 알림
@@ -357,7 +428,7 @@ export class App implements Ctx {
       },
     };
     (window as unknown as { __sa: typeof api }).__sa = api;
-    console.info('[씨앗 아틀리에] 디버그: window.__sa = { game, fast(on), autoplay(steps), newRun(mode, policy, seed) }');
+    console.info('[오차드 2150] 디버그: window.__sa = { game, fast(on), autoplay(steps), newRun(mode, policy, seed) }');
   }
 
   /** 봇처럼 교배·최선 출하·공방 나가기를 반복 (화면 동작을 그대로 거친다) */

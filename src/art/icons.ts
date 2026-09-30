@@ -190,7 +190,7 @@ const JOKER: Record<string, Draw> = {
       g.appendChild(S('rect', { x: 20, y, width: w, height: 1.2, rx: 0.6, fill: '#7a6a4a', opacity: 0.55 }));
     g.appendChild(S('circle', { cx: 38.5, cy: 42, r: 7.8, fill: '#c21d3a', 'fill-opacity': 0.12, stroke: '#c21d3a', 'stroke-width': 1.4 }));
     g.appendChild(S('circle', { cx: 38.5, cy: 42, r: 5.7, fill: 'none', stroke: '#c21d3a', 'stroke-width': 0.6 }));
-    g.appendChild(Txt({ x: 38.5, y: 44.6, 'text-anchor': 'middle', 'font-size': 7.2, 'font-weight': 700, fill: '#c21d3a', 'font-family': SERIF }, '純'));
+    g.appendChild(P(starPath(38.5, 42, 3.2, 1.4, 6), { fill: '#c21d3a' }));
     k.add(g);
     k.add(P('M14.5,50 L11.5,59.5 L15,57.8 L17,60.5 L18.8,51Z', { fill: k.paint('ruby', 'd'), ...OL }));
     k.add(P('M19.5,50.5 L21,60 L23.4,57.4 L26.4,58.6 L23.8,49.5Z', { fill: k.paint('ruby', 'd'), ...OL }));

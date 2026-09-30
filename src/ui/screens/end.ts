@@ -1,4 +1,4 @@
-// 끝 (gameover / victory) — 브랜드 연대기, 정체 공개(카드가 뒤집히며), 철학 성찰, [다시 하기] [타이틀]
+// 끝 (gameover / victory) — 플레이 기록, 유전자형 공개, 선택 되돌아보기, [다시 하기] [타이틀]
 import { audio } from '../../audio';
 import { karyotype, plantCard } from '../../art';
 import type { HandTypeId, RunState } from '../../contract/game';
@@ -29,10 +29,10 @@ export class EndScreen {
     audio.play(win ? 'victory' : 'gameOver');
     const pol = POLICIES.find((p) => p.id === s.policy);
     const evidence = s.policy === 'heritage'
-      ? `기록: 교배 ${s.stats.crosses}번, 그중 자가수분 ${s.stats.selfings}번. 숨은 형질은 ${s.stats.recessiveSurprises}번 관찰했어요.`
+      ? `교배 ${s.stats.crosses}번 중 자가수분을 ${s.stats.selfings}번 했어요. 부모에게 보이지 않던 형질은 ${s.stats.recessiveSurprises}번 나왔어요.`
       : s.policy === 'precision'
-        ? `기록: 유전자 편집 ${s.stats.edits}번, 숨은 형질 관찰 ${s.stats.recessiveSurprises}번. 편집 횟수만으로 효과나 안전성을 판정할 수는 없어요.`
-        : `기록: 유전자 편집 ${s.stats.edits}번, 꽃가루 유출 ${s.stats.lmoEvents}번. ${s.stats.lmoEvents ? '이번 플레이에서 유출 사건이 발생했어요.' : '이번 플레이에서는 유출 사건이 관찰되지 않았어요. 위험이 없다는 뜻은 아니에요.'}`;
+        ? `유전자를 ${s.stats.edits}번 편집했고, 부모에게 보이지 않던 형질은 ${s.stats.recessiveSurprises}번 나왔어요. 편집한 포기가 어떻게 자라는지도 살펴봐야 해요.`
+        : `유전자를 ${s.stats.edits}번 편집했고, 꽃가루 유출은 ${s.stats.lmoEvents}번 일어났어요. ${s.stats.lmoEvents ? '유출을 막을 방법을 생각해 보세요.' : '이번에는 유출이 없었지만, 다음에도 없으리라는 보장은 없어요.'}`;
     const question = s.policy === 'heritage'
       ? '자가수분과 선발로 얻은 이점은 무엇이었나요? 다양성에는 어떤 영향이 있을까요?'
       : s.policy === 'precision'
@@ -55,9 +55,9 @@ export class EndScreen {
       h(
         'header',
         { class: 'end__head' },
-        h('div', { class: 'end__kicker' }, `${this.ctx.brand ? this.ctx.brand + ' ' : ''}브랜드 연대기`),
-        h('h1', { class: ['end__title', win ? 'is-win' : 'is-lose'] }, win ? '2150 명품 박람회 우승!' : '연대기가 여기서 멈췄어요'),
-        h('p', { class: 'end__sub' }, win ? '할머니의 온실이 전설이 되었어요.' : `시즌 ${s.ante} · ${o.name}에서 목표 ${fmt.score(o.target)}점 중 ${fmt.score(s.roundScore)}점을 냈어요.`),
+        h('div', { class: 'end__kicker' }, `${this.ctx.brand ? this.ctx.brand + ' · ' : ''}플레이 기록`),
+        h('h1', { class: ['end__title', win ? 'is-win' : 'is-lose'] }, win ? '마지막 주문까지 완수했어요' : '이번 도전은 여기까지예요'),
+        h('p', { class: 'end__sub' }, win ? '최종 박람회의 목표 점수를 넘겼어요.' : `시즌 ${s.ante}의 ${o.name}: 목표 ${fmt.score(o.target)}점, 획득 ${fmt.score(s.roundScore)}점.`),
       ),
       h(
         'div',
@@ -91,19 +91,19 @@ export class EndScreen {
         h(
           'section',
           { class: 'end__reveal panel' },
-          h('h2', { class: 'h2' }, '정체 공개 — 온실 포기들의 진짜 유전자형'),
+          h('h2', { class: 'h2' }, '온실 포기의 유전자형'),
           reveal,
         ),
         h(
           'section',
           { class: 'end__reflect panel panel--gold' },
-          h('h2', { class: 'h2' }, `브랜드 철학: ${pol?.name ?? ''}`),
+          h('h2', { class: 'h2' }, `운영 방식: ${pol?.name ?? ''}`),
           h('p', { class: 'hint' }, pol?.tradeoff ?? ''),
           h('p', { class: 'reflect__evidence' }, evidence),
           h('label', { class: 'reflect__q' }, question),
           reflectInput,
           h('div', { class: 'reflect__row' }, saveBtn, saved),
-          h('p', { class: 'hint' }, '성찰은 이 기기 브라우저에만 남아요. 선생님께 보여 주거나 공책에 옮겨 적어요.'),
+          h('p', { class: 'hint' }, '적은 내용은 이 브라우저에만 남아요. 수업에서 쓰려면 선생님께 보여 주거나 공책에 옮겨 적으세요.'),
         ),
       ),
       h('footer', { class: 'end__btns' }, button('다시 하기', () => this.onAgain(), { class: 'btn--play btn--big', 'data-autofocus': '' }), button('타이틀', () => this.ctx.goTitle(), { class: 'btn--ghost btn--big' })),

@@ -1,5 +1,5 @@
 /* ───────────────────────────────────────────────────────────
-   씨앗 아틀리에 2150 — 그림 스타일 (src/art 전용)
+   오차드 2150 — 그림 스타일 (src/art 전용)
    모든 선택자는 .sa-* 로 시작한다. 전역 요소(body 등)는 건드리지 않는다.
    폰트는 index.ts 에서 import 한다 (@import 금지).
    ─────────────────────────────────────────────────────────── */
@@ -733,59 +733,58 @@
   font-size: var(--logo-size, 56px);
   line-height: 1;
   user-select: none;
+  color: #f4ecda;
 }
-.sa-logo__crest {
-  width: 2.1em;
-  height: 2.1em;
-  margin-bottom: 0.08em;
-  filter: drop-shadow(0 0 0.25em rgba(47, 212, 196, 0.35)) drop-shadow(0 0.08em 0.12em rgba(0, 0, 0, 0.6));
-}
-.sa-logo__title {
-  display: flex;
-  gap: 0.28em;
-  font-family: var(--sa-serif);
-  font-weight: 700;
-  font-size: 1em;
-  letter-spacing: 0.01em;
-  padding: 0.05em 0.1em 0.12em;
-  background: linear-gradient(
-    100deg,
-    #8a6a2b 0%,
-    #e6c77a 16%,
-    #fff5d2 24%,
-    #c9a24a 34%,
-    #e6c77a 50%,
-    #fff1c1 58%,
-    #b8923f 70%,
-    #e6c77a 86%,
-    #8a6a2b 100%
-  );
-  background-size: 260% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0.035em 0 #3d2a0a) drop-shadow(0 0.06em 0.12em rgba(0, 0, 0, 0.7)) drop-shadow(0 0 0.35em rgba(230, 199, 122, 0.28));
-  animation: sa-shimmer 6s ease-in-out infinite alternate;
-}
-@keyframes sa-shimmer {
-  from { background-position: 100% 0; }
-  to { background-position: 0% 0; }
-}
-.sa-logo__year {
+.sa-logo__masthead {
   display: flex;
   align-items: center;
-  gap: 0.6em;
-  margin-top: 0.22em;
+  justify-content: center;
+  gap: 0.42em;
+  width: 100%;
+  margin-bottom: 0.21em;
+}
+.sa-logo__rule {
+  width: 0.82em;
+  height: 1px;
+  background: #a7c4a7;
+  opacity: 0.7;
+}
+.sa-logo__eyebrow {
+  color: #bbcfbc;
+  font-family: var(--sa-sans);
+  font-weight: 700;
+  font-size: 0.16em;
+  letter-spacing: 0.18em;
+}
+.sa-logo__name {
+  display: flex;
+  align-items: baseline;
+  gap: 0.22em;
   font-family: var(--sa-serif);
   font-weight: 700;
-  font-size: 0.3em;
-  color: #e6c77a;
-  text-shadow: 0 0 0.6em rgba(230, 199, 122, 0.4);
+  letter-spacing: -0.05em;
+  white-space: nowrap;
+  text-shadow: 0 3px 18px rgba(0, 0, 0, 0.5);
 }
-.sa-logo__num { letter-spacing: 0.5em; margin-right: -0.5em; }
-.sa-logo__rule { display: block; width: 3.2em; height: 0.06em; background: linear-gradient(90deg, rgba(230, 199, 122, 0), #e6c77a); }
-.sa-logo__rule:last-child { background: linear-gradient(90deg, #e6c77a, rgba(230, 199, 122, 0)); }
+.sa-logo__word { font-size: 1em; }
+.sa-logo__number {
+  color: #b9d7b0;
+  font-family: var(--sa-sans);
+  font-size: 0.68em;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.06em;
+}
+.sa-logo__subtitle {
+  margin-top: 0.48em;
+  padding-top: 0.42em;
+  border-top: 1px solid rgba(183, 214, 170, 0.5);
+  color: #e0e7d8;
+  font-family: var(--sa-sans);
+  font-size: 0.24em;
+  font-weight: 650;
+  letter-spacing: 0.25em;
+}
 
 /* ─────────────────────────── 배경 ─────────────────────────── */
 .sa-bg { display: block; background: #020d0b; }

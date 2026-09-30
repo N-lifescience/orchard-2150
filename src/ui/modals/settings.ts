@@ -63,18 +63,20 @@ export function openSettings(ctx: Ctx): void {
         { class: 'set__sec' },
         h('h3', null, '기록'),
         h('p', { class: 'hint' }, inRun
-          ? '진행은 자동으로 저장돼요. 홈에서 이어하기와 기록 지우기를 할 수 있어요.'
-          : '모든 기록은 이 기기 브라우저에만 있어요. 서버로 보내지 않아요.'),
+          ? '진행은 자동 저장돼요. 홈에서 다른 연대기도 이어할 수 있어요.'
+          : '연대기는 홈에서 하나씩 삭제할 수 있어요. 기록은 이 브라우저에만 남습니다.'),
         inRun ? null : h(
           'div',
           { class: 'set__btns' },
-          button('저장 지우기', () => {
-            ctx.game.clearSave();
-            window.location.reload();
-          }, { class: 'btn--discard' }),
-          button('모든 기록 지우기', () => {
-            wipeAll();
-            window.location.reload();
+          button('이 기기 기록 모두 지우기', () => {
+            const warning = ctx.modals.open({
+              title: '모든 기록을 지울까요?',
+              content: h('p', { class: 'hint' }, '저장된 연대기, 연구 노트, 설정이 이 브라우저에서 모두 삭제됩니다.'),
+              actions: [
+                button('취소', () => warning.close(), { class: 'btn--ghost' }),
+                button('모두 삭제', () => { wipeAll(); window.location.reload(); }, { class: 'btn--discard' }),
+              ],
+            });
           }, { class: 'btn--discard' }),
         ),
       ),

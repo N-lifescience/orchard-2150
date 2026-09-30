@@ -1,4 +1,4 @@
-// 유전 부호(표준 코돈표)와 전사·번역. 原作: 실제 생물의 표준 유전 부호 그대로.
+// 유전 부호(표준 코돈표)와 전사·번역. 실제 생물의 표준 유전 부호를 따른다.
 import type { AminoAcid } from '../contract/genetics';
 
 const AA_LIST: AminoAcid[] = [

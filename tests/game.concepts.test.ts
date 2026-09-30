@@ -17,7 +17,7 @@ describe('개념 카드 발견', () => {
     let found = false;
     for (let seed = 1; seed <= 10 && !found; seed++) {
       const { g, st } = game(seed);
-      const neighbor = st.garden[2]; // '이웃 농장의 루비' R:Rr S:Ss
+      const neighbor = st.garden[2]; // '레아 모레노의 루비' R:Rr S:Ss
       g.chooseCross(neighbor.id, neighbor.id);
       const surprise = st.seen.some((c) => c.pheno.color === 'gold' || !c.pheno.marked);
       expect(st.discoveries.includes('segregation')).toBe(surprise);

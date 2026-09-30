@@ -153,7 +153,7 @@ export class CrossView {
     if (key === this.orderKey) return;
     this.orderKey = key;
     this.orderCard.dataset.kind = o.kind;
-    const kindLabel = o.kind === 'small' ? '작은 주문' : o.kind === 'big' ? '큰 주문' : '명품 의뢰인';
+    const kindLabel = o.kind === 'small' ? '지역 납품' : o.kind === 'big' ? '도시 계약' : '특별 주문';
     replaceChildren(
       this.orderCard,
       h('div', { class: 'ordercard__kicker' }, `시즌 ${s.ante} · ${kindLabel}`),

@@ -6,6 +6,7 @@ import type { Ctx } from '../ctx';
 import { h, button, replaceChildren } from '../h';
 import { play, motion } from '../motion';
 import { wipeAll } from '../prefs';
+import { activeRunSlot, removeRunSlot } from '../runSlots';
 
 const ORDER = Object.keys(CONCEPTS) as ConceptId[];
 
@@ -14,8 +15,8 @@ function conceptBody(c: ConceptDef): HTMLElement {
     'div',
     { class: 'concept' },
     h('p', { class: 'concept__body' }, c.body),
-    c.fiction ? h('div', { class: 'concept__box concept__box--fiction' }, h('div', { class: 'concept__tag' }, '虛 게임 설정'), h('p', null, c.fiction)) : null,
-    h('div', { class: 'concept__box concept__box--real' }, h('div', { class: 'concept__tag' }, '原 실제 과학'), h('p', null, c.real)),
+    c.fiction ? h('div', { class: 'concept__box concept__box--fiction' }, h('div', { class: 'concept__tag' }, '게임 속 설정'), h('p', null, c.fiction)) : null,
+    h('div', { class: 'concept__box concept__box--real' }, h('div', { class: 'concept__tag' }, '실제 과학'), h('p', null, c.real)),
     c.standard ? h('div', { class: 'concept__std' }, `성취기준 ${c.standard}`) : null,
   );
 }
@@ -57,20 +58,40 @@ export function showDiscoveries(ctx: Ctx, ids: ConceptId[]): Promise<void> {
 
 export function openNotes(ctx: Ctx, by: 'all' | 'standard' = 'all'): void {
   const found = new Set(ctx.game.state.discoveries);
-  const detail = h('div', { class: 'notes__detail', 'aria-live': 'polite' }, h('p', { class: 'hint' }, '열린 카드를 누르면 자세히 볼 수 있어요.'));
+  const firstFound = ORDER.find((id) => found.has(id)) ?? null;
+  let selected: ConceptId | null = firstFound;
+  let mode: 'all' | 'standard' = by;
+  const detail = h('div', { class: 'notes__detail', 'aria-live': 'polite' });
+  const renderDetail = () => {
+    if (!selected) {
+      replaceChildren(detail, h('div', { class: 'notes__blank' }, h('span', { class: 'notes__blank-mark', 'aria-hidden': 'true' }, '—'), h('p', null, '교배와 재배를 진행하면 발견한 개념이 이곳에 기록됩니다.')));
+      return;
+    }
+    const c = CONCEPTS[selected];
+    replaceChildren(
+      detail,
+      h('div', { class: 'notes__detail-head' }, h('span', null, '관찰 기록'), h('span', { class: 'notes__folio' }, `No. ${String(ORDER.indexOf(selected) + 1).padStart(2, '0')}`)),
+      h('h3', { class: 'notes__title' }, c.title),
+      conceptBody(c),
+    );
+  };
   const cardFor = (id: ConceptId) => {
     const c = CONCEPTS[id];
     const open = found.has(id);
-    const b = h('button', { type: 'button', class: ['note', open ? 'is-open' : 'is-locked'], 'aria-label': open ? c.title : '아직 발견하지 못한 개념', disabled: !open }, h('span', { class: 'note__q' }, open ? c.title : '?'), open && c.standard ? h('span', { class: 'note__std' }, c.standard) : null);
+    const no = String(ORDER.indexOf(id) + 1).padStart(2, '0');
+    const b = h('button', { type: 'button', class: ['note', open ? 'is-open' : 'is-locked', selected === id ? 'is-selected' : ''], 'aria-label': open ? `${no}번 기록, ${c.title}` : `${no}번 기록, 아직 발견하지 못함`, 'aria-pressed': open ? String(selected === id) : undefined, disabled: !open }, h('span', { class: 'note__num' }, no), h('span', { class: 'note__q' }, open ? c.title : '미발견'), open && c.standard ? h('span', { class: 'note__std' }, c.standard) : null);
     if (open)
       b.addEventListener('click', () => {
         audio.play('select');
-        replaceChildren(detail, h('h3', { class: 'notes__title' }, c.title), conceptBody(c));
+        selected = id;
+        fill(mode);
+        renderDetail();
       });
     return b;
   };
   const grid = h('div', { class: 'notes__grid' });
-  const fill = (mode: 'all' | 'standard') => {
+  const fill = (nextMode: 'all' | 'standard') => {
+    mode = nextMode;
     if (mode === 'all') replaceChildren(grid, ...ORDER.map(cardFor));
     else {
       const groups = new Map<string, ConceptId[]>();
@@ -83,15 +104,23 @@ export function openNotes(ctx: Ctx, by: 'all' | 'standard' = 'all'): void {
     tabA.setAttribute('aria-pressed', String(mode === 'all'));
     tabB.setAttribute('aria-pressed', String(mode === 'standard'));
   };
-  const tabA = button('모두', () => fill('all'), { class: 'btn--seg' });
-  const tabB = button('성취기준별', () => fill('standard'), { class: 'btn--seg' });
+  const tabA = button('발견 순서', () => fill('all'), { class: 'btn--seg' });
+  const tabB = button('성취기준', () => fill('standard'), { class: 'btn--seg' });
   fill(by);
+  renderDetail();
   ctx.modals.open({
     title: '연구 노트',
     kicker: `발견 ${found.size} / ${ORDER.length}`,
     className: 'modal--notes',
     wide: true,
-    content: h('div', { class: 'notes' }, h('div', { class: 'sortbox' }, tabA, tabB), h('div', { class: 'notes__cols' }, grid, detail)),
+    content: h(
+      'div', { class: 'notes' },
+      h('div', { class: 'notes__cover' }, h('span', { class: 'notes__cover-kicker' }, 'ORCHARD 2150 / FIELD RECORD'), h('span', { class: 'notes__cover-count' }, `${found.size} / ${ORDER.length} 기록`)),
+      h('div', { class: 'notes__cols' },
+        h('section', { class: 'notes__page notes__page--index', 'aria-label': '연구 노트 목차' }, h('div', { class: 'notes__page-head' }, h('h3', null, '발견 목록'), h('span', null, 'INDEX')), h('div', { class: 'sortbox' }, tabA, tabB), grid),
+        h('section', { class: 'notes__page notes__page--detail', 'aria-label': '선택한 발견 기록' }, detail),
+      ),
+    ),
   });
 }
 
@@ -108,17 +137,22 @@ const STANDARDS: [string, string, string][] = [
 
 export function openTeacher(ctx: Ctx): void {
   const found = new Set(ctx.game.state.discoveries);
-  const clearBtn = button('저장 지우기', () => {
-    ctx.game.clearSave();
-    ctx.toast.show('진행 저장을 지웠어요.', 'good');
-    ctx.render();
+  const activeSlot = activeRunSlot();
+  const clearBtn = button('선택된 연대기 삭제', () => {
+    if (!activeSlot) return;
+    const m = ctx.modals.open({
+      title: '선택된 연대기를 삭제할까요?',
+      content: h('p', { class: 'hint' }, `${activeSlot.brand || '이름 없는 과수원'}의 진행만 이 기기에서 삭제합니다. 다른 연대기와 설정은 남아요.`),
+      actions: [button('취소', () => m.close(), { class: 'btn--ghost' }), button('삭제', () => { removeRunSlot(activeSlot.id); window.location.reload(); }, { class: 'btn--discard' })],
+    });
   }, { class: 'btn--discard' });
-  const wipeBtn = button('모든 기록 지우기', () => {
-    ctx.game.clearSave();
-    wipeAll();
-    ctx.brand = '';
-    ctx.toast.show('이 기기에 남은 기록(진행 저장·브랜드 이름·성찰·설정)을 모두 지웠어요.', 'good');
-    ctx.render();
+  clearBtn.disabled = !activeSlot;
+  const wipeBtn = button('이 기기 기록 모두 삭제', () => {
+    const m = ctx.modals.open({
+      title: '이 기기 기록을 모두 삭제할까요?',
+      content: h('p', { class: 'hint' }, '저장된 모든 연대기, 연구 노트, 이름, 성찰, 소리·화면 설정이 이 브라우저에서 삭제됩니다.'),
+      actions: [button('취소', () => m.close(), { class: 'btn--ghost' }), button('모두 삭제', () => { wipeAll(); window.location.reload(); }, { class: 'btn--discard' })],
+    });
   }, { class: 'btn--discard' });
   ctx.modals.open({
     title: '선생님 안내',
@@ -132,14 +166,14 @@ export function openTeacher(ctx: Ctx): void {
         'section',
         { class: 'teacher__privacy panel panel--gold' },
         h('h3', null, '개인정보'),
-        h('p', null, h('b', null, '학생 개인정보를 수집하지 않아요. 모든 기록은 이 기기 브라우저에만 남고 [저장 지우기]로 지울 수 있어요.')),
+        h('p', null, h('b', null, '학생 개인정보를 수집하지 않아요. 모든 기록은 이 기기 브라우저에만 남으며 아래 버튼으로 지울 수 있어요.')),
         h(
           'ul',
           { class: 'teacher__list' },
-          h('li', null, '이 기기에 남는 것: 게임 진행 저장, 브랜드 이름(선택, 12자 이내), 끝 화면의 성찰 한 줄, 소리·화면 설정. 목적은 이어하기와 수업 중 돌아보기뿐이에요.'),
+          h('li', null, '이 기기에 남는 것: 연대기별 진행 저장, 과수원 이름(선택, 12자 이내), 끝 화면의 성찰 한 줄, 소리·화면 설정. 목적은 이어하기와 수업 중 돌아보기뿐이에요.'),
           h('li', null, '서버·계정·외부 전송이 없어요. 제3자 제공도, 처리 위탁도 없어요. 외부 글꼴·분석 도구도 부르지 않아요.'),
-          h('li', null, '보관 기간: 학생이 지우거나 브라우저 데이터를 지울 때까지. 게임이 끝나면 진행 저장은 자동으로 지워져요.'),
-          h('li', null, '브랜드 이름 칸에는 실명·학번을 쓰지 않도록 안내해 주세요.'),
+          h('li', null, '보관 기간: 학생이 지우거나 브라우저 데이터를 지울 때까지. 완료한 연대기의 진행 저장은 자동으로 지워져요.'),
+          h('li', null, '과수원 이름 칸에는 실명·학번을 쓰지 않도록 안내해 주세요.'),
         ),
         h('div', { class: 'teacher__btns' }, clearBtn, wipeBtn),
       ),
@@ -172,7 +206,7 @@ export function openTeacher(ctx: Ctx): void {
           h('li', null, h('b', null, '전체 8시즌'), ' — 한 판 40~60분. 멘델 유전부터 유전자 편집·LMO까지.'),
           h('li', null, h('b', null, '빠른 4시즌'), ' — 한 차시(25~35분). 멘델 유전·다유전자·성염색체.'),
           h('li', null, h('b', null, '단원 연습'), ' — 성염색체(시즌 3–4) · 염색체 이상(시즌 5–6) · 유전자 편집(시즌 7–8)부터 시작 온실을 줘요.'),
-          h('li', null, '퀴즈가 없어요. 개념 카드는 학생이 그 현상을 겪은 뒤에 떠요. 각 카드는 虛(게임 설정)와 原(실제 과학)을 나눠 적었어요.'),
+          h('li', null, '개념 카드는 학생이 그 현상을 겪은 뒤에 열려요. 각 카드에는 게임 속 설정과 실제 과학을 나누어 적었어요.'),
           h('li', null, '끝 화면에서 온실 포기들의 실제 유전자형·핵형·계보가 공개돼요. 추론한 것과 비교하게 해 보세요.'),
         ),
       ),

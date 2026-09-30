@@ -36,10 +36,10 @@ export function midQ(r: Rng): string {
 const allele = (r: Rng, dom: string, rec: string, p: number) => (r() < p ? dom : rec);
 const pair = (r: Rng, dom: string, rec: string, p: number) => allele(r, dom, rec, p) + allele(r, dom, rec, p);
 
-// 할머니·할아버지 포기 (full/quick 공통)
-const GRANDMA_RUBY = 'R:RR S:SS B:bb Q1:+- Q2:++ Q3:+- Q4:-- Q5:+- Q6:+-';
-const GRANDMA_GOLD = 'R:rr S:ss B:bb Q1:-+ Q2:-- Q3:+- Q4:+- Q5:-- Q6:++';
-const GRANDPA_SCENT = 'R:Rr S:ss B:bb Q1:++ Q2:++ Q3:+- Q4:-+ Q5:+- Q6:--';
+// 발렌시아 육종팀의 시작 품종 (full/quick 공통)
+const ROSSI_RUBY = 'R:RR S:SS B:bb Q1:+- Q2:++ Q3:+- Q4:-- Q5:+- Q6:+-';
+const ROSSI_GOLD = 'R:rr S:ss B:bb Q1:-+ Q2:-- Q3:+- Q4:+- Q5:-- Q6:++';
+const BIANCHI_SCENT = 'R:Rr S:ss B:bb Q1:++ Q2:++ Q3:+- Q4:-+ Q5:+- Q6:--';
 
 const lumi = (name: string, spec: string, revealed: boolean): PlantSeed => ({ name, genome: parseGenotype('lumi', spec), revealed });
 const stella = (name: string, spec: string, revealed: boolean): PlantSeed => ({ name, genome: parseGenotype('stella', spec), revealed });
@@ -49,10 +49,10 @@ export function starterGarden(mode: RunMode, r: Rng): PlantSeed[] {
     case 'full':
     case 'quick':
       return [
-        lumi('할머니의 루비 별', GRANDMA_RUBY, true),
-        lumi('할머니의 골드', GRANDMA_GOLD, true),
-        lumi('이웃 농장의 루비', `R:Rr S:Ss B:bb ${midQ(r)}`, false),
-        lumi('할아버지의 향기', GRANDPA_SCENT, false),
+        lumi('엘레나 로시의 루비 별', ROSSI_RUBY, true),
+        lumi('엘레나 로시의 골드', ROSSI_GOLD, true),
+        lumi('레아 모레노의 루비', `R:Rr S:Ss B:bb ${midQ(r)}`, false),
+        lumi('마테오 비앙키의 향기', BIANCHI_SCENT, false),
       ];
     case 'unit-sex':
       return [
@@ -60,21 +60,21 @@ export function starterGarden(mode: RunMode, r: Rng): PlantSeed[] {
         stella('초록 잎 골드 암그루', `R:rr sex:XX L:ll ${midQ(r)}`, true),
         stella('은빛 잎 루비 수그루', `R:Rr sex:XY L:L ${midQ(r)}`, true),
         stella('초록 잎 골드 수그루', `R:rr sex:XY L:l ${midQ(r)}`, true),
-        lumi('할머니의 루비 별', GRANDMA_RUBY, true),
+        lumi('엘레나 로시의 루비 별', ROSSI_RUBY, true),
       ];
     case 'unit-chromo':
       return [
         lumi('거대 루미 (4n)', 'R:RRrr S:SSss B:bbbb Q1:++-- Q2:+++- Q3:+-+- Q4:--++ Q5:++-- Q6:+---', true),
-        lumi('할머니의 루비 별', GRANDMA_RUBY, true),
-        lumi('할머니의 골드', GRANDMA_GOLD, true),
-        lumi('할아버지의 향기', GRANDPA_SCENT, false),
+        lumi('엘레나 로시의 루비 별', ROSSI_RUBY, true),
+        lumi('엘레나 로시의 골드', ROSSI_GOLD, true),
+        lumi('마테오 비앙키의 향기', BIANCHI_SCENT, false),
       ];
     case 'unit-edit':
       return [
         lumi('쓴맛 도는 야생 루미', `R:Rr S:Ss B:Bb ${midQ(r)}`, true),
-        lumi('할머니의 루비 별', GRANDMA_RUBY, true),
-        lumi('할머니의 골드', GRANDMA_GOLD, true),
-        lumi('할아버지의 향기', GRANDPA_SCENT, false),
+        lumi('엘레나 로시의 루비 별', ROSSI_RUBY, true),
+        lumi('엘레나 로시의 골드', ROSSI_GOLD, true),
+        lumi('마테오 비앙키의 향기', BIANCHI_SCENT, false),
       ];
   }
 }
@@ -142,5 +142,5 @@ export function rarePlant(r: Rng, ante: number): PlantSeed {
 /** 교배할 짝이 하나도 없을 때 이웃 농장이 보내 주는 루미 (소프트락 방지) */
 export function rescuePlant(r: Rng): PlantSeed {
   const g = parseGenotype('lumi', `R:${pair(r, 'R', 'r', 0.5)} S:${pair(r, 'S', 's', 0.5)} B:bb ${midQ(r)}`);
-  return { name: '이웃 농장이 보낸 루미', genome: g, revealed: false };
+  return { name: '레아 모레노가 보낸 루미', genome: g, revealed: false };
 }

@@ -1,5 +1,6 @@
 // 화면 설정·브랜드 이름·성찰 한 줄 — 이 기기 브라우저(localStorage)에만 둔다. 서버로 보내지 않는다.
 import { SAVE_KEY } from '../game';
+import { removeAllRunSlots, SLOTS_KEY, TUTORIAL_KEY } from './runSlots';
 import { sanitizeBrand, sanitizeLine } from './fmt';
 
 export const UI_KEY = 'seed-atelier-2150:ui';
@@ -9,7 +10,7 @@ export const REFLECT_KEY = 'seed-atelier-2150:reflection';
 export const AUDIO_KEY = 'seed-atelier-2150:audio';
 
 /** [모든 기록 지우기] 가 지우는 키 전부 */
-export const ALL_KEYS = [SAVE_KEY, BRAND_KEY, REFLECT_KEY, AUDIO_KEY, UI_KEY] as const;
+export const ALL_KEYS = [SAVE_KEY, SLOTS_KEY, TUTORIAL_KEY, BRAND_KEY, REFLECT_KEY, AUDIO_KEY, UI_KEY] as const;
 
 export type Speed = 1 | 2 | 4;
 export interface UiPrefs {
@@ -106,6 +107,7 @@ export function saveReflection(line: string, kv: KV | null = store()): string {
 
 /** 이 게임이 이 기기에 남긴 기록을 전부 지운다 */
 export function wipeAll(kv: KV | null = store()): void {
+  removeAllRunSlots(kv);
   for (const k of ALL_KEYS) {
     try {
       kv?.removeItem(k);

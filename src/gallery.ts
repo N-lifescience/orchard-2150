@@ -250,7 +250,7 @@ app.addEventListener('pointerout', (e) => {
 // ─────────────────────────── 온실 부모 카드
 {
   const row = section('온실 부모 카드 (plantCard)');
-  cell(row, plantCard(view(ph({ brix: 17, plusFraction: 0.8 }), { title: '할머니의 루비 별', subtitle: '시작 품종 · 1세대', genotypeText: 'RR SS bb · 당도+ 9/12' })), 'plantCard 공개');
+  cell(row, plantCard(view(ph({ brix: 17, plusFraction: 0.8 }), { title: '엘레나 로시의 루비 별', subtitle: '시작 품종 · 1세대', genotypeText: 'RR SS bb · 당도+ 9/12' })), 'plantCard 공개');
   cell(row, plantCard(view(ph({ color: 'gold', marked: false, brix: 11, plusFraction: 0.3 }), { title: '3세대 선발 12호', subtitle: '자가수분 · 3세대' })), 'plantCard 비공개');
   cell(row, plantCard(view(ph({ species: 'stella', sex: 'M', color: 'ruby', marked: true, brix: null }), { title: '은빛 수그루', subtitle: '시장 품종', partialGenotype: 'XY L' })), 'plantCard 수그루');
   cell(row, plantCard(view(ph({ ploidy: 4, giant: true, brix: 18, plusFraction: 0.8 }), { title: '콜히친 4배체 거인', subtitle: '4n · 2세대' })), 'plantCard 4n');
@@ -260,7 +260,7 @@ app.addEventListener('pointerout', (e) => {
 {
   const row = section('장인의 비법 (jokerCard)', '희귀도 보석: 흔함 청록 · 특별 청 · 희귀 자홍 · 전설 금빛 무지개. 가격표·누적 뱃지 예시 포함.');
   const J: [string, string, Rarity, string][] = [
-    ['shears', '할머니의 전지가위', 'common', '+4 배수'],
+    ['shears', '엘레나 로시의 전지가위', 'common', '+4 배수'],
     ['rubyLover', '루비 애호가', 'common', '루비 모종마다 +3 배수'],
     ['goldCollector', '골드 수집가', 'common', '골드 모종마다 +3 배수'],
     ['patternArtisan', '무늬 장인', 'common', '무늬 있는 모종마다 +30 칩'],
@@ -281,7 +281,7 @@ app.addEventListener('pointerout', (e) => {
     ['scissorRack', '가위 거치대', 'rare', '주문마다 유전자 가위 1회 무료'],
     ['jellyfishGene', '형광 해파리 유전자', 'rare', '형광 모종마다 ×1.5, 대신 꽃가루 유출 확률 ↑'],
     ['climateHouse', '기후 적응 온실', 'uncommon', '보스 규칙이 약해져요'],
-    ['grandpaNotes', '할아버지의 향기 노트', 'legendary', '당도 16 이상 모종의 칩 ×2'],
+    ['grandpaNotes', '마테오 비앙키의 향기 노트', 'legendary', '당도 16 이상 모종의 칩 ×2'],
     ['tissueLab', '조직배양 랩', 'rare', '선발 때 1포기 더 들일 수 있어요'],
     ['mystery', '(모르는 id)', 'common', '기본 씨앗 문양'],
   ];
@@ -327,11 +327,11 @@ app.addEventListener('pointerout', (e) => {
     ['nobees', '벌이 없는 날'],
     ['uniformity', '균일성 심사'],
     ['drought', '가뭄'],
-    ['judge', '과일 심사위원'],
-    ['picky', '편식 셰프'],
-    ['sommelier', '까다로운 소믈리에'],
-    ['lmoCheck', 'LMO 표시제 점검'],
-    ['expo', '2150 명품 박람회'],
+    ['judge', '열매 검사'],
+    ['picky', '단색 포장 계약'],
+    ['sommelier', '고당도 계약'],
+    ['lmoCheck', '표시 기준 검사'],
+    ['expo', '2150 국제 품종 박람회'],
     ['mystery', '(모르는 id)'],
   ];
   for (const [id, name] of B) {

@@ -1,4 +1,4 @@
-// 공방 (phase 'shop') — 비법·시약 2칸, 봉투 2개, 증축 1개, 새로고침, 다음 주문 미리보기
+// 상점 (phase 'shop') — 비법·시약 2칸, 봉투 2개, 증축 1개, 새로고침, 다음 주문 미리보기
 import { audio } from '../../audio';
 import { bossEmblem, jokerCard, medalArt, orderEmblem, packArt, plantCard, reagentCard } from '../../art';
 import type { PackChoice, RunState, ShopItem } from '../../contract/game';
@@ -36,7 +36,7 @@ export class ShopView {
       h(
         'div',
         { class: 'shop panel' },
-        h('header', { class: 'shop__head' }, h('h2', { class: 'h2' }, '공방'), h('p', { class: 'hint' }, '비법은 왼쪽부터 차례로 발동해요. 가진 비법을 누르면 팔 수 있어요.')),
+        h('header', { class: 'shop__head' }, h('h2', { class: 'h2' }, '상점'), h('p', { class: 'hint' }, '비법은 왼쪽부터 차례로 발동해요. 가진 비법을 누르면 팔 수 있어요.')),
         this.cardsRow,
         this.packsRow,
       ),
@@ -163,7 +163,7 @@ export class ShopView {
       h('div', { class: 'next__target' }, `목표 ${fmt.score(o.target)} · 보상 $${o.reward}`),
       o.requestedColor ? h('div', { class: 'next__request' }, `요청 과육: ${o.requestedColor === 'ruby' ? '루비빛' : '골드빛'} · 출하 시 +$2`) : null,
       o.boss ? h('div', { class: 'next__rule' }, o.boss.desc) : null,
-      idx === 1 && s.orders[2].boss ? h('div', { class: 'next__later' }, `그다음 명품 의뢰인: ${s.orders[2].name}`) : null,
+      idx === 1 && s.orders[2].boss ? h('div', { class: 'next__later' }, `그다음 특별 주문: ${s.orders[2].name}`) : null,
     );
   }
 

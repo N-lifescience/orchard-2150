@@ -36,7 +36,7 @@ describe('숫자 표기', () => {
 
   it('조사', () => {
     expect(josa('루비', '을를')).toBe('루비를');
-    expect(josa('할머니의 골드', '을를')).toBe('할머니의 골드를');
+    expect(josa('엘레나 로시의 골드', '을를')).toBe('엘레나 로시의 골드를');
     expect(josa('3세대 선발 2호', '을를')).toBe('3세대 선발 2호를');
     expect(josa('별다래 수그루', '이가')).toBe('별다래 수그루가');
     expect(josa('온실', '은는')).toBe('온실은');

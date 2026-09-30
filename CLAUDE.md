@@ -1,4 +1,4 @@
-# 씨앗 아틀리에 2150 — 프로젝트 규칙
+# 오차드 2150 — 프로젝트 규칙
 
 설계: docs/GDD.md · 작업 계약: docs/CONTRACT.md · 규약: src/contract/*.ts
 

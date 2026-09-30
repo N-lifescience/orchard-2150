@@ -32,9 +32,9 @@ export interface ConceptDef {
   title: string;
   /** 게임에서 방금 벌어진 일 (한두 문장) */
   body: string;
-  /** 虛: 게임 설정인 부분 (없으면 생략) */
+  /** 게임을 위해 지어낸 설정 (없으면 생략) */
   fiction?: string;
-  /** 原作: 실제 과학·실제 사례 */
+  /** 실제 과학·실제 사례 */
   real: string;
   standard?: string; // '12유전01-01' 등
 }
@@ -73,13 +73,13 @@ export type RunMode = 'full' | 'quick' | 'unit-sex' | 'unit-chromo' | 'unit-edit
 
 export interface Plant {
   id: string;
-  name: string; // '할머니의 루비 별', '3세대 선발 12호' …
+  name: string; // '엘레나 로시의 루비 별', '3세대 선발 12호' …
   genome: Genome;
   pheno: Phenotype;
   origin: 'starter' | 'seedling' | 'market' | 'clone';
   parents?: [string, string]; // 부모 Plant.id
   generation: number;
-  /** 유전자형이 공개됐는가(검사 키트, 할머니 라벨) */
+  /** 유전자형이 공개됐는가(검사 키트, 시작 포기 라벨) */
   revealed: boolean;
 }
 
@@ -99,7 +99,7 @@ export type Phase = 'title' | 'cross' | 'play' | 'cashout' | 'select' | 'shop' |
 
 export interface OrderInfo {
   kind: 'small' | 'big' | 'boss';
-  name: string; // '동네 장터', '고급 식당', 보스 이름
+  name: string; // '지역 납품', '도시 계약', 특별 주문 이름
   client: string; // 의뢰인 한 줄
   target: number;
   reward: number;
@@ -244,7 +244,7 @@ export interface Game {
   /** uid=null 이면 건너뜀. mustReplace 면 replacePlantId 필수. 끝나면 → 'shop' (마지막 앤티 보스 뒤면 'victory') */
   select(uid: string | null, replacePlantId?: string): void;
 
-  // ── 공방 (phase 'shop')
+  // ── 상점 (phase 'shop')
   buy(slot: string): { ok: boolean; reason?: string };
   reroll(): { ok: boolean; reason?: string };
   sellJoker(uid: string): void;

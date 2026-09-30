@@ -65,7 +65,7 @@ export function sexLetters(copies: ChromosomeCopy[]): string {
 /**
  * 살 수 없는 접합자인가.
  *  - 상염색체 그룹 하나라도 사본 0개(전무 염색체) → 치사 (계약)
- *  - XY 종에서 X 가 하나도 없음 → 치사 (原作: 사람의 YO 도 발생하지 못한다)
+ *  - XY 종에서 X 가 하나도 없음 → 치사 (사람의 YO 도 발생하지 못한다)
  */
 export function isLethal(g: Genome): boolean {
   for (const group of groupsOf(g.species)) {

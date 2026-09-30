@@ -1,4 +1,4 @@
-// 종 정의. 루미·별다래는 둘 다 가상의 종(虛)이다. 유전 규칙(우열·분리·독립·X 연관·배수체)은 실제 과학(原作)을 따른다.
+// 종 정의. 루미·별다래는 가상의 종이며 유전 규칙(우열·분리·독립·X 연관·배수체)은 실제 과학을 따른다.
 import type {
   AlleleDef,
   AlleleId,
@@ -13,7 +13,7 @@ import type {
 
 // ── 편집 가능한 유전자의 코딩 DNA (5'→3', ATG … 종결 코돈, 10코돈 + 종결 = 33nt) ──
 //
-// R (과육색 효소, 虛)
+// R (게임 속 과육색 효소)
 //   코돈  0    1    2    3    4    5    6    7    8    9    10
 //        ATG  GCT  TGG  CAG  AAA  GGA  TAC  CAT  GAA  CTG  TAA
 //        Met  Ala  Trp  Gln  Lys  Gly  Tyr  His  Glu  Leu  종결
@@ -25,7 +25,7 @@ export const SEQ_R = 'ATGGCTTGGCAGAAAGGATACCATGAACTGTAA';
 export const SEQ_r = 'ATGGCTTGGTAGAAAGGATACCATGAACTGTAA';
 export const ACTIVE_R = 7;
 
-// B (쓴맛 효소, 虛)
+// B (게임 속 쓴맛 효소)
 //   코돈  0    1    2    3    4    5    6    7    8    9    10
 //        ATG  TCA  GGT  TGG  GAA  CGA  TTC  CTG  AAA  TAC  TGA
 //        Met  Ser  Gly  Trp  Glu  Arg  Phe  Leu  Lys  Tyr  종결

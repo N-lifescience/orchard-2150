@@ -107,14 +107,14 @@ describe('콘텐츠 표', () => {
 
   it('비법 id·이름·희귀도·가격이 지시서와 같다', () => {
     const want: [string, string, string, number][] = [
-      ['shears', '할머니의 전지가위', 'common', 2], ['rubyLover', '루비 애호가', 'common', 5], ['goldCollector', '골드 수집가', 'common', 5],
+      ['shears', '엘레나 로시의 전지가위', 'common', 2], ['rubyLover', '루비 애호가', 'common', 5], ['goldCollector', '골드 수집가', 'common', 5],
       ['patternArtisan', '무늬 장인', 'common', 5], ['refractometer', '굴절계', 'common', 4], ['purebredCert', '빛깔 인증서', 'uncommon', 6],
       ['heterosis', '잡종강세', 'uncommon', 6], ['hideAndSeek', '숨바꼭질 대립유전자', 'uncommon', 7], ['selfingMaster', '자가수분 명인', 'uncommon', 6],
       ['breedingLog', '교배 일지', 'common', 5], ['mendelGlasses', '멘델의 안경', 'common', 3], ['punnettNote', '퍼넷 노트', 'uncommon', 4],
       ['beeSwarm', '꿀벌 군단', 'uncommon', 6], ['seedVault', '씨앗 금고', 'common', 5], ['pollenTrader', '꽃가루 상인', 'common', 4],
       ['xHeir', 'X의 상속자', 'uncommon', 6], ['colchicineNotes', '콜히친 노트', 'rare', 8], ['karyoScope', '핵형 현미경', 'uncommon', 5],
       ['scissorRack', '가위 거치대', 'rare', 7], ['jellyfishGene', '형광 해파리 유전자', 'rare', 6], ['climateHouse', '기후 적응 온실', 'rare', 8],
-      ['grandpaNotes', '할아버지의 향기 노트', 'legendary', 10], ['tissueLab', '조직배양 랩', 'uncommon', 6],
+      ['grandpaNotes', '마테오 비앙키의 향기 노트', 'legendary', 10], ['tissueLab', '조직배양 랩', 'uncommon', 6],
     ];
     for (const [id, name, rarity, cost] of want) {
       const d = JOKERS.find((j) => j.id === id)!;
@@ -279,7 +279,7 @@ describe('점수 계산', () => {
     expect(last.kind).toBe('boss');
   });
 
-  it('잡종강세·숨바꼭질·교배 일지·할아버지 노트', () => {
+  it('잡종강세·숨바꼭질·교배 일지·향기 노트', () => {
     const het = parseGenotype('lumi', 'R:Rr S:ss B:bb');
     const hc: SeedCard = { uid: 'h', genome: het, pheno: phenotype(het), brixMod: 4, revealed: false, debuffed: false };
     const r1 = scoreHand([hc], ctx({ jokers: [J('heterosis', 'hz')] }));
@@ -319,7 +319,7 @@ describe('게임 흐름', () => {
   it('새 판: 시작 온실 4포기, $4, 출하 4(전통 +1), 솎아내기 3, 목표 300/450/600', () => {
     const { st } = newGame(1, 'full', 'precision');
     expect(st.phase).toBe('cross');
-    expect(st.garden.map((p) => p.name)).toEqual(['할머니의 루비 별', '할머니의 골드', '이웃 농장의 루비', '할아버지의 향기']);
+    expect(st.garden.map((p) => p.name)).toEqual(['엘레나 로시의 루비 별', '엘레나 로시의 골드', '레아 모레노의 루비', '마테오 비앙키의 향기']);
     expect(st.garden.map((p) => p.revealed)).toEqual([true, true, false, false]);
     expect(st.money).toBe(4);
     expect(st.handsLeft).toBe(4);
@@ -341,7 +341,7 @@ describe('게임 흐름', () => {
     expect(st.seen).toHaveLength(8);
     expect(st.stats.selfings).toBe(1);
     expect(st.discoveries).toContain('selfing');
-    // 할머니의 루비 별(RR SS) 자가수분 → 전부 루비·무늬
+    // 엘레나 로시의 루비 별(RR SS) 자가수분 → 전부 루비·무늬
     expect(st.hand.every((c) => c.pheno.color === 'ruby' && c.pheno.marked)).toBe(true);
   });
 
@@ -491,7 +491,7 @@ describe('게임 흐름', () => {
 });
 
 // ── 공방 ────────────────────────────────────────────────────────
-describe('공방', () => {
+describe('상점', () => {
   function toShop(seed = 20) {
     const { g, st } = newGame(seed);
     g.chooseCross(st.garden[0].id, st.garden[0].id);
@@ -683,7 +683,7 @@ describe('시약과 편집', () => {
 
   it('편집 작업대: 사본마다 자리, 종결 코돈을 만들면 nonsense + 개념', () => {
     const { g, st } = newGame(42, 'unit-edit', 'precision');
-    const ruby = st.garden.find((p) => p.name === '할머니의 루비 별')!;
+    const ruby = st.garden.find((p) => p.name === '엘레나 로시의 루비 별')!;
     const targets = g.editTargets(ruby.id);
     const rTargets = targets.filter((t) => t.locus === 'R');
     expect(rTargets).toHaveLength(2);

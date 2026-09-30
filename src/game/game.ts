@@ -86,7 +86,7 @@ export interface InternalState extends RunState {
   upgrades: UpgradeId[];
   anteUpgrade: UpgradeId | null;
   anteUpgradeSold: boolean;
-  /** 편식 셰프가 거절하는 과육색 */
+  /** 단색 포장 계약에서 제외하는 과육색 */
   bossColor: FruitColor | null;
   /** 교배 시점의 부모 정보 (분리·X 연관·선발 세대 계산용) */
   crossInfo: {
@@ -106,6 +106,10 @@ export interface InternalState extends RunState {
 /** 계약 Game + 점수 미리보기(상태를 바꾸지 않음) */
 export interface GameImpl extends Game {
   readonly state: InternalState;
+  /** Select the local save belonging to the chronicle currently being played. */
+  setSaveKey(key: string): void;
+  getSaveKey(): string;
+  reset(): void;
   /** 지금 이 카드들을 내면 몇 점인지 (비법·보스 포함, 상태 변화 없음). 잘못된 선택이면 null */
   simulate(uids: string[]): ScoreTrace | null;
 }
@@ -190,7 +194,7 @@ function emptyState(): InternalState {
     maxAnte: 8,
     startAnte: 1,
     orderIdx: 0,
-    orders: [blank('small', '동네 장터'), blank('big', '고급 식당'), blank('boss', '명품 의뢰인')],
+    orders: [blank('small', '지역 납품'), blank('big', '도시 계약'), blank('boss', '특별 계약')],
     phase: 'title',
     money: 0,
     handsLeft: 0,
@@ -237,6 +241,7 @@ function emptyState(): InternalState {
 
 export function createGame(opts: CreateGameOptions = {}): GameImpl {
   const storage: StorageLike | null = opts.storage === undefined ? defaultStorage() : opts.storage;
+  let saveKey = SAVE_KEY;
   const bases = opts.bases && opts.bases.length > 0 ? opts.bases.slice() : ANTE_BASES.slice();
   let st: InternalState = emptyState();
   const listeners = new Set<(s: RunState) => void>();
@@ -256,6 +261,41 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
   const order = (): OrderInfo => st.orders[st.orderIdx];
   const plantById = (id: string) => st.garden.find((p) => p.id === id);
 
+  /** Refresh labels in saves made before the new characters and contracts were introduced. */
+  function refreshSavedCopy(state: InternalState): void {
+    const oldNames: [string, string][] = [
+      ['할머니의 루비 별', '엘레나 로시의 루비 별'],
+      ['할머니의 골드', '엘레나 로시의 골드'],
+      ['이웃 농장의 루비', '레아 모레노의 루비'],
+      ['할아버지의 향기', '마테오 비앙키의 향기'],
+      ['이웃 농장이 보낸 루미', '레아 모레노가 보낸 루미'],
+    ];
+    const rename = (name: string) => oldNames.reduce((out, [before, after]) => out.replaceAll(before, after), name);
+    for (const plant of state.garden) plant.name = rename(plant.name);
+    for (const card of [...state.hand, ...state.pod, ...state.seen]) {
+      if ('name' in card && typeof card.name === 'string') card.name = rename(card.name);
+    }
+    for (const [i, current] of state.orders.entries()) {
+      if (current.kind === 'boss' && current.boss) {
+        const def = BOSSES.find((boss) => boss.id === current.boss?.id);
+        if (def) {
+          current.name = def.name;
+          current.client = def.client;
+          current.boss.name = def.name;
+          current.boss.client = def.client;
+        }
+      } else if (current.kind !== 'boss') {
+        current.name = current.kind === 'small' ? '지역 납품' : '도시 계약';
+        if (!CLIENTS.some((client) => current.client.startsWith(client))) {
+          const client = CLIENTS[(state.seed + state.ante * 11 + i * 7) % CLIENTS.length];
+          const color = current.requestedColor === 'gold' ? '골드빛' : '루비빛';
+          current.client = `${client} · ${color} 과육 요청`;
+        }
+      }
+    }
+    state.toasts = state.toasts.map(rename);
+  }
+
   function notify() {
     for (const fn of [...listeners]) {
       try {
@@ -269,7 +309,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
   function save() {
     if (!storage || st.phase === 'title') return;
     try {
-      storage.setItem(SAVE_KEY, JSON.stringify(st));
+      storage.setItem(saveKey, JSON.stringify(st));
     } catch {
       /* 저장 실패는 게임을 멈추지 않는다 */
     }
@@ -277,7 +317,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
 
   function clearSave() {
     try {
-      storage?.removeItem(SAVE_KEY);
+      storage?.removeItem(saveKey);
     } catch {
       /* 무시 */
     }
@@ -319,7 +359,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
     return b.minAnte;
   }
 
-  /** 편식 셰프가 거절해도 되는 색 = 나머지 색을 온실에서 얻을 수 있는 색 */
+  /** 단색 포장 계약에서 제외해도 되는 색 = 나머지 색을 온실에서 얻을 수 있는 색 */
   function pickyColors(): FruitColor[] {
     const heteroSelf = st.garden.some((p) => selfable(p) && isHeterozygous(p.genome, 'R'));
     const obtainable = (c: FruitColor) => heteroSelf || st.garden.some((p) => p.pheno.color === c && p.pheno.fertile);
@@ -406,8 +446,8 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
     const color1 = requestedColor();
     const color2 = requestedColor();
     st.orders = [
-      { kind: 'small', name: '동네 장터', client: `${c1}: "${colorName(color1)} 과육을 부탁해요."`, requestedColor: color1, target: Math.round(base), reward: ORDER_REWARD.small },
-      { kind: 'big', name: '고급 식당', client: `${c2}: "${colorName(color2)} 과육을 부탁해요."`, requestedColor: color2, target: Math.round(base * 1.5), reward: ORDER_REWARD.big },
+      { kind: 'small', name: '지역 납품', client: `${c1} · ${colorName(color1)} 과육 요청`, requestedColor: color1, target: Math.round(base), reward: ORDER_REWARD.small },
+      { kind: 'big', name: '도시 계약', client: `${c2} · ${colorName(color2)} 과육 요청`, requestedColor: color2, target: Math.round(base * 1.5), reward: ORDER_REWARD.big },
       chooseBoss(r),
     ];
     st.orderIdx = 0;
@@ -677,7 +717,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
     st.selectPicked = null;
     if (st.ante >= st.maxAnte && st.orderIdx === 2) {
       st.phase = 'victory';
-      toast('2150 명품 박람회 우승! 할머니의 온실이 전설이 되었어요.');
+      toast('2150 국제 품종 박람회 계약을 마쳤어요.');
       return;
     }
     st.phase = 'shop';
@@ -729,6 +769,17 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
 
   // ── Game 객체 ─────────────────────────────────────────────
   const game: GameImpl = {
+    setSaveKey(key) {
+      if (key !== SAVE_KEY && !key.startsWith(`${SAVE_KEY}:slot:`)) throw new Error('잘못된 저장 슬롯이에요.');
+      saveKey = key;
+    },
+    getSaveKey() {
+      return saveKey;
+    },
+    reset() {
+      st = emptyState();
+      notify();
+    },
     get state() {
       return st;
     },
@@ -1232,7 +1283,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
     applyEdit(reagentIndex, targetId, group, copyIndex, locus, newSeq) {
       if (!(PLAY_PHASES as readonly string[]).includes(st.phase)) return { ok: false, reason: '지금은 편집할 수 없어요.' };
       if (st.reagents[reagentIndex] !== 'scissors') return { ok: false, reason: '그 칸에 유전자 가위가 없어요.' };
-      if (st.policy === 'heritage') return { ok: false, reason: '전통 육종 아틀리에는 유전자 가위를 쓰지 않아요.' };
+      if (st.policy === 'heritage') return { ok: false, reason: '전통 육종팀은 유전자 가위를 쓰지 않아요.' };
       const h = findHolder(targetId);
       if (!h) return { ok: false, reason: '온실 포기나 손에 든 모종만 편집할 수 있어요.' };
       const g = h.kind === 'plant' ? h.plant.genome : h.card.genome;
@@ -1273,13 +1324,15 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
     save,
     load() {
       try {
-        const raw = storage?.getItem(SAVE_KEY);
+        const raw = storage?.getItem(saveKey);
         if (!raw) return false;
         const parsed = JSON.parse(raw) as InternalState;
         if (!parsed || parsed.v !== 1 || typeof parsed.phase !== 'string' || !Array.isArray(parsed.garden) || !Array.isArray(parsed.orders)) return false;
         st = parsed;
+        refreshSavedCopy(st);
         st.prediction ??= null;
         st.requestFulfilled ??= false;
+        save();
         notify();
         return true;
       } catch {
@@ -1288,7 +1341,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
     },
     hasSave() {
       try {
-        return !!storage?.getItem(SAVE_KEY);
+        return !!storage?.getItem(saveKey);
       } catch {
         return false;
       }

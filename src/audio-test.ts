@@ -143,7 +143,7 @@ app.append(
   el('h1', { textContent: '소리 시험대' }),
   el('p', {
     className: 'lead',
-    textContent: '씨앗 아틀리에 2150 — WebAudio 합성만 씁니다. 아무 곳이나 한 번 누르면 소리가 켜져요.',
+    textContent: '오차드 2150 — 화면을 한 번 누르면 소리가 켜져요. 모든 소리는 브라우저에서 만듭니다.',
   }),
 );
 

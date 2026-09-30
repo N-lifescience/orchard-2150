@@ -1,9 +1,7 @@
-// 빛깔 기호 · 보스 밀랍 인장 · 주문 휘장 · 품평회 메달
+// 빛깔 기호 · 납품 라벨 · 품평 기록
 import type { SpeciesId, SuitKey } from '../contract/genetics';
 import type { BossDef, HandTypeId } from '../contract/game';
-import { Kit, S, G, P, Txt, starPath, leafPath, smoothClosed, num, type Stop } from './dom';
-import { mulberry32, hashStr, jitter } from './rng';
-import { mix } from './color';
+import { Kit, S, G, P, Txt, starPath, leafPath, num } from './dom';
 
 // ─────────────────────────────────────────── 빛깔 기호: 색 + 모양 + 무늬
 export function suitGlyph(suit: SuitKey, species: SpeciesId, size = 20): SVGSVGElement {
@@ -182,140 +180,7 @@ function bossSymbol(id: string): { sym: SVGGElement; detail?: SVGGElement } {
   }
 }
 
-export function bossEmblem(def: BossDef, size = 96): SVGSVGElement {
-  const id = def?.id ?? '_';
-  const wax = WAX[id] ?? WAX._;
-  const k = new Kit('bs', 100, 100, size, size, 'sa-boss');
-  const r = mulberry32(hashStr(id) ^ 0x51ed);
-  // 불규칙한 밀랍 덩어리
-  const pts: [number, number][] = [];
-  const n = 30;
-  const drips = [r() * n, r() * n, r() * n, r() * n].map(Math.floor);
-  for (let i = 0; i < n; i++) {
-    const a = (i / n) * Math.PI * 2;
-    let rr = 43 + jitter(r, 1.1);
-    for (const d of drips) {
-      const dd = Math.min(Math.abs(i - d), n - Math.abs(i - d));
-      rr += 3.2 * Math.exp(-(dd * dd) / 1.3);
-    }
-    pts.push([50 + Math.cos(a) * rr * 0.97, 50 + Math.sin(a) * rr * 0.97]);
-  }
-  const blob = smoothClosed(pts);
-  k.add(P(blob, { fill: '#000000', opacity: 0.35, transform: 'translate(1.4 2.4)', filter: k.blur(1.6) }));
-  k.add(P(blob, { fill: k.rad('wax', [[0, wax[0]], [0.45, wax[1]], [1, wax[2]]], 0.38, 0.32, 0.8, 0.3, 0.26), stroke: wax[2], 'stroke-width': 0.8 }));
-  // 눌린 원판
-  k.add(S('circle', { cx: 50, cy: 50, r: 33.5, fill: k.rad('press', [[0, mix(wax[1], wax[2], 0.25)], [0.85, wax[1]], [1, mix(wax[1], wax[0], 0.3)]], 0.5, 0.5, 0.5) }));
-  k.add(S('circle', { cx: 50, cy: 50, r: 34.2, fill: 'none', stroke: wax[2], 'stroke-width': 2.2, opacity: 0.8 }));
-  k.add(S('circle', { cx: 50.6, cy: 50.9, r: 35.8, fill: 'none', stroke: wax[0], 'stroke-width': 1, opacity: 0.6 }));
-  // 구슬 테
-  const beads = G({ fill: wax[0], opacity: 0.55 });
-  for (let i = 0; i < 40; i++) {
-    const a = (i / 40) * Math.PI * 2;
-    beads.appendChild(S('circle', { cx: 50 + Math.cos(a) * 39.3, cy: 50 + Math.sin(a) * 39.3, r: 0.85 }));
-  }
-  k.add(beads);
-  // 문양 (돋을새김)
-  const { sym, detail } = bossSymbol(id);
-  const place = (el: SVGGElement, dx: number, dy: number, color: string, op: number) => {
-    const c = el.cloneNode(true) as SVGGElement;
-    c.setAttribute('transform', `translate(${30 + dx} ${30 + dy})`);
-    c.setAttribute('color', color);
-    c.setAttribute('opacity', String(op));
-    return c;
-  };
-  k.add(place(sym, 0.9, 1.1, wax[2], 0.85));
-  k.add(place(sym, -0.6, -0.6, wax[0], 0.7));
-  const main = place(sym, 0, 0, mix(wax[1], wax[0], 0.28), 1);
-  if (detail) main.appendChild(detail);
-  k.add(main);
-  // 광택
-  k.add(P('M22,30 A31,31 0 0 1 42,15', { stroke: '#ffffff', 'stroke-width': 2.4, fill: 'none', opacity: 0.35, 'stroke-linecap': 'round', filter: k.blur(0.6) }));
-  k.add(S('ellipse', { cx: 30, cy: 22, rx: 5, ry: 2.2, transform: 'rotate(-40 30 22)', fill: '#ffffff', opacity: 0.35 }));
-  k.svg.removeAttribute('aria-hidden');
-  k.svg.setAttribute('role', 'img');
-  k.svg.setAttribute('aria-label', def?.name ? `의뢰인 인장: ${def.name}` : '의뢰인 인장');
-  k.svg.dataset.boss = id;
-  return k.svg;
-}
-
-// ─────────────────────────────────────────── 주문 휘장: 장터(천막) / 식당(클로슈)
-export function orderEmblem(kind: 'small' | 'big', size = 64): SVGSVGElement {
-  const k = new Kit('oe', 64, 64, size, size, `sa-order sa-order--${kind}`);
-  const foil = k.lin('foil', [[0, '#fff1c1'], [0.3, '#e6c77a'], [0.6, '#b8923f'], [1, '#6e4f18']], 0.15, 0, 0.85, 1);
-  const enamel: Stop[] = kind === 'small' ? [[0, '#2a8a7c'], [0.6, '#0d3d36'], [1, '#051a17']] : [[0, '#8a1d45'], [0.6, '#3d0a1c'], [1, '#18030a']];
-  k.add(S('circle', { cx: 32, cy: 33, r: 30.5, fill: '#000000', opacity: 0.35, filter: k.blur(1.2) }));
-  k.add(S('circle', { cx: 32, cy: 32, r: 30.5, fill: foil, stroke: '#4d3710', 'stroke-width': 0.8 }));
-  k.add(S('circle', { cx: 32, cy: 32, r: 26.2, fill: k.rad('en', enamel, 0.45, 0.38, 0.65), stroke: '#4d3710', 'stroke-width': 0.9 }));
-  const beads = G({ fill: '#fff4cf', opacity: 0.7 });
-  for (let i = 0; i < 36; i++) {
-    const a = (i / 36) * Math.PI * 2;
-    beads.appendChild(S('circle', { cx: 32 + Math.cos(a) * 28.4, cy: 32 + Math.sin(a) * 28.4, r: 0.6 }));
-  }
-  k.add(beads);
-  const clip = k.clip('in', S('circle', { cx: 32, cy: 32, r: 26 }));
-  const inner = G({ 'clip-path': clip });
-  if (kind === 'small') {
-    // 줄무늬 천막
-    const roof = 'M14,30 L32,13 L50,30Z';
-    const roofClip = k.clip('roof', P(roof));
-    const stripes = G({ 'clip-path': roofClip });
-    for (let i = 0; i < 8; i++) {
-      const x0 = 14 + i * 4.5;
-      stripes.appendChild(P(`M32,13 L${x0},30 L${x0 + 4.5},30Z`, { fill: i % 2 ? '#f3ead6' : '#d7263d' }));
-    }
-    stripes.appendChild(P(roof, { fill: k.lin('rs', [[0, '#ffffff', 0.25], [1, '#000000', 0.25]], 0, 0, 1, 0) }));
-    inner.appendChild(S('rect', { x: 18, y: 29, width: 28, height: 17, fill: k.lin('tb', [[0, '#e8d7b0'], [1, '#9a7d4c']]), stroke: '#3d2a0e', 'stroke-width': 0.6 }));
-    inner.appendChild(P('M29,46 L29,34 Q32,31.5 35,34 L35,46Z', { fill: '#2a1a08', opacity: 0.8 }));
-    inner.appendChild(stripes);
-    inner.appendChild(P(roof, { fill: 'none', stroke: '#3d0412', 'stroke-width': 0.8, 'stroke-linejoin': 'round' }));
-    // 물결 차양
-    let val = 'M14,30';
-    for (let i = 0; i < 8; i++) val += ` q2.25,4 4.5,0`;
-    inner.appendChild(P(val + ' L50,29 L14,29Z', { fill: '#d7263d', stroke: '#3d0412', 'stroke-width': 0.6 }));
-    inner.appendChild(P('M32,13 L32,7', { stroke: '#e6c77a', 'stroke-width': 1.1 }));
-    inner.appendChild(P('M32,7 L38,9 L32,11Z', { fill: '#2fd4c4' }));
-    // 과일 바구니
-    inner.appendChild(P('M17,46 L25,46 L24,51 L18,51Z M39,46 L47,46 L46,51 L40,51Z', { fill: k.paint('wood', 'v'), stroke: '#2a1405', 'stroke-width': 0.5 }));
-    for (const [x, c] of [[19, '#d7263d'], [22.5, '#f2b632'], [41, '#f2b632'], [44.5, '#d7263d']] as [number, string][])
-      inner.appendChild(S('circle', { cx: x, cy: 45, r: 2.1, fill: c, stroke: '#2a0a04', 'stroke-width': 0.4 }));
-    inner.appendChild(S('rect', { x: 8, y: 51, width: 48, height: 12, fill: '#051a17', opacity: 0.5 }));
-  } else {
-    // 은빛 클로슈
-    for (let i = 0; i < 3; i++)
-      inner.appendChild(
-        P(`M${24 + i * 8},20 c-2,-3 2,-4 0,-7 c-2,-3 2,-4 0,-6`, { stroke: '#f3ead6', 'stroke-width': 1, fill: 'none', opacity: 0.55, 'stroke-linecap': 'round' }),
-      );
-    inner.appendChild(S('ellipse', { cx: 32, cy: 45, rx: 20, ry: 4.2, fill: k.paint('silver', 'v'), stroke: '#2a3236', 'stroke-width': 0.6 }));
-    inner.appendChild(
-      P('M14.5,44 C14.5,31 22,23.5 32,23.5 C42,23.5 49.5,31 49.5,44Z', { fill: k.rad('dome', [[0, '#ffffff'], [0.35, '#d6dee2'], [0.8, '#7d8a91'], [1, '#3a454a']], 0.35, 0.3, 0.8), stroke: '#2a3236', 'stroke-width': 0.7 }),
-    );
-    inner.appendChild(P('M19,40 C19,32 23.5,27.5 29,26', { stroke: '#ffffff', 'stroke-width': 1.4, fill: 'none', opacity: 0.8, 'stroke-linecap': 'round' }));
-    inner.appendChild(S('rect', { x: 14, y: 42.5, width: 36, height: 2, rx: 1, fill: k.paint('gold', 'v') }));
-    inner.appendChild(S('circle', { cx: 32, cy: 21.8, r: 2.8, fill: k.paint('gold', 'r'), stroke: '#4d3710', 'stroke-width': 0.5 }));
-  }
-  k.add(inner);
-  k.add(P('M12,22 A22,22 0 0 1 28,10', { stroke: '#ffffff', 'stroke-width': 1.4, fill: 'none', opacity: 0.18, 'stroke-linecap': 'round' }));
-  k.svg.removeAttribute('aria-hidden');
-  k.svg.setAttribute('role', 'img');
-  k.svg.setAttribute('aria-label', kind === 'small' ? '동네 장터' : '고급 식당');
-  return k.svg;
-}
-
 // ─────────────────────────────────────────── 품평회 메달
-const RIBBON: Record<HandTypeId, [string, string]> = {
-  high: ['#8a979e', '#e3e9ec'],
-  pair: ['#1f9d92', '#b8fff6'],
-  twoPair: ['#2c5fd8', '#cfe0ff'],
-  three: ['#6a3cc0', '#e3d4ff'],
-  straight: ['#d99a16', '#fff1c1'],
-  flush: ['#b3122e', '#ffc2cc'],
-  fullHouse: ['#16845c', '#c8ffe4'],
-  four: ['#e0602a', '#ffe0cc'],
-  straightFlush: ['#d6336c', '#ffd0e0'],
-  five: ['#b8923f', '#fff6d8'],
-  flushHouse: ['#0fa3bd', '#d6fbff'],
-  flushFive: ['#1b1f1d', '#e6c77a'],
-};
 const HAND_KO: Record<HandTypeId, string> = {
   high: '단품',
   pair: '한 쌍',
@@ -345,13 +210,6 @@ const TIER: Record<HandTypeId, Metal> = {
   flushHouse: 'plat',
   flushFive: 'plat',
 };
-const METAL: Record<Metal, [string, string, string, string]> = {
-  bronze: ['#ffd9b0', '#c9803e', '#7a4518', '#3d1f08'],
-  silver: ['#ffffff', '#cdd6db', '#78868d', '#343e43'],
-  gold: ['#fff4c8', '#e6c77a', '#a8802e', '#4d3508'],
-  plat: ['#ffffff', '#dfe8f5', '#8c9cb8', '#3a4458'],
-};
-
 const SEED_PIP = 'M0,-4.4 C2.8,-1.6 2.8,2.4 0,4.4 C-2.8,2.4 -2.8,-1.6 0,-4.4Z';
 
 function handSymbol(hand: HandTypeId): { sym: SVGGElement; color: SVGGElement | null } {
@@ -428,76 +286,62 @@ function handSymbol(hand: HandTypeId): { sym: SVGGElement; color: SVGGElement | 
   return { sym: g, color };
 }
 
-export function medalArt(hand: HandTypeId, size = 72): SVGSVGElement {
-  const k = new Kit('md', 100, 100, size, size, `sa-medal sa-medal--${TIER[hand] ?? 'bronze'}`);
-  const [rc, rl] = RIBBON[hand] ?? RIBBON.high;
-  const m = METAL[TIER[hand] ?? 'bronze'];
-  const cx = 50;
-  const cy = 62;
-  // 리본
-  const rib = k.lin('rib', [[0, mix(rc, '#ffffff', 0.15)], [1, mix(rc, '#000000', 0.35)]], 0, 0, 0, 1);
-  const strapL = 'M27,0 L45,0 L56,40 L42,44Z';
-  const strapR = 'M73,0 L55,0 L44,40 L58,44Z';
-  k.add(P(strapL, { fill: rib, stroke: mix(rc, '#000000', 0.5), 'stroke-width': 0.6 }));
-  k.add(P('M33.5,0 L38.5,0 L50,41.5 L46,42.5Z', { fill: rl, opacity: 0.85 }));
-  k.add(P(strapR, { fill: rib, stroke: mix(rc, '#000000', 0.5), 'stroke-width': 0.6 }));
-  k.add(P('M66.5,0 L61.5,0 L50,41.5 L54,42.5Z', { fill: rl, opacity: 0.85 }));
-  if (hand === 'flushFive') {
-    const bands = ['#ff4f8b', '#f2b632', '#2fd4c4', '#3d7bff'];
-    bands.forEach((c, i) => k.add(P(`M${58 + i * 3},0 L${61 + i * 3},0 L${52 + i * 1.2},41 L${50 + i * 1.2},41Z`, { fill: c, opacity: 0.8 })));
-  }
-  k.add(P(strapR, { fill: k.lin('ribSh', [[0, '#000000', 0], [1, '#000000', 0.3]], 0, 0, 0, 1) }));
-  // 월계관 (금·백금)
-  const tier = TIER[hand];
-  if (tier === 'gold' || tier === 'plat') {
-    const lf = G({ fill: k.paint('leaf', 'd'), stroke: '#0c3a22', 'stroke-width': 0.4 });
-    for (const side of [-1, 1]) {
-      for (let i = 0; i < 6; i++) {
-        const a = Math.PI / 2 + side * (0.35 + i * 0.27);
-        const x = cx + Math.cos(a) * 33.5;
-        const y = cy + Math.sin(a) * 33.5;
-        const deg = (a * 180) / Math.PI + (side > 0 ? 90 + 25 : -90 - 25);
-        lf.appendChild(G({ transform: `translate(${num(x)} ${num(y)}) rotate(${num(deg)})` }, P(leafPath(8, 2.8, 0))));
-      }
-    }
-    k.add(lf);
-  }
-  // 고리
-  k.add(S('circle', { cx, cy: 33, r: 3.6, fill: 'none', stroke: k.paint('gold', 'd'), 'stroke-width': 2 }));
-  // 원판
-  k.add(S('circle', { cx: cx + 1, cy: cy + 2, r: 30, fill: '#000000', opacity: 0.35, filter: k.blur(1.4) }));
-  const outer = k.rad('m1', [[0, m[0]], [0.4, m[1]], [0.85, m[2]], [1, m[3]]], 0.38, 0.32, 0.8);
-  const innerG = k.rad('m2', [[0, m[2]], [0.55, m[1]], [1, m[0]]], 0.62, 0.66, 0.75);
-  k.add(S('circle', { cx, cy, r: 30, fill: outer, stroke: m[3], 'stroke-width': 0.8 }));
-  k.add(S('circle', { cx, cy, r: 24.5, fill: innerG, stroke: m[3], 'stroke-width': 0.6, 'stroke-opacity': 0.6 }));
-  const beads = G({ fill: m[0], opacity: 0.75 });
-  for (let i = 0; i < 40; i++) {
-    const a = (i / 40) * Math.PI * 2;
-    beads.appendChild(S('circle', { cx: cx + Math.cos(a) * 27.3, cy: cy + Math.sin(a) * 27.3, r: 0.75 }));
-  }
-  k.add(beads);
-  const { sym, color } = handSymbol(hand);
-  const place = (dx: number, dy: number, c: string, op: number) => {
-    const el = sym.cloneNode(true) as SVGGElement;
-    el.setAttribute('transform', `translate(${cx + dx} ${cy + dy})`);
-    el.setAttribute('color', c);
-    el.setAttribute('opacity', String(op));
-    return el;
-  };
-  k.add(place(0.8, 1, m[3], 0.7));
-  k.add(place(-0.6, -0.6, m[0], 0.9));
-  k.add(place(0, 0, m[1], 1));
-  if (color) {
-    color.setAttribute('transform', `translate(${cx} ${cy})`);
-    k.add(color);
-  }
-  if (tier === 'plat') {
-    const holo = k.lin('holo', [[0, '#ff7ab8', 0.5], [0.25, '#ffe27a', 0.4], [0.5, '#7affd8', 0.45], [0.75, '#7ab8ff', 0.45], [1, '#ff7ab8', 0.5]], 0, 0, 1, 1);
-    k.add(S('circle', { cx, cy, r: 30, fill: holo, class: 'sa-holo', style: 'mix-blend-mode:overlay' }));
-  }
-  k.add(P(`M${cx - 22},${cy - 10} A24,24 0 0 1 ${cx - 6},${cy - 25}`, { stroke: '#ffffff', 'stroke-width': 1.8, fill: 'none', opacity: 0.6, 'stroke-linecap': 'round' }));
+// 납품 화면에서 쓰는 표식은 장식용 인장보다 명확한 번호와 도형을 우선한다.
+// 어두운 온실 화면 위에 놓이는 종이 라벨을 모티프로 한 평면형 식별자다.
+export function bossEmblem(def: BossDef, size = 96): SVGSVGElement {
+  const id = def?.id ?? '_';
+  const accent = (WAX[id] ?? WAX._)[1];
+  const k = new Kit('bsl', 100, 100, size, size, 'sa-boss sa-boss--label');
+  k.add(S('rect', { x: 4, y: 4, width: 92, height: 92, rx: 8, fill: '#f1eddf', stroke: accent, 'stroke-width': 3 }));
+  k.add(S('rect', { x: 4, y: 4, width: 92, height: 18, rx: 7, fill: accent }));
+  k.add(S('rect', { x: 4, y: 16, width: 92, height: 6, fill: accent }));
+  k.add(Txt({ x: 10, y: 16, 'font-size': 8.4, 'font-weight': 800, 'letter-spacing': 1.4, fill: '#ffffff', 'font-family': 'Arial, sans-serif' }, 'SPECIAL ORDER'));
+  const { sym } = bossSymbol(id);
+  sym.setAttribute('transform', 'translate(30 27)');
+  sym.setAttribute('color', '#253d37');
+  k.add(sym);
+  k.add(P('M12,74 H88', { stroke: '#b9c6b6', 'stroke-width': 1 }));
+  k.add(Txt({ x: 50, y: 87, 'text-anchor': 'middle', 'font-size': [...def.name].length > 8 ? 8.2 : 10, 'font-weight': 700, fill: '#253d37', 'font-family': 'Pretendard Variable, Pretendard, sans-serif' }, def.name));
   k.svg.removeAttribute('aria-hidden');
   k.svg.setAttribute('role', 'img');
-  k.svg.setAttribute('aria-label', `품평회 메달: ${HAND_KO[hand] ?? hand}`);
+  k.svg.setAttribute('aria-label', `특별 의뢰: ${def.name}`);
+  k.svg.dataset.boss = id;
+  return k.svg;
+}
+
+export function orderEmblem(kind: 'small' | 'big', size = 64): SVGSVGElement {
+  const large = kind === 'big';
+  const accent = large ? '#a34e55' : '#397b69';
+  const k = new Kit('orl', 100, 100, size, size, `sa-order sa-order--${kind}`);
+  k.add(S('rect', { x: 4, y: 4, width: 92, height: 92, rx: 8, fill: '#f1eddf', stroke: accent, 'stroke-width': 3 }));
+  k.add(S('rect', { x: 4, y: 4, width: 92, height: 18, rx: 7, fill: accent }));
+  k.add(S('rect', { x: 4, y: 16, width: 92, height: 6, fill: accent }));
+  k.add(Txt({ x: 11, y: 16, 'font-size': 8.5, 'font-weight': 800, 'letter-spacing': 1.8, fill: '#ffffff', 'font-family': 'Arial, sans-serif' }, 'ORDER'));
+  k.add(Txt({ x: 50, y: 67, 'text-anchor': 'middle', 'font-size': 49, 'font-weight': 800, 'letter-spacing': -2.5, fill: '#243d36', 'font-family': 'Arial, sans-serif' }, large ? '02' : '01'));
+  k.add(P('M12,74 H88', { stroke: '#b9c6b6', 'stroke-width': 1 }));
+  k.add(Txt({ x: 50, y: 87, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 700, fill: '#253d37', 'font-family': 'Pretendard Variable, Pretendard, sans-serif' }, large ? '특별 납품' : '일반 납품'));
+  k.svg.removeAttribute('aria-hidden');
+  k.svg.setAttribute('role', 'img');
+  k.svg.setAttribute('aria-label', large ? '특별 납품 주문' : '일반 납품 주문');
+  return k.svg;
+}
+
+export function medalArt(hand: HandTypeId, size = 72): SVGSVGElement {
+  const tier = TIER[hand] ?? 'bronze';
+  const ink = tier === 'plat' ? '#354a73' : tier === 'gold' ? '#795a22' : tier === 'silver' ? '#506a75' : '#77543c';
+  const k = new Kit('mdl', 100, 100, size, size, `sa-medal sa-medal--${tier}`);
+  k.add(P('M23,5 H40 L50,35 L60,5 H77 L66,51 H34Z', { fill: '#557c6c' }));
+  k.add(P('M30,5 H35 L47,44 H42Z M65,5 H70 L58,44 H53Z', { fill: '#d7e6d4' }));
+  k.add(S('circle', { cx: 50, cy: 63, r: 34, fill: '#f1eddf', stroke: ink, 'stroke-width': 4 }));
+  k.add(S('circle', { cx: 50, cy: 63, r: 29, fill: 'none', stroke: '#b3bdb0', 'stroke-width': 1 }));
+  const { sym } = handSymbol(hand);
+  sym.setAttribute('transform', 'translate(50 59) scale(0.88)');
+  sym.setAttribute('color', ink);
+  k.add(sym);
+  k.add(Txt({ x: 50, y: 43, 'text-anchor': 'middle', 'font-size': 6.8, 'font-weight': 800, 'letter-spacing': 1, fill: ink, 'font-family': 'Arial, sans-serif' }, 'ORCHARD'));
+  k.add(Txt({ x: 50, y: 86, 'text-anchor': 'middle', 'font-size': 9, 'font-weight': 700, fill: ink, 'font-family': 'Pretendard Variable, Pretendard, sans-serif' }, HAND_KO[hand] ?? hand));
+  k.svg.removeAttribute('aria-hidden');
+  k.svg.setAttribute('role', 'img');
+  k.svg.setAttribute('aria-label', `품평 기록: ${HAND_KO[hand] ?? hand}`);
   return k.svg;
 }
