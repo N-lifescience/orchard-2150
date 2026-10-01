@@ -106,10 +106,11 @@ describe('LMO', () => {
     expect(h.g.useReagent(0, [h.st.garden[1].id]).ok).toBe(false);
   });
 
-  it('꽃가루 유출: 주문이 끝날 때 LMO 가 있으면 확률적으로 비LMO 포기에 T+ → 유전자 흐름', () => {
+  it('꽃가루 유출: 새 자손 씨에 형광이 유전되고 이웃 성체는 그대로다', () => {
     const { g, st } = game(61, 'full', 'biotech');
     st.reagents = ['vector'];
     g.useReagent(0, [st.garden[0].id]);
+    const original = JSON.stringify(st.garden.map((p) => p.genome));
     let leaked = false;
     for (let k = 0; k < 30 && !leaked; k++) {
       st.phase = 'cashout';
@@ -118,7 +119,8 @@ describe('LMO', () => {
     }
     expect(leaked).toBe(true);
     expect(st.discoveries).toContain('geneFlow');
-    expect(st.garden.filter((p) => p.pheno.fluorescent).length).toBeGreaterThanOrEqual(2);
+    expect(st.geneFlow?.offspring.fluorescent).toBe(true);
+    expect(JSON.stringify(st.garden.map((p) => p.genome))).toBe(original);
   });
 
   it('LMO 표시제 점검: 형광 카드 무효', () => {

@@ -9,6 +9,7 @@ export { ANTE_BASES, FLUSH_FAMILY, HAND_RANK, PACKS, UPGRADES } from './content'
 export type { PackDef, UpgradeDef } from './content';
 export { SAVE_KEY } from './game';
 export type { CreateGameOptions, GameImpl, StorageLike } from './game';
+export { goalMatches, deliveryComplete, deliveryProgressText, goalHint } from './learning';
 
 /** 계약 전체를 한 객체로 (타입 검사로 계약과 어긋나지 않음을 보증) */
 export const gameContent: GameContent = { HAND_TYPES, JOKERS, REAGENTS, BOSSES, POLICIES, CONCEPTS, createGame };

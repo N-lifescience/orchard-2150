@@ -51,7 +51,7 @@ export const JOKERS: JokerDef[] = [
   { id: 'selfingMaster', name: '자가수분 명인', rarity: 'uncommon', cost: 6, desc: '이번 교배가 자가수분이면 ×2 배수.', flavor: '한 포기, 한 꽃, 한 가족.', concept: 'selfing' },
   { id: 'breedingLog', name: '교배 일지', rarity: 'common', cost: 5, desc: '골드 또는 무늬 없는 모종이 점수를 낸 출하마다 +1 배수가 쌓여요.', flavor: '엘레나의 기록에는 실패한 교배도 빠짐없이 적혀 있어요.' },
   { id: 'mendelGlasses', name: '멘델의 안경', rarity: 'common', cost: 3, desc: '겉모습만으로 확실한 유전자형을 카드에 표시해요.', flavor: '완두밭을 오래 들여다본 사람의 눈을 빌려요.' },
-  { id: 'punnettNote', name: '퍼넷 노트', rarity: 'uncommon', cost: 4, desc: '교배 전에 자손의 빛깔·당도 기대 분포를 보여 줘요.', flavor: '네모 칸 몇 개로 꼬투리 속을 미리 봐요.' },
+  { id: 'punnettNote', name: '퍼넷 노트', rarity: 'uncommon', cost: 4, desc: '유전자형이 공개된 두 부모의 자손 빛깔·당도 기대 분포를 보여 줘요.', flavor: '관찰한 부모 정보를 토대로 다음 자손을 예상해요.' },
   { id: 'beeSwarm', name: '꿀벌 군단', rarity: 'uncommon', cost: 6, desc: '주문마다 출하 +1.', flavor: '윙윙, 오늘도 출근 완료.' },
   { id: 'seedVault', name: '씨앗 금고', rarity: 'common', cost: 5, desc: '이자 상한 +$5 (최대 $10).', flavor: '씨앗도 돈도 묵힐수록 불어나요.' },
   { id: 'pollenTrader', name: '꽃가루 상인', rarity: 'common', cost: 4, desc: '수그루를 솎아낼 때마다 +$1.', flavor: '"꽃가루 삽니다, 수그루 삽니다."', minAnte: 3 },
@@ -80,7 +80,7 @@ export const REAGENTS: ReagentDef[] = [
 export const BOSSES: BossDef[] = [
   { id: 'coldsnap', name: '냉해 계약', client: '나디아 볼코바 · 트롬쇠 종자은행', desc: '추위 때문에 감수분열 중 비분리가 늘어요(염색체 쌍마다 8%).', minAnte: 5, concept: 'nondisjunction' },
   { id: 'nobees', name: '자가수분 계약', client: '에바 린드 · 스톡홀름 도시농장', desc: '다른 포기와 교배할 수 없어요. 한 포기를 골라 자가수분하세요.', minAnte: 2, concept: 'selfing' },
-  { id: 'uniformity', name: '균일성 검사', client: '오스카 베르너 · 취리히 품종등록소', desc: '한 빛깔 계열 족보가 아니면 점수가 절반이에요. 같은 빛깔이 순계의 증거는 아니에요.', minAnte: 2, concept: 'purebred' },
+  { id: 'uniformity', name: '균일성 검사', client: '오스카 베르너 · 취리히 품종등록소', desc: '한 빛깔 계열 족보가 아니면 점수가 절반이에요. 같은 빛깔이 순계의 증거는 아니에요.', minAnte: 1, concept: 'purebred' },
   { id: 'drought', name: '가뭄 계약', client: '라일라 만수르 · 마라케시 과일상', desc: '모든 모종의 당도가 3 낮아요. 환경 변화이므로 자손에게 남지 않아요.', minAnte: 1, concept: 'environment' },
   { id: 'judge', name: '열매 검사', client: '에밀 뒤랑 · 리옹 과일 경매장', desc: '수그루에는 열매가 없어요. 수그루 모종은 점수를 못 내요.', minAnte: 3, concept: 'dioecy' },
   { id: 'picky', name: '단색 포장 계약', client: '마테오 로시 · 피렌체 식품상회', desc: '과육색 한 가지가 이번 계약에서 제외돼요.', minAnte: 1 },
@@ -173,7 +173,7 @@ export const CONCEPTS: Record<ConceptId, ConceptDef> = {
     id: 'triploid',
     title: '3배체와 씨 없는 열매',
     body: '4배체와 2배체를 교배해 3배체(3n)가 나왔어요. 이 포기는 다시 교배할 수 없어요.',
-    fiction: '게임에서는 3배체 모종을 출하하면 배수에 ×1.5를 적용해요.',
+    fiction: '게임은 3배체를 모두 씨 없는 불임 모종으로 단순화하고, 출하 배수에 ×1.5를 적용해요. 실제 씨 없는 수박도 열매가 자라려면 수분용 2배체의 꽃가루가 필요해요.',
     real: '3배체는 감수분열 때 염색체가 고르게 나뉘기 어려워 정상적인 씨를 만들기 어려워요. 기하라 히토시는 1940년대에 4배체와 2배체를 교배해 씨 없는 수박을 개발했어요. 우장춘 박사는 훗날 한국에 재배를 알렸지만 처음 만든 사람은 아니에요.',
     standard: '12유전01-04',
   },
@@ -232,8 +232,8 @@ export const CONCEPTS: Record<ConceptId, ConceptDef> = {
   geneFlow: {
     id: 'geneFlow',
     title: '꽃가루를 따라 이동한 유전자',
-    body: '형광 포기의 꽃가루가 옆 포기로 날아갔어요. 게임에서는 그 포기에도 형광이 나타납니다.',
-    fiction: '꽃가루가 닿자마자 이웃 포기 자체의 유전자형이 바뀌는 것은 게임 규칙이에요. 실제로는 수정해 생긴 씨에 유전자가 전해져요.',
+    body: '형광 포기의 꽃가루로 수정해 생긴 자손에서 형광 유전자를 확인했어요. 수분받은 원래 포기의 유전자형은 그대로예요.',
+    fiction: '꽃가루 이동 가능성과 조사에 걸리는 시간은 게임을 위해 단순화했어요. 이동 여부는 씨 하나의 관찰 기록으로 남깁니다.',
     real: '꽃가루는 바람이나 곤충을 따라 이동해요. 그 꽃가루가 다른 식물과 수정하면 다음 세대에 유전자가 옮겨 갈 수 있어요. 그래서 LMO를 재배할 때는 주변 작물과 환경에 미칠 영향을 살펴야 해요.',
     standard: '12유전03-05',
   },
@@ -262,8 +262,8 @@ export const UPGRADE_ORDER: UpgradeId[] = ['greenhouse', 'hands', 'discards', 'h
 // ── 씨앗 봉투(부스터 팩) ───────────────────────────────────────
 export interface PackDef { kind: PackKind; name: string; desc: string; price: number; size: number; picks: number }
 export const PACKS: Record<PackKind, PackDef> = {
-  seed: { kind: 'seed', name: '시장 씨앗 봉투', desc: '시장 품종 3포기 중 1포기. 유전자형은 몰라요.', price: 4, size: 3, picks: 1 },
-  rareSeed: { kind: 'rareSeed', name: '희귀 씨앗 상자', desc: '당도 높은 품종·순계·4배체·은빛 수그루 같은 귀한 포기 3개 중 1개.', price: 6, size: 3, picks: 1 },
+  seed: { kind: 'seed', name: '시장 묘목 목록', desc: '구입 전에 품종 3포기를 살펴보고 1포기를 골라요. 유전자형은 검사로 확인해요.', price: 4, size: 3, picks: 1 },
+  rareSeed: { kind: 'rareSeed', name: '연구 품종 목록', desc: '당도 높은 품종·순계·4배체·은빛 수그루 3포기를 미리 보고 1포기를 골라요.', price: 6, size: 3, picks: 1 },
   reagent: { kind: 'reagent', name: '시약 꾸러미', desc: '연구 시약 3개 중 1개.', price: 4, size: 3, picks: 1 },
   medal: { kind: 'medal', name: '품평회 메달함', desc: '족보 3개 중 하나의 레벨을 올려요.', price: 4, size: 3, picks: 1 },
   joker: { kind: 'joker', name: '비법 두루마리', desc: '장인의 비법 2개 중 1개.', price: 6, size: 2, picks: 1 },
@@ -271,7 +271,7 @@ export const PACKS: Record<PackKind, PackDef> = {
 
 // ── 주문 ───────────────────────────────────────────────────────
 /** 앤티별 기본 목표(동네 장터). 고급 식당 ×1.5, 보스 ×2, 최종 박람회 ×3. scripts/sim.ts 로 조정한 값 */
-export const ANTE_BASES: number[] = [300, 1500, 8000, 28000, 40000, 55000, 75000, 100000];
+export const ANTE_BASES: number[] = [300, 650, 1100, 1700, 2500, 3500, 4800, 6500];
 export const ORDER_REWARD = { small: 3, big: 4, boss: 5 } as const;
 
 /** 도시별 구매 담당자 (이름과 인물은 가상). 빛깔 요청은 주문 생성 시 붙인다. */

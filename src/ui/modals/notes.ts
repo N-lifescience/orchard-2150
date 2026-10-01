@@ -68,11 +68,33 @@ export function openNotes(ctx: Ctx, by: 'all' | 'standard' = 'all'): void {
       return;
     }
     const c = CONCEPTS[selected];
+    const observed = [...ctx.game.state.records].reverse().find((record) => {
+      if (['segregation', 'purebred', 'selfing', 'heterozygote', 'dominanceMolecular'].includes(c.id)) return !!record.prediction;
+      if (c.id === 'polygenic') return record.goals.some((goal) => goal.trait.minBrix !== undefined);
+      if (c.id === 'dioecy' || c.id === 'xlinked') return record.goals.some((goal) => goal.trait.species === 'stella' || goal.trait.sex !== undefined);
+      if (c.id === 'triploid' || c.id === 'polyploid') return record.goals.some((goal) => goal.trait.seedless !== undefined);
+      if (c.id === 'nondisjunction') return record.goals.some((goal) => goal.trait.euploid !== undefined);
+      if (['transcription', 'stopCodon', 'synonymous', 'frameshift'].includes(c.id)) return record.goals.some((goal) => goal.trait.knockout !== undefined);
+      if (c.id === 'lmo' || c.id === 'geneFlow') return record.goals.some((goal) => goal.trait.fluorescent !== undefined);
+      return false;
+    });
     replaceChildren(
       detail,
       h('div', { class: 'notes__detail-head' }, h('span', null, '관찰 기록'), h('span', { class: 'notes__folio' }, `No. ${String(ORDER.indexOf(selected) + 1).padStart(2, '0')}`)),
       h('h3', { class: 'notes__title' }, c.title),
       conceptBody(c),
+      observed ? h('section', { class: 'notes__observations' },
+        h('h4', null, '이 연대기에서 관찰한 결과'),
+        h('p', null, `시즌 ${observed.ante} · ${observed.name} · ${observed.attempt}차 시도`),
+        observed.parentGenotypes ? h('p', null, `교배 당시 부모 유전자형: ${observed.parentGenotypes.join(' × ')}`) : null,
+        observed.prediction ? h('p', null, `꼬투리 52알: 루비 ${observed.prediction.ruby}알, 골드 ${observed.prediction.gold}알.`) : null,
+        ...observed.goals.map((goal) => h('p', null, `${goal.label}: ${observed.delivery[goal.id] ?? 0}/${goal.count} 출하`)),
+      ) : null,
+      c.id === 'geneFlow' && ctx.game.state.geneFlow ? h('section', { class: 'notes__observations' },
+        h('h4', null, '이 연대기의 최근 꽃가루 유출'),
+        h('p', null, `${ctx.game.state.geneFlow.donor} → ${ctx.game.state.geneFlow.recipient}`),
+        h('p', null, '수분받은 포기에서 생긴 씨 표본에 형광 형질이 나타났습니다. 수분받은 성체의 유전자형은 바뀌지 않았습니다.'),
+      ) : null,
     );
   };
   const cardFor = (id: ConceptId) => {
@@ -131,7 +153,7 @@ const STANDARDS: [string, string, string][] = [
   ['12유전02-01', '유전자 발현 — 전사·번역, 우성·열성의 분자 원리', '시즌 7–8 · 편집 작업대'],
   ['12유전02-02', '유전 부호 — 코돈, 종결 코돈, 코돈의 중복성, 틀 이동', '시즌 7–8 · 편집 작업대'],
   ['12유전02-04', '세포 분화와 전능성 — 조직배양, 클론', '조직배양 시약, 조직배양 랩'],
-  ['12유전03-04', '생명공학 기술 — 유전자 변형 생물체(LMO)', '바이오테크 하우스, 형질전환 벡터'],
+  ['12유전03-04', '생명공학 기술 — 유전자 변형 생물체(LMO)', '생명공학팀, 형질전환 벡터'],
   ['12유전03-05', '생명윤리 — LMO의 유전자 흐름, 브랜드 철학의 선택과 대가', '꽃가루 유출, 끝 화면 성찰'],
 ];
 
@@ -170,9 +192,9 @@ export function openTeacher(ctx: Ctx): void {
         h(
           'ul',
           { class: 'teacher__list' },
-          h('li', null, '이 기기에 남는 것: 연대기별 진행 저장, 과수원 이름(선택, 12자 이내), 끝 화면의 성찰 한 줄, 소리·화면 설정. 목적은 이어하기와 수업 중 돌아보기뿐이에요.'),
+          h('li', null, '이 기기에 남는 것: 연대기별 진행·계약 관찰·성찰, 과수원 이름(선택, 12자 이내), 소리·화면 설정. 이어하기와 수업 중 돌아보기에 사용합니다.'),
           h('li', null, '서버·계정·외부 전송이 없어요. 제3자 제공도, 처리 위탁도 없어요. 외부 글꼴·분석 도구도 부르지 않아요.'),
-          h('li', null, '보관 기간: 학생이 지우거나 브라우저 데이터를 지울 때까지. 완료한 연대기의 진행 저장은 자동으로 지워져요.'),
+          h('li', null, '보관 기간: 학생이 지우거나 브라우저 데이터를 지울 때까지. 완료한 연대기도 홈에서 다시 열 수 있습니다.'),
           h('li', null, '과수원 이름 칸에는 실명·학번을 쓰지 않도록 안내해 주세요.'),
         ),
         h('div', { class: 'teacher__btns' }, clearBtn, wipeBtn),
@@ -199,15 +221,25 @@ export function openTeacher(ctx: Ctx): void {
       h(
         'section',
         null,
-        h('h3', null, '수업 모드'),
+        h('h3', null, '수업 시간과 진행 방식'),
         h(
           'ul',
           { class: 'teacher__list' },
-          h('li', null, h('b', null, '전체 8시즌'), ' — 한 판 40~60분. 멘델 유전부터 유전자 편집·LMO까지.'),
-          h('li', null, h('b', null, '빠른 4시즌'), ' — 한 차시(25~35분). 멘델 유전·다유전자·성염색체.'),
-          h('li', null, h('b', null, '단원 연습'), ' — 성염색체(시즌 3–4) · 염색체 이상(시즌 5–6) · 유전자 편집(시즌 7–8)부터 시작 온실을 줘요.'),
+          h('li', null, h('b', null, '전체 8시즌'), ' — 멘델 유전부터 유전자 편집·LMO까지. 두 차시에 나누어 진행하기를 권합니다.'),
+          h('li', null, h('b', null, '빠른 4시즌'), ' — 멘델 유전·다유전자·성염색체. 25~35분을 배정하고 돌아보기 8~10분을 남겨 두세요.'),
+          h('li', null, h('b', null, '단원 게임'), ' — 15~20분을 배정하고 돌아보기 8~10분을 남겨 두세요. 성염색체(시즌 3–4) · 염색체 이상(시즌 5–6) · 유전자 편집(시즌 7–8)의 준비된 온실에서 시작합니다. 시간은 수업 배정안이며 학생 대상 측정값은 아닙니다.'),
+          h('li', null, h('b', null, '수업 모드'), '에서는 계약 실패 이유를 확인한 뒤 같은 계약을 다시 준비합니다. ', h('b', null, '도전 모드'), '에서는 실패하면 연대기가 끝납니다. 계약 조건은 같습니다.'),
           h('li', null, '개념 카드는 학생이 그 현상을 겪은 뒤에 열려요. 각 카드에는 게임 속 설정과 실제 과학을 나누어 적었어요.'),
           h('li', null, '끝 화면에서 온실 포기들의 실제 유전자형·핵형·계보가 공개돼요. 추론한 것과 비교하게 해 보세요.'),
+        ),
+      ),
+      h('section', null,
+        h('h3', null, '플레이 뒤 돌아보기 · 8~10분'),
+        h('ol', { class: 'teacher__list' },
+          h('li', null, '끝 화면의 플레이 보고서에서 한 계약을 고르고, 부모·예측·관찰 수치를 짝과 비교합니다.'),
+          h('li', null, '부모의 유전자형을 근거로 결과를 설명합니다. 예측이 빗나갔다면 표본 수와 유전 가정을 함께 확인합니다.'),
+          h('li', null, '같은 조건의 다른 부모 조합이라면 어떤 비율이 나올지 먼저 예측합니다. 게임에서 본 규칙이 실제 생물에도 적용되는 범위는 연구 노트의 실제 과학 항목과 대조합니다.'),
+          h('li', null, '다음에 바꿀 선택과 이유를 연대기의 성찰에 적습니다. 보고서는 캡처하거나 텍스트 파일로 저장할 수 있습니다.'),
         ),
       ),
       h('section', null, h('h3', null, '성취기준별 연구 노트'), button('연구 노트 성취기준별로 보기', () => openNotes(ctx, 'standard'), { class: 'btn--ghost' })),

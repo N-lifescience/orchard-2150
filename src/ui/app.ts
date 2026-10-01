@@ -2,7 +2,7 @@
 import { audio } from '../audio';
 import { createBackground } from '../art';
 import type { BackgroundHandle } from '../contract/art';
-import type { PolicyId, RunMode, RunState } from '../contract/game';
+import type { PlayStyle, PolicyId, RunMode, RunState } from '../contract/game';
 import { createGame, SAVE_KEY, type GameImpl } from '../game';
 import { decide, applyDirect, type BotAction } from './bot';
 import type { Ctx } from './ctx';
@@ -15,7 +15,7 @@ import { openSettings } from './modals/settings';
 import { openTutorial } from './modals/tutorial';
 import { Modals, Tips, Toaster } from './overlay';
 import { loadBrand, loadPrefs, type UiPrefs } from './prefs';
-import { activeRunSlot, createRunSlot, listRunSlots, migrateLegacySave, removeRunSlot, selectRunSlot, touchRunSlot, tutorialSeen, type RunSlot } from './runSlots';
+import { activeRunSlot, createRunSlot, listRunSlots, migrateLegacySave, migrateRunReflection, removeRunSlot, selectRunSlot, touchRunSlot, tutorialSeen, type RunSlot } from './runSlots';
 import { RunScreen } from './run/runscreen';
 import { EndScreen } from './screens/end';
 import { TitleScreen } from './screens/title';
@@ -59,6 +59,7 @@ export class App implements Ctx {
     if (this.activeSlot) {
       this.game.setSaveKey(this.activeSlot.key);
       this.brand = this.activeSlot.brand;
+      migrateRunReflection(this.activeSlot.key);
     }
 
     const canvas = h('canvas', { class: 'bgcanvas', 'aria-hidden': 'true' });
@@ -95,13 +96,13 @@ export class App implements Ctx {
     };
 
     this.title = new TitleScreen(this);
-    this.title.onStart = (mode, policy) => this.newRun(mode, policy);
+    this.title.onStart = (mode, policy, playStyle) => this.newRun(mode, policy, playStyle);
     this.title.onResume = (id) => this.resumeRun(id);
     this.title.onRemove = (id) => this.removeRun(id);
     this.end = new EndScreen(this);
     this.end.onAgain = () => {
       const s = this.game.state;
-      this.newRun(s.mode, s.policy);
+      this.newRun(s.mode, s.policy, s.playStyle);
     };
 
     this.sysReduced = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
@@ -166,7 +167,7 @@ export class App implements Ctx {
     if (this.mode === 'title') {
       this.title.refresh();
     } else {
-      if (s.phase === 'gameover' || s.phase === 'victory') this.showEnd(s);
+      if (s.phase === 'gameover' || s.phase === 'victory' || s.phase === 'review') this.showEnd(s);
       else if (s.phase === 'title') this.goTitle();
       else {
         if (this.mode !== 'run') this.showRun();
@@ -186,7 +187,7 @@ export class App implements Ctx {
   }
 
   goTitle(): void {
-    if (this.mode === 'run') {
+    if (this.mode === 'run' || this.mode === 'end') {
       this.game.save();
       if (this.activeSlot) touchRunSlot(this.activeSlot.id);
       if (!this.game.hasSave()) {
@@ -238,8 +239,8 @@ export class App implements Ctx {
     this.end.show(s);
   }
 
-  private newRun(mode: RunMode, policy: PolicyId): void {
-    const slot = createRunSlot(this.brand, mode, policy);
+  private newRun(mode: RunMode, policy: PolicyId, playStyle: PlayStyle = 'learning', seed?: number): void {
+    const slot = createRunSlot(this.brand, mode, policy, undefined, playStyle);
     if (!slot) {
       const warning = this.modals.open({
         title: '진행을 저장할 수 없어요',
@@ -250,7 +251,7 @@ export class App implements Ctx {
             warning.close();
             this.activeSlot = null;
             this.game.setSaveKey(`${SAVE_KEY}:slot:session-${++this.sessionRuns}`);
-            this.game.newRun({ mode, policy });
+            this.game.newRun({ mode, policy, playStyle, seed });
             this.startRun();
             if (!tutorialSeen()) queueMicrotask(() => openTutorial(this));
           }, { class: 'btn--play' }),
@@ -260,7 +261,7 @@ export class App implements Ctx {
     }
     this.activeSlot = slot;
     this.game.setSaveKey(slot.key);
-    this.game.newRun({ mode, policy });
+    this.game.newRun({ mode, policy, playStyle, seed });
     this.startRun();
     if (!tutorialSeen()) queueMicrotask(() => openTutorial(this));
   }
@@ -357,7 +358,7 @@ export class App implements Ctx {
 
   private fit(): void {
     const W = window.innerWidth;
-    const H = window.innerHeight;
+    const H = window.innerHeight - (document.querySelector('.debug-panel')?.getBoundingClientRect().height ?? 0);
     const s = Math.max(0.75, Math.min(W / 1280, H / 720));
     stage.scale = s;
     this.stage.style.transform = `scale(${s})`;
@@ -422,13 +423,40 @@ export class App implements Ctx {
         return motion.fast;
       },
       autoplay: (steps = 400) => this.autoplay(steps),
-      newRun: (mode: RunMode = 'quick', policy: PolicyId = 'heritage', seed?: number) => {
-        this.game.newRun({ mode, policy, seed });
-        this.startRun();
-      },
+      newRun: (mode: RunMode = 'quick', policy: PolicyId = 'heritage', seed?: number, playStyle: PlayStyle = 'learning') => this.newRun(mode, policy, playStyle, seed),
     };
     (window as unknown as { __sa: typeof api }).__sa = api;
     console.info('[오차드 2150] 디버그: window.__sa = { game, fast(on), autoplay(steps), newRun(mode, policy, seed) }');
+    const seed = h('input', { type: 'number', min: '0', step: '1', value: '3', 'aria-label': '검증 시드' });
+    const mode = h('select', { 'aria-label': '검증 연대기 길이' },
+      h('option', { value: 'quick' }, '빠른 4시즌'), h('option', { value: 'full' }, '전체 8시즌'),
+      h('option', { value: 'unit-sex' }, '성염색체'), h('option', { value: 'unit-chromo' }, '염색체 이상'), h('option', { value: 'unit-edit' }, '유전자 편집'));
+    const style = h('select', { 'aria-label': '검증 진행 방식' }, h('option', { value: 'learning' }, '수업 모드'), h('option', { value: 'challenge' }, '도전 모드'));
+    const status = h('output', { class: 'debug-panel__status', 'aria-live': 'polite' }, '검증 준비');
+    const auto = button('자동 진행', () => {
+      auto.disabled = true;
+      status.textContent = '화면 조작 진행 중';
+      void api.autoplay(700).then((result) => {
+        status.textContent = `${result.phase} · 시즌 ${result.ante} · 주문 ${result.orderIdx + 1} · ${result.steps} 동작`;
+      }).catch(() => { status.textContent = '자동 진행 실패 — 콘솔 확인'; }).finally(() => { auto.disabled = false; });
+    }, { class: 'btn--ghost' });
+    const fast = button('빠른 연출: 켜기', () => {
+      const on = api.fast(!motion.fast);
+      fast.textContent = `빠른 연출: ${on ? '끄기' : '켜기'}`;
+    }, { class: 'btn--ghost' });
+    const panel = h('details', { class: 'debug-panel', open: true },
+      h('summary', null, '개발 검증 도구'),
+      h('div', { class: 'debug-panel__controls' }, h('label', null, '시드 ', seed), mode, style,
+        button('검증 시작', () => {
+          const value = Number(seed.value);
+          if (!Number.isSafeInteger(value) || value < 0) { status.textContent = '시드는 0 이상의 정수로 입력하세요.'; return; }
+          api.newRun(mode.value as RunMode, 'heritage', value, style.value as PlayStyle);
+          status.textContent = `시드 ${value} 검증 시작`;
+        }, { class: 'btn--play' }), auto, fast, status),
+    );
+    document.getElementById('app')?.appendChild(panel);
+    panel.addEventListener('toggle', () => this.fit());
+    this.fit();
   }
 
   /** 봇처럼 교배·최선 출하·공방 나가기를 반복 (화면 동작을 그대로 거친다) */
@@ -444,6 +472,13 @@ export class App implements Ctx {
         continue;
       }
       if (s.phase === 'gameover' || s.phase === 'victory') break;
+      if (s.phase === 'review') {
+        log.push(`${s.ante}-${s.orderIdx} review: retry`);
+        if (!this.game.retryOrder()) break;
+        this.startRun();
+        n++;
+        continue;
+      }
       // 발견 카드·일반 모달은 닫는다 (봉투 모달은 봇이 고른다)
       if (this.modals.count > 0 && !this.modals.has('modal--pack')) {
         this.modals.closeTop();

@@ -10,6 +10,7 @@ import { fx, between } from '../rng';
 import { HandView, HAND_CARD_W, type HandItem } from './hand';
 import type { Sidebar } from './sidebar';
 import type { JokerBar } from './topbar';
+import { colorExpectationText, deliveryGoals, knownColorExpectation, selectedGoalText } from '../learning';
 
 export class PlayView {
   readonly el: HTMLElement;
@@ -59,8 +60,7 @@ export class PlayView {
     this.el = h(
       'div',
       { class: 'view view--play' },
-      this.predictionEl,
-      this.requestEl,
+      h('div', { class: 'play__brief' }, this.predictionEl, this.requestEl),
       this.stageRow,
       this.banner,
       this.hand.el,
@@ -85,15 +85,27 @@ export class PlayView {
     this.predictionEl.hidden = !prediction;
     if (prediction) {
       const chosen = prediction.choice === 'ruby' ? '루비가 많음' : prediction.choice === 'gold' ? '골드가 많음' : '비슷함';
+      const a = s.cross ? this.ctx.game.plantById(s.cross.a) : undefined;
+      const b = s.cross ? this.ctx.game.plantById(s.cross.b) : undefined;
+      const cold = s.orders[s.orderIdx].boss?.id === 'coldsnap' && !s.jokers.some((j) => j.id === 'climateHouse');
+      const expected = cold ? null : knownColorExpectation(a, b);
       replaceChildren(this.predictionEl,
-        h('b', null, '교배 예측과 관찰'),
-        h('span', null, `내 예측: ${chosen} · 실제 52알: 루비 ${prediction.ruby}, 골드 ${prediction.gold}`),
-        h('small', null, '이 수는 이번 꼬투리에서 관찰한 값이에요. 한 번의 결과만으로 부모의 유전자형이나 다음 꼬투리의 비율을 확정할 수 없어요.'),
+        h('div', { class: 'play__prediction-head' }, h('b', null, '교배 결과'), h('span', null, `내 예측: ${chosen}`)),
+        h('div', { class: 'play__comparison' },
+          h('span', null, expected ? colorExpectationText(expected) : cold ? '기대: 비분리 때문에 단순 비율 적용 어려움' : '기대: 공개된 정보로 계산하기 어려움'),
+          h('strong', null, `관찰 ${prediction.ruby + prediction.gold}알: 루비 ${prediction.ruby} · 골드 ${prediction.gold}`),
+        ),
+        h('details', { class: 'play__evidence' },
+          h('summary', null, '예측과 관찰값을 어떻게 읽나요?'),
+          expected ? h('p', null, `${expected.a} × ${expected.b} → ${expected.offspring}. ${expected.reasoning}`) : h('p', null, cold
+            ? '냉해 계약에서는 염색체 비분리가 늘어납니다. 정상 감수분열의 RR·Rr·rr 비율을 그대로 적용할 수 없어요. 실제 핵형과 자손 분포를 함께 관찰하세요.'
+            : '부모의 유전자형이 모두 공개되지 않았거나 배수성·편집 상태가 달라 정확한 기대 비율을 표시하지 않았습니다. 검사 결과와 여러 꼬투리의 관찰을 함께 보세요.'),
+          h('p', null, expected && (expected.gold === 0 || expected.ruby === 0)
+            ? '이 R 자리 교배는 과육색 한 종류만 기대됩니다. 무늬·당도 같은 다른 형질은 별도로 살펴보세요.'
+            : '52알은 한 번의 관찰입니다. 표본이 작으면 기대 비율과 차이가 날 수 있어요. 한 꼬투리만으로 부모 유전자형이나 다음 결과를 확정할 수 없습니다.'),
+        ),
       );
     }
-    const requested = s.orders[s.orderIdx].requestedColor;
-    this.requestEl.hidden = !requested;
-    if (requested) setText(this.requestEl, `의뢰 빛깔: ${requested === 'ruby' ? '루비빛' : '골드빛'} 과육 · ${s.requestFulfilled ? '출하 완료 (+$2)' : '점수 내는 모종으로 출하하면 +$2'}`);
     setText(this.podCount, `${s.pod.length}/${s.podTotal}`);
     this.podFill.style.setProperty('--f', String(s.podTotal ? s.pod.length / s.podTotal : 0));
     const p = this.hand.update(s.hand, hasGlasses(s));
@@ -109,6 +121,17 @@ export class PlayView {
     const s = this.ctx.game.state;
     const sel = this.hand.selectedInOrder();
     const busy = this.ctx.isBusy() || s.phase !== 'play';
+    const order = s.orders[s.orderIdx];
+    this.requestEl.hidden = !order.goals?.length && !order.requestedColor;
+    if (order.goals?.length) {
+      const cards = s.hand.filter((c) => sel.includes(c.uid));
+      replaceChildren(this.requestEl,
+        deliveryGoals(order, s.delivery, true),
+        cards.length ? h('p', { class: 'play__delivery-preview' }, `이대로 출하하면 · ${selectedGoalText(order, s.delivery, cards)}`) : h('p', { class: 'play__delivery-preview' }, '필수 형질과 목표 점수를 모두 채우면 계약이 끝납니다.'),
+      );
+    } else if (order.requestedColor) {
+      setText(this.requestEl, `추가 보상: ${order.requestedColor === 'ruby' ? '루비' : '골드'} 과육 · ${s.requestFulfilled ? '출하 완료 (+$2)' : '출하하면 +$2'}`);
+    }
     this.playBtn.disabled = busy || sel.length === 0 || s.handsLeft <= 0;
     this.discardBtn.disabled = busy || sel.length === 0 || s.discardsLeft <= 0;
     this.sortBrix.disabled = busy;
@@ -122,13 +145,14 @@ export class PlayView {
     const ev = this.ctx.game.evaluate(sel);
     this.side.preview(ev ? { name: ev.name, level: ev.level, chips: ev.chips, mult: ev.mult } : null);
     const sim = this.ctx.game.simulate(sel);
-    const requested = s.orders[s.orderIdx].requestedColor;
+    const requested = order.requestedColor;
     const requestHit = requested && !s.requestFulfilled && sim?.scoringUids.some((uid) => s.hand.some((c) => c.uid === uid && !c.debuffed && c.pheno.sex !== 'M' && c.pheno.color === requested));
     replaceChildren(
       this.previewEl,
       h('span', { class: 'preview__hand' }, ev ? `${ev.name}` : ''),
       sim ? h('span', { class: 'preview__score' }, `예상 ${fmt.score(sim.total)}점`) : null,
-      sim?.cleared ? h('span', { class: 'preview__clear' }, '목표 돌파!') : null,
+      sim?.cleared ? h('span', { class: 'preview__clear' }, '계약 완료!') : null,
+      sim && !sim.cleared && s.roundScore + sim.total >= order.target ? h('span', { class: 'preview__need' }, '점수 달성 · 필수 납품 남음') : null,
       requestHit ? h('span', { class: 'preview__request' }, '의뢰 빛깔 보너스 +$2') : null,
     );
     this.previewEl.classList.add('is-on');
@@ -198,11 +222,13 @@ export class PlayView {
         return;
       }
       this.scoringNow = true;
+      this.el.classList.add('is-scoring');
       motion.skip = false;
       try {
         await this.runScoring(uids, trace, before, target);
       } finally {
         this.scoringNow = false;
+        this.el.classList.remove('is-scoring');
         motion.skip = false;
       }
     });
@@ -279,9 +305,8 @@ export class PlayView {
     await play(totalEl, [{ translate: '0 0', scale: '1', opacity: 1 }, { translate: `${to.cx - from.cx}px ${to.cy - from.cy}px`, scale: '0.35', opacity: 0.2 }], { duration: 440, easing: 'cubic-bezier(0.6, 0, 0.8, 0.4)' });
     totalEl.remove();
     const after = before + trace.total;
-    const crossed = before < target && after >= target;
     await side.setRound(after, true);
-    if (crossed || trace.cleared) {
+    if (trace.cleared) {
       side.burst();
       this.ctx.bg?.pulse(1);
       this.sparks(to);

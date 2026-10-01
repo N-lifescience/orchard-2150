@@ -7,6 +7,8 @@ import { button, h, replaceChildren, setText } from '../h';
 import * as fmt from '../fmt';
 import { play, roll, motion } from '../motion';
 import { fx, between } from '../rng';
+import { deliveryComplete } from '../../game';
+import { deliveryGoals } from '../learning';
 
 export class Sidebar {
   readonly el: HTMLElement;
@@ -19,6 +21,7 @@ export class Sidebar {
   private bossRule: HTMLElement;
   private targetEl: HTMLElement;
   private rewardEl: HTMLElement;
+  private deliveryEl: HTMLElement;
   readonly roundBox: HTMLElement;
   readonly roundEl: HTMLElement;
   private flames: HTMLElement;
@@ -54,11 +57,12 @@ export class Sidebar {
     this.orderBox = h('div', { class: 'side__order' }, this.emblemBox, h('div', { class: 'side__ordertext' }, this.orderName, this.orderClient), this.bossRule);
     ctx.tips.attach(this.orderBox, () => {
       const o = ctx.game.state.orders[ctx.game.state.orderIdx];
-      return h('div', null, h('b', null, o.name), h('div', null, o.client), o.boss ? h('div', { class: 'tip__rule' }, o.boss.desc) : null);
+      return h('div', null, h('b', null, o.name), h('div', null, o.client), o.goals?.length ? deliveryGoals(o, ctx.game.state.delivery) : null, o.boss ? h('div', { class: 'tip__rule' }, o.boss.desc) : null);
     });
 
     this.targetEl = h('span', { class: 'side__target-num num' }, '0');
     this.rewardEl = h('span', { class: 'side__reward' });
+    this.deliveryEl = h('div', { class: 'side__delivery', 'aria-live': 'polite' });
     this.roundEl = h('span', { class: 'side__round-num num' }, '0');
     this.flames = h('div', { class: 'flames', 'aria-hidden': 'true' });
     this.roundBox = h('div', { class: 'side__round' }, this.flames, h('div', { class: 'side__label' }, '이번 주문 점수'), this.roundEl);
@@ -87,7 +91,7 @@ export class Sidebar {
       ),
       this.orderBox,
       this.managerEl,
-      h('div', { class: 'side__target' }, h('div', { class: 'side__label' }, '목표 점수'), h('div', { class: 'side__target-row' }, this.targetEl, this.rewardEl)),
+      h('div', { class: 'side__target' }, h('div', { class: 'side__label' }, '목표 점수'), h('div', { class: 'side__target-row' }, this.targetEl, this.rewardEl), this.deliveryEl),
       this.roundBox,
       h(
         'div',
@@ -123,14 +127,18 @@ export class Sidebar {
     setText(this.brandEl, this.ctx.brand || '오차드 2150');
     const briefing: Record<RunState['phase'], string> = {
       title: '', cross: '레아 · 같은 종의 부모 두 포기를 고르세요.',
-      play: '레아 · 모종 1~5장을 골라 출하하세요.',
+      play: '레아 · 점수와 필수 납품을 함께 채우세요.',
       cashout: '레아 · 계약 완료. 보상을 받고 품종을 고르세요.',
       select: '레아 · 다음 계약에 쓸 포기를 남기세요.',
       shop: '레아 · 다음 계약을 보고 필요한 것만 사세요.',
+      review: '레아 · 남은 조건을 확인하고 다시 교배하세요.',
       gameover: '', victory: '',
     };
     setText(this.managerEl, briefing[s.phase]);
     const o = s.orders[s.orderIdx];
+    this.el.classList.toggle('has-delivery', !!o.goals?.length);
+    this.deliveryEl.hidden = !o.goals?.length;
+    replaceChildren(this.deliveryEl, o.goals?.length ? deliveryGoals(o, s.delivery, true) : null);
     const key = `${s.ante}:${s.orderIdx}:${o.name}:${o.boss?.desc ?? ''}`;
     if (key !== this.orderKey) {
       this.orderKey = key;
@@ -162,7 +170,7 @@ export class Sidebar {
     } else setText(this.moneyEl, fmt.money(s.money));
     if (!this.scoring) {
       this.setRound(s.roundScore, false);
-      this.setFlames(s.roundScore >= o.target && (s.phase === 'play' || s.phase === 'cashout'));
+      this.setFlames(s.roundScore >= o.target && deliveryComplete(o, s.delivery) && (s.phase === 'play' || s.phase === 'cashout'));
     }
   }
 

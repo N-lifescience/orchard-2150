@@ -278,7 +278,8 @@ export function codingSeq(g: Genome, group: HomologGroup, copyIndex: number, loc
 
 /**
  * 편집: 사본의 서열을 바꾸고 판정대로 대립유전자 id 를 바꾼다.
- * 기능이 남으면 기능 대립유전자(R·B), 잃으면 `R*ko`·`B*ko`. 원래 r 을 되살리는 편집이면 'R' 이 된다.
+ * 기능이 남으면 기능 대립유전자(R·B), 잃으면 `R*ko`·`B*ko`.
+ * 이미 기능이 없는 r·b의 기능을 그대로 두는 편집은 새 녹아웃으로 표시하지 않는다.
  */
 export function editCoding(
   g: Genome,
@@ -295,7 +296,9 @@ export function editCoding(
   const s = normalizeDna(newSeq);
   const genome = cloneGenome(g);
   const copy = genome.chromosomes[group][copyIndex];
-  const newId = result.functional ? functionalId : `${functionalId}*ko`;
+  const originalId = src.alleles[locus]!;
+  const newId = result.functional ? functionalId
+    : alleleDef(g.species, originalId)?.functional === false ? originalId : `${functionalId}*ko`;
   copy.alleles[locus] = newId;
   const seqs = { ...(copy.seqs ?? {}) };
   if (alleleDef(g.species, newId)?.seq === s) delete seqs[locus];

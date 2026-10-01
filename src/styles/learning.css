@@ -1,0 +1,111 @@
+/* Seed packet labels keep score and biological delivery conditions distinct. */
+.delivery-goals {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  padding: 9px 10px;
+  border-top: 1px solid rgba(129, 182, 154, 0.45);
+  border-bottom: 1px solid rgba(129, 182, 154, 0.24);
+  background: rgba(92, 151, 110, 0.08);
+  text-align: left;
+}
+.delivery-goals__head { color: #c6ddc8; font-size: 11.5px; font-weight: 700; line-height: 1.3; }
+.delivery-goal { display: grid; grid-template-columns: 13px minmax(0, 1fr) auto; align-items: start; gap: 5px; font-size: 12.5px; line-height: 1.4; }
+.delivery-goal__mark { color: #97b7a4; }
+.delivery-goal__label { color: #f3efdf; overflow-wrap: anywhere; }
+.delivery-goal__count { color: #efcc81; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.delivery-goal.is-done .delivery-goal__mark, .delivery-goal.is-done .delivery-goal__count { color: #a8e8bd; }
+.delivery-goals--compact { padding: 5px 0 0; border-bottom: 0; background: transparent; gap: 3px; }
+.delivery-goals--compact .delivery-goals__head { font-size: 11px; }
+.delivery-goals--compact .delivery-goal { font-size: 11.5px; line-height: 1.35; }
+.delivery-goals--compact .delivery-goal__count { font-size: 12px; }
+
+.side.has-delivery { gap: 5px; overflow-y: auto; scrollbar-width: thin; }
+.side.has-delivery > * { flex-shrink: 0; }
+.side.has-delivery .side__order { padding: 6px 8px; gap: 3px 6px; }
+.side.has-delivery .side__ordername { font-size: 17px; }
+.side.has-delivery .side__client { font-size: 11.5px; }
+.side.has-delivery .side__bossrule { padding: 4px 6px; font-size: 11px; }
+.side.has-delivery .side__manager { font-size: 11px; padding: 3px 6px; }
+.side.has-delivery .side__target { padding: 5px 10px 7px; }
+.side.has-delivery .side__round { padding: 5px 10px; }
+.side.has-delivery .side__round-num { font-size: 30px; }
+.side.has-delivery .side__hand { padding: 5px 8px; }
+.side.has-delivery .side__handhead { min-height: 22px; }
+.side.has-delivery .side__handname { font-size: 18px; }
+.side.has-delivery .cm { height: 36px; font-size: 23px; }
+.side.has-delivery .stat { padding: 3px 4px 4px; }
+.side.has-delivery .stat .num { font-size: 22px; }
+.side.has-delivery .stat__lbl { font-size: 11.5px; }
+.side.has-delivery .side__season { padding: 3px 4px 4px; }
+.side.has-delivery .side__season .num { font-size: 16px; }
+.side.has-delivery .side__money .num { font-size: 23px; }
+.side.has-delivery .side__menus { gap: 4px; }
+.side.has-delivery .side__menu { min-height: 32px; font-size: 11.5px; }
+.side__delivery[hidden] { display: none; }
+
+.view--cross .ordercard { padding: 14px 14px 12px; gap: 7px; overflow-y: auto; scrollbar-width: thin; }
+.view--cross .ordercard > * { flex-shrink: 0; }
+.view--cross .ordercard__emblem { width: 94px; height: 94px; }
+.view--cross .ordercard__emblem > * { max-width: 92px; max-height: 92px; }
+.view--cross .ordercard__name { font-size: 25px; }
+.view--cross .ordercard__client { min-height: 0; font-size: 13px; }
+.view--cross .ordercard__target { padding: 5px 24px; }
+.view--cross .ordercard__target .num { font-size: 30px; }
+.ordercard__retry { padding: 6px 8px; border-left: 2px solid #efcc81; background: rgba(239, 204, 129, 0.08); color: #efdfbc; font-size: 11.5px; line-height: 1.4; text-align: left; }
+.cross__right { gap: 6px; scrollbar-width: thin; }
+.cross__right > * { flex-shrink: 0; }
+.cross__headrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cross__headrow .h2 { font-size: 20px; }
+.cross__tools { display: flex; flex-shrink: 0; gap: 5px; }
+.cross__tools .btn { min-height: 30px; padding: 3px 9px; font-size: 11.5px; }
+.cross__tools .btn[hidden] { display: none; }
+.cross__guidance { display: grid; gap: 3px; padding: 8px 10px; border-left: 3px solid #81b69a; background: rgba(92, 151, 110, 0.12); color: #ecf1de; font-size: 12px; line-height: 1.45; }
+.cross__guidance b { color: #c6ddc8; font-size: 11.5px; }
+.cross__guidance small { color: #d8cfba; font-size: 11.5px; }
+.cross__guidance.is-brief { padding: 5px 9px; }
+.cross__guidance[hidden] { display: none; }
+.view--cross .garden { flex-wrap: nowrap; min-height: 194px; max-height: none; padding: 20px 6px 10px; margin-top: 0; gap: 10px; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+.view--cross .gslot { flex-shrink: 0; align-self: flex-start; }
+.cross__bar { gap: 6px; padding: 6px 8px; }
+.cross__bar .pick { font-size: 12px; padding: 4px 6px; }
+.cross__bar .btn { min-width: 0; padding: 6px 10px; font-size: 13px; }
+.cross__reason:empty { display: none; }
+.cross__prediction { padding: 7px 10px; gap: 4px; }
+.cross__prediction-actions .btn { min-height: 30px; }
+.cross__prediction .hint { font-size: 11.5px; }
+
+.play__brief { position: absolute; z-index: 4; left: 24px; right: 24px; top: 0; display: grid; gap: 6px; max-height: 184px; overflow-y: auto; scrollbar-width: thin; }
+.play__brief .play__prediction, .play__brief .play__request { position: static; inset: auto; padding: 7px 10px; font-size: 12.5px; }
+.play__brief .play__prediction { display: grid; gap: 4px; }
+.play__prediction-head, .play__comparison { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 3px 12px; }
+.play__prediction-head { color: #d8cfba; font-size: 11.5px; }
+.play__comparison { color: #c6ddc8; }
+.play__comparison strong { color: #f3efdf; font-weight: 600; }
+.play__evidence { font-size: 11.5px; color: #d8cfba; }
+.play__evidence summary { width: fit-content; color: #efcc81; cursor: pointer; }
+.play__evidence summary:focus-visible { outline: 2px solid #a8e8bd; outline-offset: 3px; }
+.play__evidence p { margin: 5px 0 0; line-height: 1.5; }
+.play__brief .play__request { border-left: 3px solid #81b69a; color: #c6ddc8; }
+.play__request .delivery-goals { padding: 0; border: 0; }
+.play__request .delivery-goals__head { color: #c6ddc8; }
+.play__request .delivery-goals--compact { grid-template-columns: auto minmax(0, 1fr); gap: 3px 14px; }
+.play__request .delivery-goals__head { grid-column: 1; grid-row: 1 / span 3; align-self: center; }
+.play__request .delivery-goal { grid-column: 2; font-size: 12px; }
+.play__delivery-preview { margin: 4px 0 0; font-size: 11.5px; line-height: 1.4; color: #d8cfba; }
+.view--play.is-scoring .play__brief { visibility: hidden; }
+.preview__need { color: #efcc81; font-size: 11.5px; }
+.preview { max-width: 850px; gap: 8px; }
+
+.learning-help { display: grid; gap: 16px; }
+.learning-help section { display: grid; gap: 7px; }
+.learning-help h3 { margin: 0; font-family: var(--serif); font-size: 20px; color: var(--gold-hi); }
+.learning-help p { margin: 0; line-height: 1.6; }
+.learning-help ol { margin: 0; padding-left: 22px; line-height: 1.7; }
+.learning-help__result { padding: 8px 12px; border-left: 3px solid #81b69a; background: rgba(92, 151, 110, 0.12); color: #c6ddc8; font-weight: 700; }
+.learning-help__note { padding-top: 12px; border-top: 1px solid var(--line-soft); color: var(--ivory-dim); font-size: 13px; }
+
+.shopitem__preview { min-height: 26px; padding: 3px 8px; font-size: 11px; }
+.offer-preview { display: grid; gap: 12px; }
+.offer-preview__choice { padding: 12px 14px; border: 1px solid var(--line-soft); border-radius: 6px; background: var(--glass); }
+.offer-preview__choice p { margin: 5px 0 0; }

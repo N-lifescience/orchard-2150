@@ -61,6 +61,13 @@ export function deg(n: number): number {
 
 export const clamp = (x: number, lo: number, hi: number): number => (x < lo ? lo : x > hi ? hi : x);
 
-/** 소리 변주 전용 난수 — 게임 로직에는 쓰지 않는다(재현성은 소리와 무관) */
-export const rand = (): number => Math.random();
+/** 소리 변주 전용 난수. 게임의 난수 상태와 분리한 고정 시드를 사용한다. */
+let audioSeed = 2150;
+export const rand = (): number => {
+  audioSeed = (audioSeed + 0x6d2b79f5) >>> 0;
+  let value = audioSeed;
+  value = Math.imul(value ^ (value >>> 15), value | 1);
+  value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+  return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+};
 export const jitter = (amount: number): number => 1 + (rand() * 2 - 1) * amount;

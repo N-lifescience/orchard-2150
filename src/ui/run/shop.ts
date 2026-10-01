@@ -106,16 +106,41 @@ export class ShopView {
     }
     if (!why && s.money < it.price) why = '돈이 모자라요';
     if (!why && s.pack) why = '열어 둔 봉투부터 골라 주세요';
-    const label = it.kind === 'pack' ? '열기' : it.kind === 'upgrade' ? '증축' : '구매';
+    const label = it.kind === 'pack' ? '고르기' : it.kind === 'upgrade' ? '증축' : '구매';
     const buyBtn = button(it.sold ? '팔림' : `${label} $${it.price}`, () => this.buy(it.slot), { class: ['btn--buy', it.kind === 'pack' && 'btn--gold'].filter(Boolean).join(' '), 'aria-label': `${name} ${label}, $${it.price}${why ? ` (${why})` : ''}` });
     buyBtn.disabled = it.sold || !!why;
     const wrap = h('div', { class: ['shopitem', `shopitem--${it.kind}`, it.sold && 'is-sold'], role: 'listitem' }, h('div', { class: 'shopitem__art' }, art), buyBtn);
+    if (it.kind === 'pack' && it.choices && !it.sold) {
+      wrap.appendChild(button('구입 전 살펴보기', () => this.previewOffer(it), { class: 'btn--ghost shopitem__preview', 'aria-label': `${name} 내용 살펴보기` }));
+    }
     if (!it.sold) {
       attachTilt(wrap, () => art);
       this.ctx.tips.attach(wrap, () => h('div', null, h('b', null, name), h('div', null, desc), why ? h('div', { class: 'tip__rule' }, why) : null));
       wrap.addEventListener('pointerenter', () => audio.play('hover'));
     }
     return wrap;
+  }
+
+  private previewOffer(item: Extract<ShopItem, { kind: 'pack' }>): void {
+    const choices = item.choices ?? [];
+    const content = h('div', { class: 'offer-preview' }, h('p', { class: 'hint' }, `이 목록에서 ${PACKS[item.pack].picks}개를 고릅니다. 지금 보이는 선택지는 구입 뒤에도 같아요.`));
+    for (const choice of choices) {
+      let name: string;
+      let detail: string;
+      if (choice.kind === 'plant') {
+        name = choice.plant.name;
+        detail = `${speciesLabel(choice.plant.pheno)} · ${phenoSentence(choice.plant.pheno, choice.plant.pheno.brix)}${choice.plant.revealed ? '' : ' · 유전자형은 검사로 확인'}`;
+      } else if (choice.kind === 'medal') {
+        name = HAND_TYPES[choice.hand].name;
+        detail = '이 족보의 연구 레벨 +1';
+      } else {
+        const def = choice.kind === 'joker' ? this.ctx.game.jokerDef(choice.id) : this.ctx.game.reagentDef(choice.id);
+        name = def.name;
+        detail = def.desc;
+      }
+      content.appendChild(h('div', { class: 'offer-preview__choice' }, h('b', null, name), h('p', { class: 'hint' }, detail)));
+    }
+    const modal = this.ctx.modals.open({ title: PACKS[item.pack].name, kicker: `선택 목록 · $${item.price}`, content, actions: [button('닫기', () => modal.close(), { class: 'btn--ghost' })] });
   }
 
   private buy(slot: string): void {
@@ -284,7 +309,7 @@ export class ShopView {
     if (!ch || this.ctx.isBusy()) return;
     let replace: string | undefined;
     if (ch.kind === 'plant' && s.garden.length >= s.gardenCap) {
-      const out = await pickPlant(this.ctx, { title: '온실이 가득 찼어요', hint: `${ch.plant.name}을(를) 들이려면 한 포기를 내보내야 해요.`, confirm: '내보내고 들이기' });
+      const out = await pickPlant(this.ctx, { title: '온실이 가득 찼어요', hint: `${fmt.josa(ch.plant.name, '을를')} 들이려면 한 포기를 내보내야 해요.`, confirm: '내보내고 들이기' });
       if (!out) return;
       replace = out;
     }

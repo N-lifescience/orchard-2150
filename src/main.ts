@@ -1,6 +1,8 @@
 // 오차드 2150 — 입구
 import './art'; // 글꼴·그림 스타일 (art.css)
 import './styles/main.css';
+import './styles/learning.css';
+import './styles/feedback.css';
 import { App } from './ui/app';
 
 function boot(): void {

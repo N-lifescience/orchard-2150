@@ -55,7 +55,9 @@ import {
   UPGRADES,
   UPGRADE_ORDER,
 } from './content';
-import { marketPlant, rarePlant, rescuePlant, starterGarden, type PlantSeed } from './plants';
+import { marketPlant, rarePlant, rescuePlant, seasonMaterials, starterGarden, type PlantSeed } from './plants';
+import { seasonGoals } from './contracts';
+import { countDelivery, deliveryComplete, deliveryProgressText, goalHint } from './learning';
 import { cardSuit, classify, effBrix, handBase, isSurprise, scoreHand, type ScoreCtx } from './rules';
 
 export const SAVE_KEY = 'seed-atelier-2150:save:v1';
@@ -95,12 +97,15 @@ export interface InternalState extends RunState {
     phenoB: Phenotype;
     genA: number;
     genB: number;
+    genotypes?: [string, string];
   } | null;
   /** 이번 주문에서 한 출하 수 (박람회: 첫 출하) */
   orderHands: number;
   selectPicksLeft: number;
   selectPicked: { uid: string; plantId: string; name: string } | null;
   usedBosses: string[];
+  orderCheckpoint: string | null;
+  suppliedSeasons: number[];
 }
 
 /** 계약 Game + 점수 미리보기(상태를 바꾸지 않음) */
@@ -189,6 +194,7 @@ function emptyState(): InternalState {
     v: 1,
     seed: 0,
     mode: 'full',
+    playStyle: 'learning',
     policy: 'heritage',
     ante: 1,
     maxAnte: 8,
@@ -211,6 +217,11 @@ function emptyState(): InternalState {
     cross: null,
     prediction: null,
     requestFulfilled: false,
+    delivery: {},
+    orderAttempt: 1,
+    review: null,
+    records: [],
+    geneFlow: null,
     pod: [],
     podTotal: POD_SIZE,
     hand: [],
@@ -221,7 +232,7 @@ function emptyState(): InternalState {
     discoveries: [],
     pendingDiscoveries: [],
     toasts: [],
-    stats: { handsPlayed: 0, bestHand: 0, crosses: 0, selfings: 0, recessiveSurprises: 0, edits: 0, lmoEvents: 0, handCounts: {} },
+    stats: { handsPlayed: 0, bestHand: 0, crosses: 0, selfings: 0, recessiveSurprises: 0, edits: 0, lmoEvents: 0, retries: 0, handCounts: {} },
     rngCounter: 0,
     idCounter: 0,
     plantSerial: 0,
@@ -236,6 +247,8 @@ function emptyState(): InternalState {
     selectPicksLeft: 0,
     selectPicked: null,
     usedBosses: [],
+    orderCheckpoint: null,
+    suppliedSeasons: [],
   };
 }
 
@@ -325,8 +338,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
 
   /** 상태를 바꾼 뒤 부른다: 자동 저장 + 구독자 알림 */
   function commit() {
-    if (st.phase === 'gameover' || st.phase === 'victory') clearSave();
-    else save();
+    save();
     notify();
   }
 
@@ -393,7 +405,9 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
       const expo = BOSSES.find((b) => b.id === 'expo')!;
       return { kind: 'boss', name: expo.name, client: expo.client, target: Math.round(base * 3), reward: ORDER_REWARD.boss, boss: { ...expo } };
     }
-    let pool = BOSSES.filter((b) => b.id !== 'expo' && (b.policy ? b.policy.includes(st.policy) : true) && bossMinAnte(b) <= st.ante && bossFeasible(b));
+    // These lessons use a stable rule so the new genetics task is the source of difficulty.
+    const lessonBoss = st.ante <= 2 ? 'uniformity' : st.ante <= 4 ? 'judge' : st.ante <= 6 ? 'coldsnap' : 'sommelier';
+    let pool = BOSSES.filter((b) => b.id === lessonBoss && bossFeasible(b));
     const fresh = pool.filter((b) => !st.usedBosses.includes(b.id));
     if (fresh.length > 0) pool = fresh;
     else st.usedBosses = [];
@@ -437,6 +451,19 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
 
   function startAnte() {
     const r = rng();
+    if (!st.suppliedSeasons.includes(st.ante)) {
+      const materials = seasonMaterials(st.ante, st.policy, r).filter((seed) => !st.garden.some((p) => p.name === seed.name));
+      for (const seed of materials) st.garden.push(makePlant(seed, 'starter', 1));
+      if (materials.length) {
+        st.gardenCap = Math.max(st.gardenCap, st.garden.length);
+        toast(`레아가 이번 단원의 연구용 포기 ${materials.length}개와 필요한 온실 칸을 준비했어요.`);
+      }
+      if (st.ante === 7 && st.policy !== 'heritage' && !st.reagents.includes('scissors')) {
+        st.reagentCap = Math.max(st.reagentCap, st.reagents.length + 1);
+        st.reagents.push('scissors');
+      }
+      st.suppliedSeasons.push(st.ante);
+    }
     const base = targetBase();
     const c1 = pickOne(r, CLIENTS);
     const c2 = pickOne(r, CLIENTS.filter((c) => c !== c1));
@@ -450,6 +477,15 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
       { kind: 'big', name: '도시 계약', client: `${c2} · ${colorName(color2)} 과육 요청`, requestedColor: color2, target: Math.round(base * 1.5), reward: ORDER_REWARD.big },
       chooseBoss(r),
     ];
+    for (const [idx, current] of st.orders.entries()) {
+      current.goals = seasonGoals(st.ante, idx, st.policy);
+      const color = current.goals.find((goal) => goal.trait.color)?.trait.color;
+      if (current.kind !== 'boss') {
+        current.requestedColor = color;
+        const person = idx === 0 ? c1 : c2;
+        current.client = `${person} · ${current.goals.map((goal) => goal.label).join(' / ')} 납품`;
+      }
+    }
     st.orderIdx = 0;
     const avail = UPGRADE_ORDER.filter((u) => !st.upgrades.includes(u));
     st.anteUpgrade = avail.length > 0 ? pickOne(r, avail) : null;
@@ -474,6 +510,9 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
     st.cross = null;
     st.prediction = null;
     st.requestFulfilled = false;
+    st.delivery = {};
+    st.orderAttempt = 1;
+    st.review = null;
     st.crossInfo = null;
     st.orderHands = 0;
     st.shop = null;
@@ -486,13 +525,14 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
       const r = rng();
       if (st.garden.length >= st.gardenCap) {
         const out = st.garden.pop()!;
-        toast(`온실을 비우려고 ${out.name}을(를) 이웃 농장에 보냈어요.`);
+        toast(`온실 칸을 마련했어요. 이웃 농장에 보낸 포기: ${out.name}`);
       }
       st.garden.push(makePlant(rescuePlant(r), 'market', 1));
       toast('교배할 짝이 없어서 이웃 농장이 루미 한 포기를 보내 줬어요.');
     }
     const b = activeBoss();
     if (b?.id === 'nobees' && !st.garden.some(selfable)) toast('벌이 없는 날이지만 자가수분할 포기가 없어 이웃 벌집을 빌렸어요. 오늘은 교배가 돼요.');
+    st.orderCheckpoint = JSON.stringify({ ...st, orderCheckpoint: null });
   }
 
   function nondisjunctionRate(): number {
@@ -570,8 +610,16 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
   }
 
   function gameOver(msg: string) {
-    st.phase = 'gameover';
+    const missing = (order().goals ?? []).find((goal) => (st.delivery[goal.id] ?? 0) < goal.count);
+    st.review = { reason: msg, score: st.roundScore, target: order().target, delivery: { ...st.delivery }, hint: missing ? goalHint(missing) : '형질은 납품했어요. 같은 빛깔이나 당도 조합을 모으고, 비법과 연구 레벨의 효과를 확인해 보세요.', attempt: st.orderAttempt };
+    recordOrder(false);
+    st.phase = st.playStyle === 'learning' ? 'review' : 'gameover';
     toast(msg);
+  }
+
+  function recordOrder(cleared: boolean) {
+    const current = order();
+    st.records.push({ ante: st.ante, orderIdx: st.orderIdx, name: current.name, prediction: st.prediction ? { ...st.prediction } : null, parents: st.cross ? [plantById(st.cross.a)?.name ?? '', plantById(st.cross.b)?.name ?? ''] : null, parentGenotypes: st.crossInfo?.genotypes, goals: structuredClone(current.goals ?? []), delivery: { ...st.delivery }, score: st.roundScore, target: current.target, attempt: st.orderAttempt, cleared });
   }
 
   // ── 상점 도우미 ────────────────────────────────────────────
@@ -615,7 +663,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
     const items: ShopItem[] = [cardItem(r, 'card1', taken), cardItem(r, 'card2', taken)];
     for (const slot of ['pack1', 'pack2']) {
       const kind = pickWeighted(r, Object.keys(PACK_WEIGHT) as PackKind[], (k) => PACK_WEIGHT[k])!;
-      items.push({ slot, kind: 'pack', pack: kind, price: PACKS[kind].price, sold: false });
+      items.push({ slot, kind: 'pack', pack: kind, price: PACKS[kind].price, sold: false, choices: packChoices(kind) });
     }
     if (st.anteUpgrade) items.push({ slot: 'upgrade', kind: 'upgrade', id: st.anteUpgrade, price: UPGRADES[st.anteUpgrade].cost, sold: st.anteUpgradeSold });
     st.shop = { items, rerollCost: baseReroll() };
@@ -626,7 +674,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
     return HAND_RANK.filter((h) => !secret.includes(h) || (st.stats.handCounts[h] ?? 0) > 0);
   }
 
-  function openPack(kind: PackKind) {
+  function packChoices(kind: PackKind): PackChoice[] {
     const r = rng();
     const def = PACKS[kind];
     const choices: PackChoice[] = [];
@@ -670,7 +718,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
         break;
       }
     }
-    st.pack = { pack: kind, choices, picks: def.picks };
+    return choices;
   }
 
   function applyUpgrade(id: UpgradeId) {
@@ -706,7 +754,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
       const out = replacePlantId ? plantById(replacePlantId) : undefined;
       if (!out) return '온실이 가득 찼어요. 내보낼 포기를 골라 주세요.';
       st.garden = st.garden.filter((q) => q.id !== out.id);
-      toast(`${out.name}을(를) 온실에서 내보냈어요.`);
+      toast(`온실에서 내보낸 포기: ${out.name}`);
     }
     st.garden.push(p);
     return null;
@@ -725,20 +773,20 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
   }
 
   function lmoLeak() {
-    const lmo = st.garden.filter((p) => p.pheno.fluorescent);
-    if (lmo.length === 0) return;
-    const species = new Set(lmo.map((p) => p.genome.species));
-    const clean = st.garden.filter((p) => !p.pheno.fluorescent && species.has(p.genome.species));
-    if (clean.length === 0) return;
+    const pairs = st.garden.filter((p) => p.pheno.fluorescent && p.pheno.sex !== 'F').flatMap((donor) =>
+      st.garden.filter((recipient) => !recipient.pheno.fluorescent && recipient.pheno.sex !== 'M' && geneCanCross(donor.genome, recipient.genome, false).ok).map((recipient) => ({ donor, recipient })),
+    );
+    if (pairs.length === 0) return;
     const r = rng();
     const chance = 0.2 + 0.25 * countJoker('jellyfishGene');
     if (r() >= chance) return;
-    const target = pickOne(r, clean);
-    target.genome = addTransgene(target.genome, r);
-    target.pheno = phenotype(target.genome);
+    const { donor, recipient } = pickOne(r, pairs);
+    const offspring = phenotype(makePod(recipient.genome, donor.genome, r, 1)[0]);
+    if (!offspring.fluorescent) return;
+    st.geneFlow = { donor: donor.name, recipient: recipient.name, offspring };
     st.stats.lmoEvents++;
     discover('geneFlow');
-    toast(`꽃가루가 날아가 ${target.name}에 형광 유전자가 섞였어요.`);
+    toast(`${recipient.name}에서 생긴 씨에 형광 유전자가 전달됐어요. 원래 포기의 유전자형은 바뀌지 않아요.`);
   }
 
   // ── 시약·편집 대상 찾기 ────────────────────────────────────
@@ -798,6 +846,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
       st = emptyState();
       st.seed = seed;
       st.mode = mode;
+      st.playStyle = o.playStyle ?? 'learning';
       st.policy = policy;
       st.startAnte = START_ANTE[mode];
       st.ante = st.startAnte;
@@ -816,6 +865,27 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
       startAnte();
       startOrder();
       commit();
+    },
+
+    retryOrder() {
+      if (st.phase !== 'review' || !st.orderCheckpoint) return false;
+      const checkpoint = st.orderCheckpoint;
+      const failed = st;
+      const restored = JSON.parse(checkpoint) as InternalState;
+      st = restored;
+      st.orderCheckpoint = checkpoint;
+      st.orderAttempt = failed.orderAttempt + 1;
+      st.records = failed.records;
+      st.discoveries = failed.discoveries;
+      st.pendingDiscoveries = [];
+      st.stats = { ...failed.stats, retries: failed.stats.retries + 1 };
+      st.handsLeft += Math.min(2, st.orderAttempt - 1);
+      st.discardsLeft += Math.min(3, st.orderAttempt - 1);
+      st.orders[st.orderIdx].target = Math.round(restored.orders[st.orderIdx].target * Math.max(0.65, 1 - 0.15 * (st.orderAttempt - 1)));
+      st.review = null;
+      toast(`같은 계약을 다시 준비해요. 형질 조건은 그대로이고 출하·솎아내기 도움을 받았어요.`);
+      commit();
+      return true;
     },
 
     // ── 교배 ──
@@ -864,7 +934,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
       const envMod = boss?.id === 'drought' ? -3 : 0;
       const selfing = aId === bId;
       st.cross = { a: aId, b: bId, selfing };
-      st.crossInfo = { species: a.genome.species, phenoA: a.pheno, phenoB: b.pheno, genA: a.generation, genB: b.generation };
+      st.crossInfo = { species: a.genome.species, phenoA: a.pheno, phenoB: b.pheno, genA: a.generation, genB: b.generation, genotypes: [a.revealed ? describeGenotype(a.genome) : '교배 당시 비공개', b.revealed ? describeGenotype(b.genome) : '교배 당시 비공개'] };
       st.pod = genomes.map((g) => makeCard(g, envMod));
       st.podTotal = st.pod.length;
       st.prediction = prediction ? {
@@ -898,7 +968,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
       const cards = handCards(uids);
       if (!cards) return null;
       const res = scoreHand(cards, scoreCtx());
-      res.trace.cleared = st.roundScore + res.trace.total >= order().target;
+      res.trace.cleared = st.roundScore + res.trace.total >= order().target && deliveryComplete(order(), countDelivery(order(), st.delivery, cards));
       return res.trace;
     },
 
@@ -918,6 +988,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
         st.requestFulfilled = true;
       }
       st.roundScore += t.total;
+      st.delivery = countDelivery(order(), st.delivery, cards);
       st.handsLeft--;
       st.orderHands++;
       st.stats.handsPlayed++;
@@ -926,11 +997,13 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
       const played = new Set(uids);
       st.hand = st.hand.filter((c) => !played.has(c.uid));
       const target = order().target;
-      t.cleared = st.roundScore >= target;
+      t.cleared = st.roundScore >= target && deliveryComplete(order(), st.delivery);
       if (t.cleared) {
+        recordOrder(true);
         st.phase = 'cashout';
       } else if (st.handsLeft <= 0) {
-        gameOver(`출하를 다 썼어요. 목표까지 ${target - st.roundScore}점 모자랐어요.`);
+        const points = Math.max(0, target - st.roundScore);
+        gameOver(points ? `출하를 다 썼어요. 목표까지 ${points}점 모자라고, 납품은 ${deliveryProgressText(order(), st.delivery)}입니다.` : `목표 점수는 넘겼지만 필수 형질을 더 납품해야 해요: ${deliveryProgressText(order(), st.delivery)}.`);
       } else {
         drawToHand();
         if (st.hand.length === 0) gameOver('꼬투리의 씨앗을 다 썼어요.');
@@ -998,6 +1071,14 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
       if (st.phase !== 'cashout') return;
       const total = game.cashoutLines().reduce((s, l) => s + l.amount, 0);
       st.money += total;
+      const last = st.records.at(-1);
+      if (last?.cleared && (order().goals?.length ?? 0) > 0) {
+        const hand = HAND_RANK.filter((id) => (st.stats.handCounts[id] ?? 0) > 0).sort((a, b) => (st.stats.handCounts[b] ?? 0) - (st.stats.handCounts[a] ?? 0))[0];
+        if (hand) {
+          st.handLevels[hand] += 1;
+          toast(`형질 납품 기록을 남겼어요. ${HAND_TYPES[hand].name} 연구 레벨 +1.`);
+        }
+      }
       lmoLeak();
       st.phase = 'select';
       st.selectPicksLeft = 1 + countJoker('tissueLab');
@@ -1073,7 +1154,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
           st.reagents.push(item.id);
           break;
         case 'pack':
-          openPack(item.pack);
+          st.pack = { pack: item.pack, choices: structuredClone(item.choices ?? packChoices(item.pack)), picks: PACKS[item.pack].picks };
           break;
         case 'upgrade':
           applyUpgrade(item.id);
@@ -1101,13 +1182,13 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
     },
 
     sellJoker(uid) {
-      if (st.phase === 'title' || st.phase === 'gameover' || st.phase === 'victory') return;
+      if (st.phase === 'title' || st.phase === 'review' || st.phase === 'gameover' || st.phase === 'victory') return;
       const idx = st.jokers.findIndex((j) => j.uid === uid);
       if (idx < 0) return;
       const value = game.sellValue(uid);
       const [j] = st.jokers.splice(idx, 1);
       st.money += value;
-      toast(`${game.jokerDef(j.id).name}을(를) 팔았어요 (+$${value}).`);
+      toast(`비법을 팔았어요: ${game.jokerDef(j.id).name} (+$${value}).`);
       commit();
     },
 
@@ -1125,7 +1206,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
         case 'plant': {
           const err = admitPlant(ch.plant, replacePlantId);
           if (err) return { ok: false, reason: err };
-          toast(`${ch.plant.name}을(를) 온실에 들였어요.`);
+          toast(`온실에 들인 포기: ${ch.plant.name}`);
           break;
         }
         case 'reagent':
@@ -1332,6 +1413,18 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
         refreshSavedCopy(st);
         st.prediction ??= null;
         st.requestFulfilled ??= false;
+        st.playStyle ??= 'challenge';
+        st.delivery ??= {};
+        st.orderAttempt ??= 1;
+        st.review ??= null;
+        st.records ??= [];
+        st.geneFlow ??= null;
+        st.stats.retries ??= 0;
+        st.suppliedSeasons ??= [];
+        st.orderCheckpoint ??= null;
+        for (const item of st.shop?.items ?? []) if (item.kind === 'pack' && !item.choices) item.choices = packChoices(item.pack);
+        // Old contracts retain their original requirements until the next season.
+        if (st.phase === 'cross' && !st.orderCheckpoint) st.orderCheckpoint = JSON.stringify({ ...st, orderCheckpoint: null });
         save();
         notify();
         return true;

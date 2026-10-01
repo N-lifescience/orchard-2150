@@ -7,6 +7,7 @@ import { FLUSH_FAMILY, HAND_RANK } from '../src/game/content';
 import type { InternalState, StorageLike } from '../src/game/game';
 import { SAVE_KEY } from '../src/game/game';
 import { cardChips, classify, scoreHand, type ScoreCtx } from '../src/game/rules';
+import { applyDirect, decide } from '../src/ui/bot';
 
 // ── 도우미 ──────────────────────────────────────────────────────
 class MemStorage implements StorageLike {
@@ -362,13 +363,14 @@ describe('게임 흐름', () => {
     }
   });
 
-  it('출하를 다 쓰고 목표 미달이면 gameover (저장도 지운다)', () => {
+  it('도전 모드에서 출하를 다 쓰면 gameover, 종료 기록은 저장한다', () => {
     const { g, st, storage } = newGame(5);
+    st.playStyle = 'challenge';
     g.chooseCross(st.garden[0].id, st.garden[1].id);
     st.orders[0].target = 10 ** 9;
     while (st.phase === 'play') g.play([st.hand[0].uid]);
     expect(st.phase).toBe('gameover');
-    expect(storage.getItem(SAVE_KEY)).toBeNull();
+    expect(JSON.parse(storage.getItem(SAVE_KEY)!).phase).toBe('gameover');
   });
 
   it('솎아내기: 횟수 차감, 꽃가루 상인은 수그루마다 +$1', () => {
@@ -814,25 +816,7 @@ describe('끝까지 한 판', () => {
     for (let step = 0; step < 400 && g.state.phase !== 'victory' && g.state.phase !== 'gameover'; step++) {
       const st = g.state;
       seenPhases.add(st.phase);
-      switch (st.phase) {
-        case 'cross': {
-          const selfable = st.garden.find((p) => g.canCross(p.id, p.id).ok)!;
-          g.chooseCross(selfable.id, selfable.id);
-          break;
-        }
-        case 'play':
-          g.play(st.hand.slice(0, 5).map((c) => c.uid));
-          break;
-        case 'cashout':
-          g.collect();
-          break;
-        case 'select':
-          g.select(null);
-          break;
-        case 'shop':
-          g.leaveShop();
-          break;
-      }
+      applyDirect(g, decide(g));
     }
     expect(g.state.phase).toBe('victory');
     expect(g.state.ante).toBe(4);

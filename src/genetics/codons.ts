@@ -87,7 +87,7 @@ export function translate(mrna: string): {
   for (let i = 0; i + 3 <= s.length; i += 3) {
     const codon = s.slice(i, i + 3);
     const aa = CODON_TABLE[codon];
-    if (aa === undefined) throw new Error(`코돈 '${codon}' 을(를) 읽을 수 없어요 — A·U·G·C 만 쓸 수 있어요`);
+    if (aa === undefined) throw new Error(`'${codon}' 코돈을 읽을 수 없어요. A·U·G·C만 쓸 수 있어요.`);
     if (aa === 'STOP' && stopAt === null) stopAt = codons.length;
     codons.push(codon);
     aminoAcids.push(aa);

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createGame, SAVE_KEY, type StorageLike } from '../src/game/game';
 import { wipeAll } from '../src/ui/prefs';
-import { createRunSlot, listRunSlots, migrateLegacySave, removeRunSlot, runSlotProgress } from '../src/ui/runSlots';
+import { createRunSlot, listRunSlots, loadRunReflection, migrateLegacySave, migrateRunReflection, removeRunSlot, runSlotProgress, saveRunReflection } from '../src/ui/runSlots';
 
 class MemoryStore implements StorageLike {
   values = new Map<string, string>();
@@ -44,6 +44,7 @@ describe('여러 연대기 저장', () => {
     const game = createGame({ storage: kv });
     game.newRun({ mode: 'full', policy: 'heritage', seed: 9 });
     const legacy = JSON.parse(kv.getItem(SAVE_KEY)!) as Record<string, unknown>;
+    delete legacy.playStyle;
     (legacy.garden as { name: string }[])[0].name = '할머니의 루비 별';
     (legacy.orders as { name: string; client: string }[])[0].name = '동네 장터';
     (legacy.orders as { name: string; client: string }[])[0].client = '학교 과학 동아리: "루비빛 과육을 부탁해요."';
@@ -54,6 +55,7 @@ describe('여러 연대기 저장', () => {
     expect(slots).toHaveLength(1);
     expect(slots[0].brand).toBe('기존 과수원');
     expect(slots[0].key).toBe(SAVE_KEY);
+    expect(slots[0].playStyle).toBe('challenge');
     const restored = createGame({ storage: kv });
     expect(restored.load()).toBe(true);
     expect(restored.state.garden[0].name).toBe('엘레나 로시의 루비 별');
@@ -62,5 +64,39 @@ describe('여러 연대기 저장', () => {
     wipeAll(kv);
     expect(listRunSlots(kv)).toEqual([]);
     expect(kv.getItem(SAVE_KEY)).toBeNull();
+  });
+
+  it('성찰과 진행 방식은 연대기별로 분리하고 해당 슬롯 삭제에 함께 지운다', () => {
+    const kv = new MemoryStore();
+    const game = createGame({ storage: kv });
+    const first = createRunSlot('수업', 'quick', 'heritage', kv, 'learning')!;
+    game.setSaveKey(first.key);
+    game.newRun({ mode: 'quick', policy: 'heritage', playStyle: 'learning', seed: 1 });
+    const second = createRunSlot('도전', 'quick', 'heritage', kv, 'challenge')!;
+    game.setSaveKey(second.key);
+    game.newRun({ mode: 'quick', policy: 'heritage', playStyle: 'challenge', seed: 2 });
+    saveRunReflection(first.key, '루비 39알, 골드 13알을 관찰했다.', kv);
+    saveRunReflection(second.key, '다음에는 골드 부모끼리 교배한다.', kv);
+    expect(listRunSlots(kv).find((slot) => slot.id === first.id)?.playStyle).toBe('learning');
+    expect(listRunSlots(kv).find((slot) => slot.id === second.id)?.playStyle).toBe('challenge');
+    expect(loadRunReflection(first.key, kv)).toContain('39알');
+    expect(loadRunReflection(second.key, kv)).toContain('골드 부모');
+    removeRunSlot(first.id, kv);
+    expect(loadRunReflection(first.key, kv)).toBe('');
+    expect(loadRunReflection(second.key, kv)).toContain('골드 부모');
+    wipeAll(kv);
+    expect(loadRunReflection(second.key, kv)).toBe('');
+  });
+
+  it('기존 공유 성찰은 선택된 연대기로 한 번만 옮긴다', () => {
+    const kv = new MemoryStore();
+    kv.setItem('seed-atelier-2150:reflection', '이전 성찰');
+    const firstKey = `${SAVE_KEY}:slot:1`;
+    const secondKey = `${SAVE_KEY}:slot:2`;
+    migrateRunReflection(firstKey, kv);
+    migrateRunReflection(secondKey, kv);
+    expect(loadRunReflection(firstKey, kv)).toBe('이전 성찰');
+    expect(loadRunReflection(secondKey, kv)).toBe('');
+    expect(kv.getItem('seed-atelier-2150:reflection')).toBeNull();
   });
 });

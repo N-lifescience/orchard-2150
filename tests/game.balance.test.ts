@@ -1,22 +1,45 @@
-// 밸런스 시뮬레이션 (scripts/sim.ts) — 탐욕 봇 50판, full 모드.
-// 목표: 앤티 2는 거의 항상, 앤티 4는 절반쯤, 앤티 8은 드물게(0~10%) 깬다.
 import { describe, expect, it } from 'vitest';
-import { formatSim, runSim } from '../scripts/sim';
+import type { PolicyId, RunMode } from '../src/contract/game';
+import { formatSim, runOne, runSim } from '../scripts/sim';
 import { ANTE_BASES } from '../src/game/content';
 
-describe('밸런스', () => {
-  it('full · 전통 육종 · 시드 50개: 도달 앤티 분포', () => {
-    const r = runSim({ seeds: 50, mode: 'full', policy: 'heritage' });
-    console.log(`\n목표 기본값 ${JSON.stringify(ANTE_BASES)}\n${formatSim(r, ANTE_BASES)}`);
-    expect(r.clearRate[2]).toBeGreaterThanOrEqual(0.9);
-    expect(r.clearRate[4]).toBeGreaterThanOrEqual(0.3);
-    expect(r.clearRate[4]).toBeLessThanOrEqual(0.7);
-    expect(r.clearRate[8]).toBeLessThanOrEqual(0.1);
-  }, 120000);
+// 성공 횟수를 낮게 강제하지 않는다. 학습 판의 도전은 필수 형질을 육종하고 골라내는 데 있다.
+// 이 봇은 학생 성취도를 측정하지 않으며, 공개 규칙의 진행 가능성과 출하 판정을 검사한다.
+describe('학습 모드의 진행 가능성과 필수 형질', () => {
+  it.each([
+    ['full', 'heritage'], ['full', 'precision'], ['full', 'biotech'],
+    ['quick', 'heritage'], ['unit-sex', 'heritage'], ['unit-chromo', 'heritage'], ['unit-edit', 'precision'],
+  ] as [RunMode, PolicyId][])('%s · %s · 시드 10개: 점수와 형질을 모두 충족하며 완주한다', (mode, policy) => {
+    const r = runSim({ seeds: 10, mode, policy, playStyle: 'learning', maxRetries: 2 });
+    console.log(`${mode} / ${policy}\n${formatSim(r, ANTE_BASES)}`);
+    if (r.halted.length) console.log(r.halted);
+    expect(r.verifiedDeliveries).toBe(true);
+    expect(r.victories / r.runs).toBeGreaterThanOrEqual(0.9);
+    expect(r.avgRetries).toBeLessThanOrEqual(2);
+    expect(r.avgParentPairs).toBeGreaterThan(1);
+  }, 60000);
 
-  it('같은 시드면 시뮬레이션 결과도 같다', () => {
-    const a = runSim({ seeds: 3, firstSeed: 500 });
-    const b = runSim({ seeds: 3, firstSeed: 500 });
+  it('full 한 판에서 과육색·성염색체·배수체·편집을 실제로 다룬다', () => {
+    const r = runOne(21, { mode: 'full', policy: 'biotech', playStyle: 'learning' });
+    expect(r.phase).toBe('victory');
+    expect(r.crossSpecies).toEqual(['lumi', 'stella']);
+    expect(r.offspringPloidies).toContain(3);
+    expect(r.edits).toBeGreaterThan(0);
+    expect(r.distinctParentPairs).toBeGreaterThanOrEqual(5);
+    const complete = r.records.filter((rec) => rec.cleared);
+    expect(complete).toHaveLength(24);
+    expect(new Set(complete.flatMap((rec) => rec.goals.map((goal) => goal.id))).size).toBeGreaterThanOrEqual(10);
+  }, 60000);
+
+  it('도전 모드도 점수만으로 형질 조건을 건너뛰지 않는다', () => {
+    const r = runSim({ seeds: 10, mode: 'full', policy: 'precision', playStyle: 'challenge' });
+    expect(r.verifiedDeliveries).toBe(true);
+    expect(r.unfinished).toBe(0);
+  }, 60000);
+
+  it('같은 시드와 선택 전략이면 결과가 같다', () => {
+    const a = runSim({ seeds: 3, firstSeed: 500, mode: 'quick' });
+    const b = runSim({ seeds: 3, firstSeed: 500, mode: 'quick' });
     expect(a).toEqual(b);
   }, 60000);
 });

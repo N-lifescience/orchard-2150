@@ -70,6 +70,7 @@ export type PolicyId = 'heritage' | 'precision' | 'biotech';
 export interface PolicyDef { id: PolicyId; name: string; desc: string; tradeoff: string }
 
 export type RunMode = 'full' | 'quick' | 'unit-sex' | 'unit-chromo' | 'unit-edit';
+export type PlayStyle = 'learning' | 'challenge';
 
 export interface Plant {
   id: string;
@@ -95,7 +96,51 @@ export interface SeedCard {
   edited?: boolean;
 }
 
-export type Phase = 'title' | 'cross' | 'play' | 'cashout' | 'select' | 'shop' | 'gameover' | 'victory';
+export type Phase = 'title' | 'cross' | 'play' | 'cashout' | 'select' | 'shop' | 'review' | 'gameover' | 'victory';
+
+/** A contract requires these observable inherited traits as well as points. */
+export interface DeliveryGoal {
+  id: string;
+  label: string;
+  detail: string;
+  count: number;
+  trait: {
+    color?: FruitColor;
+    marked?: boolean;
+    species?: SpeciesId;
+    sex?: 'F' | 'H';
+    seedless?: boolean;
+    minBrix?: number;
+    bitter?: boolean;
+    euploid?: boolean;
+    fluorescent?: boolean;
+    knockout?: boolean;
+  };
+}
+
+export interface OrderReview {
+  reason: string;
+  score: number;
+  target: number;
+  delivery: Record<string, number>;
+  hint: string;
+  attempt: number;
+}
+
+export interface OrderRecord {
+  ante: number;
+  orderIdx: number;
+  name: string;
+  prediction: PredictionRecord | null;
+  parents: [string, string] | null;
+  parentGenotypes?: [string, string];
+  goals: DeliveryGoal[];
+  delivery: Record<string, number>;
+  score: number;
+  target: number;
+  attempt: number;
+  cleared: boolean;
+}
 
 export interface OrderInfo {
   kind: 'small' | 'big' | 'boss';
@@ -105,6 +150,7 @@ export interface OrderInfo {
   reward: number;
   /** 일반 주문: 해당 빛깔 모종을 출하하면 추가 보상 */
   requestedColor?: FruitColor;
+  goals?: DeliveryGoal[];
   boss?: BossDef;
 }
 
@@ -118,7 +164,7 @@ export interface PredictionRecord {
 export type ShopItem =
   | { slot: string; kind: 'joker'; id: string; price: number; sold: boolean }
   | { slot: string; kind: 'reagent'; id: string; price: number; sold: boolean }
-  | { slot: string; kind: 'pack'; pack: PackKind; price: number; sold: boolean }
+  | { slot: string; kind: 'pack'; pack: PackKind; price: number; sold: boolean; choices?: PackChoice[] }
   | { slot: string; kind: 'upgrade'; id: UpgradeId; price: number; sold: boolean };
 export type PackKind = 'seed' | 'rareSeed' | 'reagent' | 'medal' | 'joker';
 export type UpgradeId = 'greenhouse' | 'hands' | 'discards' | 'handSize' | 'jokerSlot' | 'reroll';
@@ -140,12 +186,14 @@ export interface RunStats {
   recessiveSurprises: number; // 두 부모에 없던 형질 등장 횟수
   edits: number;
   lmoEvents: number;
+  retries: number;
   handCounts: Partial<Record<HandTypeId, number>>;
 }
 
 export interface RunState {
   seed: number;
   mode: RunMode;
+  playStyle: PlayStyle;
   policy: PolicyId;
   ante: number;
   maxAnte: number; // full 8, quick 4, unit-* 는 시작 앤티+1
@@ -168,6 +216,12 @@ export interface RunState {
   /** 교배 전에 고른 예측과 만들어진 52알 전체의 관찰 결과 */
   prediction: PredictionRecord | null;
   requestFulfilled: boolean;
+  delivery: Record<string, number>;
+  orderAttempt: number;
+  review: OrderReview | null;
+  records: OrderRecord[];
+  /** The maternal plant is unchanged; this records a sampled offspring after outcrossing. */
+  geneFlow: { donor: string; recipient: string; offspring: Phenotype } | null;
   pod: SeedCard[]; // 남은 씨앗
   podTotal: number; // 처음 꼬투리 알 수 (52)
   hand: SeedCard[];
@@ -215,13 +269,14 @@ export interface SelectOptions {
   extraPicks: number; // 조직배양 랩이면 1
 }
 
-export interface NewRunOptions { seed?: number; mode: RunMode; policy: PolicyId }
+export interface NewRunOptions { seed?: number; mode: RunMode; policy: PolicyId; playStyle?: PlayStyle }
 
 export interface Game {
   readonly state: RunState;
   subscribe(fn: (s: RunState) => void): () => void;
 
   newRun(opts: NewRunOptions): void;
+  retryOrder(): boolean;
 
   // ── 교배 (phase 'cross')
   canCross(aId: string, bId: string): { ok: boolean; reason?: string };

@@ -1,5 +1,5 @@
 // 시작 온실과 시장 품종 — 유전자형 문자열(계약 문법)을 만들어 유전 엔진에 넘긴다
-import type { RunMode } from '../contract/game';
+import type { PolicyId, RunMode } from '../contract/game';
 import type { Genome, Rng } from '../contract/genetics';
 import { doubleGenome, parseGenotype, phenotype } from '../genetics';
 import { MARKET_ORIGINS } from './content';
@@ -77,6 +77,20 @@ export function starterGarden(mode: RunMode, r: Rng): PlantSeed[] {
         lumi('마테오 비앙키의 향기', BIANCHI_SCENT, false),
       ];
   }
+}
+
+/** Guaranteed teaching material: a new topic never depends on a random shop offer. */
+export function seasonMaterials(ante: number, policy: PolicyId, r: Rng): PlantSeed[] {
+  const q = midQ(r);
+  if (ante === 3) return [
+    stella('레아의 초록 잎 골드 암그루', `R:rr sex:XX L:ll ${q}`, true),
+    stella('니콜라의 은빛 잎 수그루', `R:Rr sex:XY L:L ${q}`, true),
+    stella('이네스의 초록 잎 골드 수그루', `R:rr sex:XY L:l ${q}`, true),
+  ];
+  if (ante === 5) return [lumi('엘레나의 연구용 4배체', 'R:RRrr S:SSss B:bbbb Q1:++-- Q2:++-- Q3:++-- Q4:++-- Q5:++-- Q6:++--', true)];
+  if (ante === 6 || ante === 8) return [lumi('이사벨의 고당도 계통', 'R:Rr S:ss B:bb Q1:++ Q2:++ Q3:++ Q4:++ Q5:++ Q6:++', true)];
+  if (ante === 7 && policy !== 'heritage') return [lumi('린의 편집 관찰용 루미', `R:rr S:ss B:Bb ${q}`, true)];
+  return [];
 }
 
 /** 표현형에서 시장 품종 이름을 짓는다 */

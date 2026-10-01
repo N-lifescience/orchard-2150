@@ -1,10 +1,11 @@
 // Multiple independent chronicles stored only in this browser.
-import type { PolicyId, RunMode } from '../contract/game';
+import type { PlayStyle, PolicyId, RunMode } from '../contract/game';
 import { SAVE_KEY, type StorageLike } from '../game/game';
-import { sanitizeBrand } from './fmt';
+import { sanitizeBrand, sanitizeLine } from './fmt';
 
 export const SLOTS_KEY = 'seed-atelier-2150:slots:v1';
 export const TUTORIAL_KEY = 'seed-atelier-2150:tutorial:v1';
+const LEGACY_REFLECTION_KEY = 'seed-atelier-2150:reflection';
 
 export interface RunSlot {
   id: string;
@@ -12,6 +13,7 @@ export interface RunSlot {
   brand: string;
   mode: RunMode;
   policy: PolicyId;
+  playStyle: PlayStyle;
   updatedAt: number;
 }
 
@@ -43,7 +45,7 @@ function read(kv: StorageLike | null): SlotIndex {
           (slot.key === SAVE_KEY && slot.id === 'legacy' || slot.key === `${SAVE_KEY}:slot:${slot.id}`) &&
           typeof slot.brand === 'string' && modes.includes(slot.mode) && policies.includes(slot.policy) &&
           typeof slot.updatedAt === 'number' && Number.isFinite(slot.updatedAt),
-        );
+        ).map((slot) => ({ ...slot, playStyle: slot.playStyle === 'learning' ? 'learning' as const : 'challenge' as const }));
         const nextId = Math.max(1, Number.isSafeInteger(data.nextId) ? data.nextId : 1, ...slots.map((s) => Number(s.id) + 1).filter(Number.isFinite));
         return { v: 1, nextId, activeId: typeof data.activeId === 'string' ? data.activeId : null, slots };
       }
@@ -71,10 +73,10 @@ export function migrateLegacySave(brand = '', kv: StorageLike | null = localStor
     if (!raw) return;
     const index = read(kv);
     if (index.slots.some((slot) => slot.key === SAVE_KEY)) return;
-    const state = JSON.parse(raw) as { mode?: RunMode; policy?: PolicyId };
+    const state = JSON.parse(raw) as { mode?: RunMode; policy?: PolicyId; playStyle?: PlayStyle };
     index.slots.push({
       id: 'legacy', key: SAVE_KEY, brand: sanitizeBrand(brand),
-      mode: state.mode ?? 'full', policy: state.policy ?? 'heritage', updatedAt: Date.now(),
+      mode: state.mode ?? 'full', policy: state.policy ?? 'heritage', playStyle: state.playStyle ?? 'challenge', updatedAt: Date.now(),
     });
     index.activeId ??= 'legacy';
     write(kv, index);
@@ -98,9 +100,10 @@ export function runSlotProgress(slot: RunSlot, kv: StorageLike | null = localSto
   try {
     const raw = kv?.getItem(slot.key);
     if (!raw) return '저장된 진행 없음';
-    const state = JSON.parse(raw) as { ante?: number; maxAnte?: number; orderIdx?: number };
+    const state = JSON.parse(raw) as { ante?: number; maxAnte?: number; orderIdx?: number; phase?: string };
     if (!Number.isInteger(state.ante) || !Number.isInteger(state.maxAnte) || !Number.isInteger(state.orderIdx)) return '진행 정보 확인 불가';
-    return `시즌 ${state.ante}/${state.maxAnte} · 주문 ${(state.orderIdx ?? 0) + 1}/3`;
+    const result = state.phase === 'victory' ? '완료 · ' : state.phase === 'gameover' ? '도전 종료 · ' : state.phase === 'review' ? '재도전 대기 · ' : '';
+    return `${result}시즌 ${state.ante}/${state.maxAnte} · 주문 ${(state.orderIdx ?? 0) + 1}/3`;
   } catch {
     return '진행 정보 확인 불가';
   }
@@ -112,10 +115,10 @@ export function activeRunSlot(kv: StorageLike | null = localStore()): RunSlot | 
   return slots.find((s) => s.id === activeId) ?? slots[0] ?? null;
 }
 
-export function createRunSlot(brand: string, mode: RunMode, policy: PolicyId, kv: StorageLike | null = localStore()): RunSlot | null {
+export function createRunSlot(brand: string, mode: RunMode, policy: PolicyId, kv: StorageLike | null = localStore(), playStyle: PlayStyle = 'learning'): RunSlot | null {
   const index = read(kv);
   const id = String(index.nextId++);
-  const slot: RunSlot = { id, key: `${SAVE_KEY}:slot:${id}`, brand: sanitizeBrand(brand), mode, policy, updatedAt: Date.now() };
+  const slot: RunSlot = { id, key: `${SAVE_KEY}:slot:${id}`, brand: sanitizeBrand(brand), mode, policy, playStyle, updatedAt: Date.now() };
   index.slots.push(slot);
   index.activeId = id;
   return write(kv, index) ? slot : null;
@@ -141,6 +144,7 @@ export function removeRunSlot(id: string, kv: StorageLike | null = localStore())
   const slot = index.slots.find((s) => s.id === id);
   if (!slot) return;
   try { kv?.removeItem(slot.key); } catch { /* no storage */ }
+  try { kv?.removeItem(`${slot.key}:reflection`); } catch { /* no storage */ }
   index.slots = index.slots.filter((s) => s.id !== id);
   if (index.activeId === id) index.activeId = index.slots[0]?.id ?? null;
   write(kv, index);
@@ -149,9 +153,34 @@ export function removeRunSlot(id: string, kv: StorageLike | null = localStore())
 export function removeAllRunSlots(kv: StorageLike | null = localStore()): void {
   for (const slot of read(kv).slots) {
     try { kv?.removeItem(slot.key); } catch { /* continue */ }
+    try { kv?.removeItem(`${slot.key}:reflection`); } catch { /* continue */ }
   }
   try { kv?.removeItem(SAVE_KEY); } catch { /* continue */ }
+  try { kv?.removeItem(`${SAVE_KEY}:reflection`); } catch { /* continue */ }
   try { kv?.removeItem(SLOTS_KEY); } catch { /* continue */ }
+}
+
+/** Associate the earlier shared reflection with the chronicle that was selected. */
+export function migrateRunReflection(saveKey: string, kv: StorageLike | null = localStore()): void {
+  try {
+    const old = kv?.getItem(LEGACY_REFLECTION_KEY);
+    if (old === null || old === undefined) return;
+    if (!kv?.getItem(`${saveKey}:reflection`)) kv?.setItem(`${saveKey}:reflection`, sanitizeLine(old));
+    kv?.removeItem(LEGACY_REFLECTION_KEY);
+  } catch { /* Optional writing stays local even if storage is unavailable. */ }
+}
+
+export function loadRunReflection(saveKey: string, kv: StorageLike | null = localStore()): string {
+  try { return sanitizeLine(kv?.getItem(`${saveKey}:reflection`) ?? ''); } catch { return ''; }
+}
+
+export function saveRunReflection(saveKey: string, value: string, kv: StorageLike | null = localStore()): string {
+  const clean = sanitizeLine(value);
+  try {
+    if (clean) kv?.setItem(`${saveKey}:reflection`, clean);
+    else kv?.removeItem(`${saveKey}:reflection`);
+  } catch { /* Writing remains available when persistent storage is blocked. */ }
+  return clean;
 }
 
 export function tutorialSeen(kv: StorageLike | null = localStore()): boolean {
