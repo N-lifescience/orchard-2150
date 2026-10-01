@@ -81,13 +81,14 @@ export function openNotes(ctx: Ctx, by: 'all' | 'standard' = 'all'): void {
         h('span', { class: 'notes__blank-mark', 'aria-hidden': 'true' }, '관찰 노트'),
         h('h3', null, '아직 첫 기록을 기다리고 있어요.'),
         h('p', null, '교배하거나 모종을 출하하면, 발견한 개념이 이 노트에 남아요.'),
-        h('p', null, '왼쪽 목차에서 기록을 골라 다시 읽을 수 있어요.'),
+        h('p', null, '목차에서 기록을 골라 다시 읽을 수 있어요.'),
       ));
       return;
     }
     const c = CONCEPTS[selected];
     const observed = [...ctx.game.state.records].reverse().find((record) => {
-      if (['segregation', 'purebred', 'selfing', 'heterozygote', 'dominanceMolecular'].includes(c.id)) return !!record.prediction;
+      if (c.id === 'selfing') return !!record.parents && record.parents[0] === record.parents[1];
+      if (['segregation', 'purebred', 'heterozygote', 'dominanceMolecular'].includes(c.id)) return !!record.prediction;
       if (c.id === 'polygenic') return record.goals.some((goal) => goal.trait.minBrix !== undefined);
       if (c.id === 'dioecy' || c.id === 'xlinked') return record.goals.some((goal) => goal.trait.species === 'stella' || goal.trait.sex !== undefined);
       if (c.id === 'triploid' || c.id === 'polyploid') return record.goals.some((goal) => goal.trait.seedless !== undefined);
@@ -138,6 +139,9 @@ export function openNotes(ctx: Ctx, by: 'all' | 'standard' = 'all'): void {
         if (state && !entry.hasAttribute('disabled')) state.textContent = on ? '→' : '';
       });
       renderDetail();
+      if (ctx.stage.classList.contains('is-responsive') && window.innerWidth <= 760) {
+        detail.scrollIntoView({ block: 'start' });
+      }
     });
     return b;
   };
@@ -181,7 +185,7 @@ const STANDARDS: [string, string, string][] = [
   ['12유전02-01', '유전자 발현 — 전사·번역, 우성·열성의 분자 원리', '시즌 7–8 · 편집 작업대'],
   ['12유전02-02', '유전 부호 — 코돈, 종결 코돈, 코돈의 중복성, 틀 이동', '시즌 7–8 · 편집 작업대'],
   ['12유전02-04', '세포 분화와 전능성 — 조직배양, 클론', '조직배양 시약, 조직배양 랩'],
-  ['12유전03-04', '생명공학 기술 — 유전자 변형 생물체(LMO)', '생명공학팀, 형질전환 벡터'],
+  ['12유전03-04', '생명공학 기술 — 유전자 변형 생물체(LMO)', '형질전환팀, 형질전환 벡터'],
   ['12유전03-05', '생명윤리 — LMO의 유전자 흐름, 브랜드 철학의 선택과 대가', '꽃가루 유출, 끝 화면 성찰'],
 ];
 
@@ -256,7 +260,7 @@ export function openTeacher(ctx: Ctx): void {
           h('li', null, h('b', null, '전체 8시즌'), ' — 멘델 유전부터 유전자 편집·LMO까지. 두 차시에 나누어 진행하기를 권합니다.'),
           h('li', null, h('b', null, '빠른 4시즌'), ' — 멘델 유전·다유전자·성염색체. 25~35분을 배정하고 돌아보기 8~10분을 남겨 두세요.'),
           h('li', null, h('b', null, '단원 게임'), ' — 15~20분을 배정하고 돌아보기 8~10분을 남겨 두세요. 성염색체(시즌 3–4) · 염색체 이상(시즌 5–6) · 유전자 편집(시즌 7–8)의 준비된 온실에서 시작합니다. 시간은 수업 배정안이며 학생 대상 측정값은 아닙니다.'),
-          h('li', null, h('b', null, '수업 모드'), '에서는 계약 실패 이유를 확인한 뒤 같은 계약을 다시 준비합니다. ', h('b', null, '도전 모드'), '에서는 실패하면 연대기가 끝납니다. 계약 조건은 같습니다.'),
+          h('li', null, h('b', null, '재도전 허용'), '에서는 계약 실패 이유를 확인한 뒤 같은 계약을 다시 준비합니다. ', h('b', null, '실패 시 종료'), '에서는 실패하면 연대기가 끝납니다. 계약 조건은 같습니다.'),
           h('li', null, '개념 카드는 학생이 그 현상을 겪은 뒤에 열려요. 각 카드에는 게임 속 설정과 실제 과학을 나누어 적었어요.'),
           h('li', null, '끝 화면에서 온실 포기들의 실제 유전자형·핵형·계보가 공개돼요. 추론한 것과 비교하게 해 보세요.'),
         ),

@@ -1,0 +1,412 @@
+/* The touch workbench flows down the page instead of shrinking the desktop stage. */
+.slot__readout { display: none; }
+.stage:not(.is-responsive) { overflow: clip; }
+
+html.is-responsive-ui { height: auto; min-height: 100%; overflow: auto; }
+html.is-responsive-ui body { height: auto; min-height: 100%; overflow: visible; }
+.app:has(.stage.is-responsive), .viewport:has(.stage.is-responsive) { position: relative; inset: auto; min-height: 100dvh; overflow: visible; }
+.viewport:has(.stage.is-responsive) { display: block; }
+
+.stage.is-responsive {
+  position: relative;
+  left: 0 !important;
+  top: 0 !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 100dvh;
+  transform: none !important;
+  overflow: clip;
+  font-size: 16px;
+}
+.stage.is-responsive::after { display: none; }
+.stage.is-responsive .screens { position: relative; inset: auto; min-height: 100dvh; }
+.stage.is-responsive :where(.btn, .chip, .select, .input) { min-height: 44px; min-width: 44px; font-size: 16px; }
+.stage.is-responsive :where(.btn, .chip) { white-space: normal; line-height: 1.5; }
+.stage.is-responsive :where(.hint, .concept__body, .concept__box, .learning-help p, .tutorial__body, .teacher__list) { font-size: 16px; line-height: 1.8; }
+.stage.is-responsive :where(.h2, .learning-help h3) { font-size: 24px; line-height: 1.45; }
+.stage.is-responsive :where(.panel, .modal) { border-radius: 10px; }
+.stage.is-responsive :where(.title__panel, .title__home, .wiz, .main, .phase, .view, .side, .topbar, .shop, .shop__side, .sel, .cash, .cross__right) { min-width: 0; }
+
+/* A shelf of saves remains in the document; no nested tiny scroll boxes. */
+.stage.is-responsive .title-screen, .stage.is-responsive .title-screen.is-wiz {
+  position: relative; inset: auto; min-height: 100dvh; height: auto;
+  padding: 28px clamp(16px, 4vw, 40px) 24px; gap: 20px; overflow: visible;
+}
+.stage.is-responsive .title__logo .sa-logo { --logo-size: clamp(26px, 4vw, 43px); }
+.stage.is-responsive .title__tag { font-size: 16px; line-height: 1.8; }
+.stage.is-responsive .title__tag p + p { margin-top: 10px; }
+.stage.is-responsive .title__panel { flex: none; margin-top: 0; }
+.stage.is-responsive .title__home { grid-template-columns: minmax(240px, .8fr) minmax(0, 1.2fr); max-height: none; gap: 24px; }
+.stage.is-responsive .title__start { padding: 24px; }
+.stage.is-responsive .title__start > p { font-size: 16px; }
+.stage.is-responsive .title__start .title__save-hint, .stage.is-responsive .title__practice-hint { font-size: 14px; line-height: 1.75; }
+.stage.is-responsive .title__home .title__menu .btn { min-height: 48px; font-size: 15px; }
+.stage.is-responsive .save-library { padding-top: 0; }
+.stage.is-responsive .save-library__hint { font-size: 15px; }
+.stage.is-responsive .save-list { overflow: visible; min-height: 0; padding: 0; }
+.stage.is-responsive .save-slot { padding: 18px; }
+.stage.is-responsive .save-slot__name { font-size: 23px; }
+.stage.is-responsive :where(.save-slot__meta, .save-slot__progress) { font-size: 15px; }
+.stage.is-responsive .save-slot__status { font-size: 13px; }
+.stage.is-responsive .save-slot__date { font-size: 13px; }
+.stage.is-responsive .save-slot__remove, .stage.is-responsive .save-slot__resume { min-height: 44px; font-size: 15px; }
+.stage.is-responsive .title__foot { position: static; margin-top: 14px; font-size: 13px; gap: 12px; flex-wrap: wrap; }
+.stage.is-responsive .wiz { width: 100%; max-width: 100%; gap: 20px; }
+.stage.is-responsive .wiz__steps { width: 100%; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: 14px; }
+.stage.is-responsive .wiz__step-num { width: 26px; height: 26px; font-size: 12px; }
+.stage.is-responsive .wiz__intro { font-size: 16px; }
+.stage.is-responsive .wiz__mode-groups { gap: 24px; }
+.stage.is-responsive .mode-group__heading { gap: 6px; flex-wrap: wrap; }
+.stage.is-responsive .mode-group__title { font-size: 18px; }
+.stage.is-responsive .mode-group__heading p { font-size: 14px; }
+.stage.is-responsive .mode-group__cards { gap: 14px; }
+.stage.is-responsive .modecard { padding: 20px; gap: 10px; }
+.stage.is-responsive .modecard__name { font-size: 24px; }
+.stage.is-responsive :where(.modecard__stats, .modecard__task, .modecard__time, .modecard__tag, .stylecard__detail) { font-size: 15px; line-height: 1.75; }
+.stage.is-responsive .modecard__stats { flex-wrap: wrap; gap: 6px 16px; }
+.stage.is-responsive .modecard__desc { font-size: 16px; line-height: 1.8; }
+.stage.is-responsive .season-strip > span { height: 24px; font-size: 13px; }
+.stage.is-responsive .wiz__styles { width: 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.stage.is-responsive .stylecard { min-height: 0; padding: 24px; }
+.stage.is-responsive .wiz__policies { gap: 16px; }
+.stage.is-responsive .policy { padding: 20px; min-height: 0; }
+.stage.is-responsive .policy__desc, .stage.is-responsive .policy__trade { font-size: 16px; line-height: 1.75; }
+.stage.is-responsive .wiz__nav { width: 100%; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+.stage.is-responsive .wiz__selection { font-size: 16px; }
+.stage.is-responsive .wiz__duration-hint { font-size: 15px; line-height: 1.75; }
+.stage.is-responsive .wiz--name { max-width: 680px; width: 100%; }
+.stage.is-responsive .wiz--name .input { width: 100%; font-size: 18px; }
+.stage.is-responsive .wiz__recap > div { font-size: 16px; grid-template-columns: 110px minmax(0, 1fr); }
+
+/* The order ledger becomes a compact summary above the workbench. */
+.stage.is-responsive .run { position: relative; inset: auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; padding: 16px; min-height: 100dvh; }
+.stage.is-responsive .run.has-coach { padding-top: 16px; }
+.stage.is-responsive .run.has-coach .coach { position: relative; inset: auto; grid-column: 1 / -1; width: auto; margin: 0; }
+.stage.is-responsive .run.has-coach .side__manager { display: none; }
+.stage.is-responsive .side, .stage.is-responsive .side.has-delivery {
+  position: relative; inset: auto; width: 100%; height: auto; padding: 16px;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; overflow: visible;
+}
+.stage.is-responsive .side > :where(.side__header, .side__order, .side__manager, .side__menus) { grid-column: 1 / -1; }
+.stage.is-responsive .side__header { padding-bottom: 10px; }
+.stage.is-responsive .side__brand { font-size: 18px; }
+.stage.is-responsive .side__home { min-height: 44px; font-size: 16px; }
+.stage.is-responsive .side.has-delivery .side__order { padding: 10px; gap: 8px; }
+.stage.is-responsive .side .side__ordername { font-size: 22px; }
+.stage.is-responsive .side .side__client { font-size: 16px; display: block; overflow: visible; }
+.stage.is-responsive .side .side__bossrule { display: block; font-size: 16px; padding: 10px; }
+.stage.is-responsive .side .side__manager { font-size: 16px; margin: 0; padding: 10px; }
+.stage.is-responsive .side__target, .stage.is-responsive .side__round { grid-column: span 2; }
+.stage.is-responsive .side .side__target, .stage.is-responsive .side .side__round { padding: 12px; }
+.stage.is-responsive .side__target-row { flex-wrap: wrap; }
+.stage.is-responsive .side__target-num { font-size: 32px; }
+.stage.is-responsive .side .side__round-num { font-size: 38px; }
+.stage.is-responsive .side__reward, .stage.is-responsive .side__label { font-size: 15px; }
+.stage.is-responsive .side__hand { grid-column: span 2; }
+.stage.is-responsive .side .side__handname { font-size: 22px; }
+.stage.is-responsive .side__handlv { font-size: 14px; }
+.stage.is-responsive .side .cm { min-height: 44px; font-size: 28px; }
+.stage.is-responsive .side__stats, .stage.is-responsive .side__row { grid-column: span 2; }
+.stage.is-responsive .side .stat__lbl { font-size: 15px; }
+.stage.is-responsive .side .stat .num { font-size: 28px; }
+.stage.is-responsive .side .side__season .num { font-size: 22px; }
+.stage.is-responsive .side .side__money .num { font-size: 28px; }
+.stage.is-responsive .run:not([data-phase='play']) .side__hand { display: none; }
+.stage.is-responsive .side .side__menus { margin-top: 0; gap: 8px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.stage.is-responsive .side .side__menu { min-height: 44px; padding: 8px 6px; font-size: 15px; }
+.stage.is-responsive .delivery-goals, .stage.is-responsive .delivery-goals--compact { gap: 8px; padding-top: 10px; }
+.stage.is-responsive .delivery-goals__head, .stage.is-responsive .delivery-goals--compact .delivery-goals__head { font-size: 15px; }
+.stage.is-responsive .delivery-goal, .stage.is-responsive .delivery-goals--compact .delivery-goal { font-size: 16px; gap: 7px; line-height: 1.65; }
+.stage.is-responsive .delivery-goal__count, .stage.is-responsive .delivery-goals--compact .delivery-goal__count { font-size: 16px; }
+.stage.is-responsive .main { position: relative; inset: auto; width: 100%; height: auto; }
+.stage.is-responsive .main::before { display: none; }
+.stage.is-responsive .topbar { position: relative; inset: auto; height: auto; width: 100%; display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 12px; margin-bottom: 18px; }
+.stage.is-responsive .jokers, .stage.is-responsive .reagents { min-width: 0; padding: 12px; --joker-w: 132px; --reagent-w: 132px; }
+.stage.is-responsive .bar__label, .stage.is-responsive .bar__count { font-size: 16px; }
+.stage.is-responsive .bar__row { overflow-x: auto; padding: 4px 2px 10px; gap: 12px; scrollbar-width: thin; }
+.stage.is-responsive .bar__slot--empty { width: 56px; height: 90px; }
+.stage.is-responsive .bar__slot--empty span { font-size: 14px; }
+.stage.is-responsive .phase { position: relative; inset: auto; width: 100%; height: auto; }
+.stage.is-responsive .view { position: relative; inset: auto; width: 100%; height: auto; }
+.stage.is-responsive .view.is-leaving { display: none; }
+
+/* Parent plants stay large enough to inspect; each rail owns its horizontal scroll. */
+.stage.is-responsive .view--cross { display: grid; grid-template-columns: minmax(220px, .7fr) minmax(0, 1.3fr); gap: 18px; align-items: start; }
+.stage.is-responsive .view--cross .ordercard { position: relative; inset: auto; width: 100%; height: auto; padding: 20px; gap: 12px; overflow: visible; }
+.stage.is-responsive .ordercard__kicker, .stage.is-responsive .ordercard__reward { font-size: 15px; }
+.stage.is-responsive .view--cross .ordercard__client, .stage.is-responsive .ordercard__request, .stage.is-responsive .ordercard__rule, .stage.is-responsive .ordercard__retry { font-size: 16px; line-height: 1.75; }
+.stage.is-responsive .ordercard__note { font-size: 15px; }
+.stage.is-responsive .cross__right { position: relative; inset: auto; height: auto; width: 100%; gap: 14px; overflow: visible; }
+.stage.is-responsive .cross__headrow { flex-wrap: wrap; gap: 12px; }
+.stage.is-responsive .cross__headrow .h2 { font-size: 24px; }
+.stage.is-responsive .cross__tools { flex-wrap: wrap; }
+.stage.is-responsive .cross__tools .btn { min-height: 44px; font-size: 16px; padding: 8px 12px; }
+.stage.is-responsive .cross__guidance, .stage.is-responsive .cross__guidance b, .stage.is-responsive .cross__guidance small { font-size: 16px; line-height: 1.8; }
+.stage.is-responsive .view--cross .garden { --card-w: 134px; min-height: 256px; width: 100%; padding: 24px 8px 14px; gap: 16px; overflow-x: auto; }
+.stage.is-responsive .gslot.is-picked::after { top: -16px; font-size: 15px; padding: 3px 10px; }
+.stage.is-responsive .cross__bar { display: grid; grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1fr); gap: 10px; padding: 12px; }
+.stage.is-responsive .cross__bar .pick { width: 100%; min-height: 48px; padding: 10px; font-size: 16px; white-space: normal; }
+.stage.is-responsive .cross__bar .btn { min-height: 48px; grid-column: 1 / -1; font-size: 18px; }
+.stage.is-responsive .cross__prediction { padding: 16px; gap: 12px; }
+.stage.is-responsive .cross__prediction-title { font-size: 17px; }
+.stage.is-responsive .cross__prediction-actions .btn { min-height: 44px; }
+.stage.is-responsive .cross__prediction .hint { font-size: 16px; }
+.stage.is-responsive .cross__reason { font-size: 16px; }
+.stage.is-responsive .punnett { padding: 16px; }
+.stage.is-responsive .punnett__title, .stage.is-responsive .punnett__empty, .stage.is-responsive .punnett__extra { font-size: 15px; line-height: 1.7; }
+
+/* Touch cards form an unobstructed grid. Actions and forecast remain together. */
+.stage.is-responsive .view--play { display: flex; flex-direction: column; gap: 18px; padding: 16px; border: 1px solid var(--line-soft); border-radius: 10px; background: rgba(4, 22, 18, .75); --card-w: 156px; }
+.stage.is-responsive .view--play::before { display: none; }
+.stage.is-responsive .play__brief { position: relative; inset: auto; width: 100%; max-height: none; overflow: visible; gap: 12px; }
+.stage.is-responsive .play__brief .play__prediction, .stage.is-responsive .play__brief .play__request { font-size: 16px; line-height: 1.75; padding: 14px; }
+.stage.is-responsive .play__prediction-head, .stage.is-responsive .play__evidence, .stage.is-responsive .play__delivery-preview { font-size: 15px; line-height: 1.75; }
+.stage.is-responsive .play__evidence summary { min-height: 44px; display: flex; align-items: center; }
+.stage.is-responsive .play__request .delivery-goals--compact { grid-template-columns: minmax(0, 1fr); }
+.stage.is-responsive .play__request .delivery-goals__head, .stage.is-responsive .play__request .delivery-goal { grid-column: auto; grid-row: auto; font-size: 16px; }
+.stage.is-responsive .view--play.is-scoring .play__brief { display: none; }
+.stage.is-responsive .hand, .stage.is-responsive .playrow { position: relative; inset: auto; width: 100%; height: auto; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px 14px; justify-items: center; padding: 10px 0; }
+.stage.is-responsive .playrow:empty { display: none; }
+.stage.is-responsive .slot { position: relative; inset: auto; width: 100%; height: auto; min-height: 44px; display: flex; flex-direction: column; align-items: center; gap: 10px; transform: none !important; }
+.stage.is-responsive .sa-tiltable.is-selected, .stage.is-responsive .sa-tiltable.is-selected:hover { --_lift: 0%; }
+.stage.is-responsive .hand .slot[data-key]::after { display: none; }
+.stage.is-responsive .hand .slot.is-selected::before { inset: -5px; transform: none; }
+.stage.is-responsive .slot__readout { display: grid; width: 100%; max-width: 175px; gap: 5px; font-size: 16px; line-height: 1.6; color: #e5ecdd; text-align: left; }
+.stage.is-responsive .slot__genotype { font-family: var(--mono); color: #c2d9a7; font-size: 14px; overflow-wrap: anywhere; }
+.stage.is-responsive .slot__readout strong { color: #ffb6c1; font-size: 14px; }
+.stage.is-responsive .hand .slot.is-selected { outline: 2px solid #bedda1; outline-offset: 5px; border-radius: 10px; }
+.stage.is-responsive .actions { position: relative; inset: auto; width: 100%; height: auto; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; padding: 12px 0 4px; }
+.stage.is-responsive .actions .btn--play, .stage.is-responsive .actions .btn--discard { width: 100%; min-width: 0; min-height: 52px; font-size: 20px; }
+.stage.is-responsive .actions .btn--play { grid-column: 1; grid-row: 2; }
+.stage.is-responsive .actions .btn--discard { grid-column: 2; grid-row: 2; }
+.stage.is-responsive .actions .sortbox { grid-column: 1 / -1; grid-row: 3; justify-self: center; }
+.stage.is-responsive .sortbox__lbl { font-size: 15px; }
+.stage.is-responsive .preview { position: relative; inset: auto; transform: none; grid-column: 1 / -1; grid-row: 1; max-width: 100%; padding: 12px; border-radius: 6px; justify-content: center; flex-wrap: wrap; white-space: normal; font-size: 16px; line-height: 1.7; }
+.stage.is-responsive .preview__hand, .stage.is-responsive .preview__need { font-size: 16px; }
+.stage.is-responsive .pod { position: relative; inset: auto; width: 100%; min-height: 60px; height: auto; display: grid; grid-template-columns: 40px auto auto; justify-content: center; gap: 12px; align-items: center; padding: 12px; border: 1px solid #4d755a; border-radius: 8px; background: #163526; }
+.stage.is-responsive .pod__shell { width: 28px; height: 38px; }
+.stage.is-responsive .pod__shell i { width: 7px; height: 9px; margin-left: -3px; }
+.stage.is-responsive .pod__shell i:nth-of-type(1) { top: 3px; }
+.stage.is-responsive .pod__shell i:nth-of-type(2) { top: 14px; }
+.stage.is-responsive .pod__shell i:nth-of-type(3) { top: 25px; }
+.stage.is-responsive .pod__count, .stage.is-responsive .pod__lbl { font-size: 16px; margin: 0; }
+.stage.is-responsive .banner { left: 0; top: 20px; width: 100%; }
+.stage.is-responsive .banner__t { max-width: 100%; font-size: 28px; padding: 12px; }
+.stage.is-responsive .tally { left: 50%; top: 30px; max-width: 90%; padding: 14px 20px; }
+.stage.is-responsive .tally__num { font-size: clamp(32px, 8vw, 64px); overflow-wrap: anywhere; }
+.stage.is-responsive .contract-seal { max-width: calc(100% - 24px); width: 370px; padding: 18px; }
+.stage.is-responsive .contract-seal__score { font-size: 15px; }
+
+/* Between contracts, rewards, selection, and shop use the same readable flow. */
+.stage.is-responsive .cash { position: relative; inset: auto; margin: 0 auto; width: min(100%, 580px); padding: 24px; }
+.stage.is-responsive .cash__label, .stage.is-responsive .cash__of { font-size: 16px; }
+.stage.is-responsive .cash__coins { flex-wrap: wrap; justify-content: flex-end; max-width: 70px; }
+.stage.is-responsive .sel { position: relative; inset: auto; width: 100%; height: auto; padding: 20px; gap: 18px; }
+.stage.is-responsive .sel__head { flex-wrap: wrap; gap: 14px; }
+.stage.is-responsive .sel__grid { --card-w: 132px; display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); justify-items: center; overflow: visible; min-height: 0; padding: 16px; gap: 24px 14px; }
+.stage.is-responsive .sslot__env { font-size: 13px; line-height: 1.5; bottom: -20px; white-space: normal; }
+.stage.is-responsive .sel__bottom { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+.stage.is-responsive .sel__garden { --card-w: 112px; gap: 18px; padding: 12px 2px; }
+.stage.is-responsive .sel__info { font-size: 16px; line-height: 1.75; }
+.stage.is-responsive .sel__btns { flex-wrap: wrap; }
+.stage.is-responsive .shop, .stage.is-responsive .shop__side { position: relative; inset: auto; width: 100%; height: auto; padding: 20px; gap: 18px; }
+.stage.is-responsive .view--shop { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(230px, 1fr); gap: 18px; }
+.stage.is-responsive .shop__head { flex-wrap: wrap; gap: 10px; }
+.stage.is-responsive .shop__cards, .stage.is-responsive .shop__packs { display: flex; flex-wrap: wrap; gap: 24px 20px; min-height: 0; padding: 16px 0; }
+.stage.is-responsive .shopitem { gap: 14px; }
+.stage.is-responsive .shopitem__preview { font-size: 15px; }
+.stage.is-responsive .shop__side .btn { min-height: 48px; }
+.stage.is-responsive .next { flex: none; gap: 12px; padding: 18px; }
+.stage.is-responsive :where(.next__target, .next__request, .next__rule, .next__later) { font-size: 16px; line-height: 1.75; }
+.stage.is-responsive .voucher { width: 150px; height: auto; min-height: 195px; gap: 12px; padding: 16px; }
+.stage.is-responsive .voucher__name { font-size: 21px; }
+.stage.is-responsive .voucher__desc { font-size: 16px; line-height: 1.6; }
+
+/* A viewport-pinned modal scrolls its content, including the notebook's paper. */
+.stage.is-responsive .modal-layer { position: fixed; inset: 0; }
+.stage.is-responsive .modal-wrap { position: fixed; inset: 0; grid-template-columns: minmax(0, 1fr); padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); }
+.stage.is-responsive .modal { min-width: 0; width: min(100%, 980px); max-width: 100%; max-height: calc(100dvh - 24px); padding: 20px; }
+.stage.is-responsive .modal__x { width: 44px; height: 44px; right: 10px; top: 10px; }
+.stage.is-responsive .modal__head { padding-right: 46px; }
+.stage.is-responsive .modal__title { font-size: 27px; line-height: 1.5; }
+.stage.is-responsive .modal__kicker { font-size: 14px; }
+.stage.is-responsive .modal__body { min-width: 0; padding-right: 3px; overscroll-behavior: contain; }
+.stage.is-responsive .modal__actions { flex-wrap: wrap; gap: 12px; }
+.stage.is-responsive .modal--notes .modal__head { flex-wrap: wrap; gap: 4px; }
+.stage.is-responsive .modal--notes .modal__body { overflow-y: auto; }
+.stage.is-responsive .notes__cols { grid-template-columns: 260px minmax(0, 1fr); min-height: 0; max-height: none; overflow: visible; }
+.stage.is-responsive .notes__page { height: auto; min-height: 420px; padding: 20px; }
+.stage.is-responsive .notes__page--detail { padding: 0; }
+.stage.is-responsive .notes__grid { max-height: 440px; overflow-y: auto; }
+.stage.is-responsive .notes .sortbox { flex-wrap: wrap; gap: 8px; }
+.stage.is-responsive .notes .sortbox .btn { min-height: 44px; font-size: 15px; }
+.stage.is-responsive .note { min-height: 48px; padding: 12px 8px; }
+.stage.is-responsive .note__q, .stage.is-responsive .note.is-locked .note__q { font-size: 16px; line-height: 1.7; }
+.stage.is-responsive .notes__chapter h4, .stage.is-responsive .notes__detail-head, .stage.is-responsive .notes__cover { font-size: 14px; }
+.stage.is-responsive .notes__detail { height: auto; overflow: visible; padding: 24px; }
+.stage.is-responsive .notes__title { font-size: 28px; }
+.stage.is-responsive .notes :where(.concept__body, .concept__box, .notes__observations p) { font-size: 16px; line-height: 1.9; }
+.stage.is-responsive .notes__data { grid-template-columns: minmax(85px, .6fr) minmax(0, 1.4fr); gap: 12px; font-size: 15px; }
+.stage.is-responsive .notes__observations { padding: 16px; }
+.stage.is-responsive .notes__observations h4 { font-size: 17px; }
+.stage.is-responsive .notes__blank { min-height: 320px; height: auto; font-size: 16px; }
+.stage.is-responsive .tutorial { min-height: 0; padding: 20px; }
+.stage.is-responsive .tutorial__title { font-size: 27px; line-height: 1.5; }
+.stage.is-responsive .tutorial__action { font-size: 16px; }
+.stage.is-responsive .tutorial__actions { flex-wrap: wrap; gap: 12px; }
+.stage.is-responsive .tutorial__actions .btn { flex: 1; }
+.stage.is-responsive .teacher__btns, .stage.is-responsive .set__btns { flex-wrap: wrap; }
+.stage.is-responsive .teacher__table { display: block; overflow-x: auto; font-size: 15px; }
+.stage.is-responsive .teacher__table th, .stage.is-responsive .teacher__table td { font-size: 15px; }
+.stage.is-responsive .set__lbl { font-size: 16px; }
+.stage.is-responsive .set__row { grid-template-columns: 85px minmax(0, 1fr) 36px; gap: 10px; min-height: 48px; }
+.stage.is-responsive input[type='range'] { min-height: 44px; width: 100%; }
+.stage.is-responsive .item { grid-template-columns: 150px minmax(0, 1fr); }
+.stage.is-responsive .item__note, .stage.is-responsive .item__why { font-size: 16px; line-height: 1.7; }
+.stage.is-responsive .picker__grid { --card-w: 124px; gap: 20px; justify-content: center; }
+.stage.is-responsive .pickitem__why { font-size: 14px; white-space: normal; width: 100%; }
+.stage.is-responsive .picker__count { font-size: 16px; }
+.stage.is-responsive .gh { grid-template-columns: minmax(0, 1fr); --card-w: 112px; }
+.stage.is-responsive .gh__line, .stage.is-responsive .gh__meta, .stage.is-responsive .gh__geno { font-size: 15px; line-height: 1.7; }
+.stage.is-responsive .orders { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.stage.is-responsive :where(.orderbox__client, .orderbox__request, .orderbox__rule, .orderbox__reward) { font-size: 16px; line-height: 1.75; }
+.stage.is-responsive .podv__grid { overflow-x: auto; padding-bottom: 12px; }
+.stage.is-responsive .podv__row { min-width: 520px; grid-template-columns: 140px repeat(var(--cols), minmax(24px, 1fr)) 44px; }
+.stage.is-responsive .podv__h, .stage.is-responsive .podv__suit, .stage.is-responsive .podv__cell { font-size: 15px; }
+.stage.is-responsive .podv__bars { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.stage.is-responsive .ed__top { grid-template-columns: minmax(0, 1fr); }
+.stage.is-responsive .ed :where(.ed__field, .ed__main, .ed__right, .select) { min-width: 0; max-width: 100%; }
+.stage.is-responsive .ed__strands { width: 100%; padding: 14px 10px; }
+.stage.is-responsive .strand { grid-template-columns: 90px 18px auto 18px; width: max-content; min-width: 100%; gap: 6px; }
+.stage.is-responsive .strand__label { font-size: 15px; }
+.stage.is-responsive .base, .stage.is-responsive button.base { min-width: 44px; width: 44px; min-height: 44px; height: 44px; font-size: 20px; }
+.stage.is-responsive .codon--num { width: 140px; font-size: 15px; }
+.stage.is-responsive .ed__result { grid-template-columns: minmax(0, 1fr); }
+.stage.is-responsive :where(.ed__note, .ed__kind, .ed__func, .ed__reference summary, .ed__focus) { font-size: 16px; line-height: 1.75; }
+.stage.is-responsive .ed__table { min-width: 390px; }
+.stage.is-responsive .ed__reference { overflow-x: auto; }
+.stage.is-responsive .ct__cell { font-size: 13px; }
+.stage.is-responsive .ct__cell small { font-size: 12px; }
+.stage.is-responsive .packopen__row { --card-w: 124px; --joker-w: 140px; --reagent-w: 140px; gap: 20px; }
+.stage.is-responsive .choice { width: 180px; gap: 10px; }
+.stage.is-responsive .choice__sub { font-size: 16px; line-height: 1.75; }
+.stage.is-responsive .choice__name { font-size: 20px; }
+.stage.is-responsive .tip { max-width: min(300px, calc(100vw - 32px)); font-size: 16px; line-height: 1.7; }
+.stage.is-responsive .tip__geno, .stage.is-responsive .tip__sub { font-size: 14px; }
+.stage.is-responsive .toasts { position: fixed; top: max(12px, env(safe-area-inset-top)); width: calc(100% - 24px); }
+.stage.is-responsive .toast { max-width: 100%; font-size: 16px; }
+.stage.is-responsive .end-screen, .stage.is-responsive .end-screen--review { position: relative; inset: auto; height: auto; min-height: 100dvh; padding: 28px 20px; gap: 24px; }
+.stage.is-responsive .end__body { grid-template-columns: repeat(2, minmax(0, 1fr)); flex: none; gap: 18px; }
+.stage.is-responsive .end__reflect { grid-column: 1 / -1; }
+.stage.is-responsive .end__stats, .stage.is-responsive .end__reveal, .stage.is-responsive .end__reflect { overflow: visible; padding: 20px; }
+.stage.is-responsive .end__sub, .stage.is-responsive .stats, .stage.is-responsive .end__hands, .stage.is-responsive .debrief-prompts { font-size: 16px; line-height: 1.75; }
+.stage.is-responsive .reveal { overflow: visible; grid-template-columns: minmax(0, 1fr); }
+.stage.is-responsive .reveal__text, .stage.is-responsive .reveal__geno { font-size: 15px; line-height: 1.65; }
+.stage.is-responsive .reflect__evidence { font-size: 16px; line-height: 1.75; }
+.stage.is-responsive .review-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); flex: none; max-height: none; }
+.stage.is-responsive .review-result, .stage.is-responsive .review-guidance { overflow: visible; }
+.stage.is-responsive .review-goals p { font-size: 16px; }
+.stage.is-responsive .report-paper { padding: 20px; font-size: 16px; line-height: 1.8; }
+.stage.is-responsive .end__btns { flex-wrap: wrap; }
+
+@media (max-width: 760px) {
+  .stage.is-responsive .title-screen, .stage.is-responsive .title-screen.is-wiz { align-items: stretch; padding: 24px 16px; }
+  .stage.is-responsive .title__logo, .stage.is-responsive .title__tag { text-align: center; }
+  .stage.is-responsive .title__home { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .stage.is-responsive .title__start { padding: 22px; }
+  .stage.is-responsive .save-slot__head, .stage.is-responsive .save-slot__bottom { flex-wrap: wrap; gap: 12px; }
+  .stage.is-responsive .save-slot__name { font-size: 22px; }
+  .stage.is-responsive .save-slot__actions { width: 100%; justify-content: flex-end; }
+  .stage.is-responsive .save-slot__resume { min-width: 120px; }
+  .stage.is-responsive .wiz__steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 12px 0; }
+  .stage.is-responsive .wiz__title { text-align: left; font-size: 27px; }
+  .stage.is-responsive .wiz__intro { text-align: left; }
+  .stage.is-responsive .mode-group__cards--journey, .stage.is-responsive .mode-group__cards--units, .stage.is-responsive .wiz__styles, .stage.is-responsive .wiz__policies { grid-template-columns: minmax(0, 1fr); }
+  .stage.is-responsive .modecard { padding: 20px; }
+  .stage.is-responsive .wiz__selection { flex-basis: 100%; order: -1; text-align: left; }
+  .stage.is-responsive .wiz__nav .btn { flex: 1; }
+  .stage.is-responsive .wiz--name .hint { text-align: left; }
+  .stage.is-responsive .wiz__recap { padding: 14px 16px; }
+  .stage.is-responsive .wiz__recap > div { grid-template-columns: 90px minmax(0, 1fr); gap: 8px; }
+  .stage.is-responsive .run, .stage.is-responsive .run.has-coach { padding: 12px; gap: 14px; }
+  .stage.is-responsive .side, .stage.is-responsive .side.has-delivery { padding: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .stage.is-responsive .side__target { grid-column: 1 / -1; }
+  .stage.is-responsive .side__round, .stage.is-responsive .side__hand, .stage.is-responsive .side__stats, .stage.is-responsive .side__row { grid-column: span 1; }
+  .stage.is-responsive .run:not([data-phase='play']) .side__round { grid-column: 1 / -1; }
+  .stage.is-responsive .side .side__menus { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .stage.is-responsive .side .side__menu { font-size: 14px; min-height: 48px; }
+  .stage.is-responsive .side__handhead { flex-wrap: wrap; gap: 4px; }
+  .stage.is-responsive .side .side__handname { font-size: 20px; }
+  .stage.is-responsive .side .cm { font-size: 22px; }
+  .stage.is-responsive .side .side__round-num { font-size: 32px; }
+  .stage.is-responsive .side__row { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .stage.is-responsive .side .side__season .num { font-size: 18px; }
+  .stage.is-responsive .topbar { grid-template-columns: minmax(0, 1fr); margin-bottom: 14px; }
+  .stage.is-responsive .jokers, .stage.is-responsive .reagents { --joker-w: 124px; --reagent-w: 124px; }
+  .stage.is-responsive .bar__slot--empty { width: 48px; height: 64px; }
+  .stage.is-responsive .view--cross { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .stage.is-responsive .view--cross .ordercard { display: none; }
+  .stage.is-responsive .cross__right { padding: 16px; border: 1px solid var(--line-soft); border-radius: 10px; background: rgba(4, 22, 18, .75); }
+  .stage.is-responsive .view--cross .garden { --card-w: 128px; min-height: 247px; }
+  .stage.is-responsive .cross__prediction-actions { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .stage.is-responsive .cross__prediction-actions .btn { text-align: left; justify-content: flex-start; padding: 10px 14px; }
+  .stage.is-responsive .punnett { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .stage.is-responsive .view--play { padding: 14px; gap: 16px; --card-w: clamp(118px, calc((100vw - 72px) / 2), 160px); }
+  .stage.is-responsive .hand, .stage.is-responsive .playrow { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 12px; }
+  .stage.is-responsive .slot__readout { font-size: 16px; }
+  .stage.is-responsive .play__brief .play__prediction, .stage.is-responsive .play__brief .play__request { padding: 12px; }
+  .stage.is-responsive .play__comparison { display: grid; gap: 8px; }
+  .stage.is-responsive .banner__t { font-size: 25px; }
+  .stage.is-responsive .cash, .stage.is-responsive .sel { padding: 18px 14px; }
+  .stage.is-responsive .sel__grid { --card-w: 120px; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 12px 0; gap: 28px 12px; }
+  .stage.is-responsive .sel__btns .btn { flex: 1; }
+  .stage.is-responsive .view--shop { grid-template-columns: minmax(0, 1fr); }
+  .stage.is-responsive .shop, .stage.is-responsive .shop__side { padding: 18px 14px; }
+  .stage.is-responsive .shop__cards { --joker-w: 124px; --reagent-w: 124px; gap: 24px 18px; }
+  .stage.is-responsive .shop__packs { --pack-w: 108px; gap: 24px 18px; }
+  .stage.is-responsive .shopitem { max-width: 100%; }
+  .stage.is-responsive .modal-wrap { padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)); }
+  .stage.is-responsive .modal { max-height: calc(100dvh - 16px); padding: 18px 14px; }
+  .stage.is-responsive .modal__title { font-size: 24px; }
+  .stage.is-responsive .modal__actions .btn { flex: 1; }
+  .stage.is-responsive .notes__cols { grid-template-columns: minmax(0, 1fr); }
+  .stage.is-responsive .notes__page--index { min-height: 0; max-height: 340px; border-right: 0; border-bottom: 2px solid #bcc9b1; padding: 18px; box-shadow: none; }
+  .stage.is-responsive .notes__grid { flex: 1 1 auto; min-height: 0; max-height: 210px; }
+  .stage.is-responsive .notes__detail { padding: 22px 20px; }
+  .stage.is-responsive .notes__page--detail { min-height: 0; }
+  .stage.is-responsive .notes__page--detail::before { display: none; }
+  .stage.is-responsive .notes__cover { flex-wrap: wrap; gap: 8px; padding: 12px; }
+  .stage.is-responsive .notes__data { grid-template-columns: minmax(0, 1fr); gap: 3px; }
+  .stage.is-responsive .notes__title { font-size: 26px; }
+  .stage.is-responsive .notes__observations { padding: 14px; }
+  .stage.is-responsive .item { grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 20px; }
+  .stage.is-responsive .item__text { width: 100%; }
+  .stage.is-responsive .orders { grid-template-columns: minmax(0, 1fr); }
+  .stage.is-responsive .gh__item { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+  .stage.is-responsive .gh__text { width: 100%; }
+  .stage.is-responsive .gh__karyo { max-width: 100%; overflow-x: auto; }
+  .stage.is-responsive .packopen__row { gap: 20px 12px; }
+  .stage.is-responsive .choice { width: 100%; padding: 16px; }
+  .stage.is-responsive .choice__art { min-height: 200px; }
+  .stage.is-responsive .tutorial { padding: 18px; }
+  .stage.is-responsive .end-screen, .stage.is-responsive .end-screen--review { padding: 26px 16px; }
+  .stage.is-responsive .end__title { font-size: 34px; }
+  .stage.is-responsive .end__body, .stage.is-responsive .review-layout { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .stage.is-responsive .end__reflect { grid-column: auto; }
+  .stage.is-responsive .end__btns .btn { flex: 1; min-width: 120px; }
+  .stage.is-responsive .reveal__item { grid-template-columns: auto minmax(0, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce), (pointer: coarse) {
+  .stage.is-responsive .hand .slot > .sa-card, .stage.is-responsive .gslot > .sa-card { animation: none; }
+  .stage.is-responsive .sa-body { --rx: 0deg !important; --ry: 0deg !important; }
+}
+
+/* Keep the current instruction reachable while scrolling the touch workbench. */
+.stage.is-responsive .run.has-coach .coach { position: sticky; top: max(8px, env(safe-area-inset-top)); z-index: 20; }
+.stage.is-responsive .gslot__readout { display: grid; gap: 5px; width: 160px; max-width: 100%; font-size: 16px; line-height: 1.65; color: #e3edde; white-space: normal; margin-top: 12px; }
+.stage.is-responsive .gslot__readout strong { font-size: 16px; color: #d6e8b7; }
+.stage.is-responsive .view--cross .garden { min-height: 390px; }
+.stage.is-responsive .view--cross .gslot { height: auto; }
+.stage.is-responsive .gslot > .sa-card.is-selected { --_lift: 0%; }
+.stage.is-responsive .coach-target { scroll-margin-block: 230px; }

@@ -176,13 +176,21 @@ export class HandView {
         const card = seedCard(v);
         card.classList.add('slot__card');
         if (this.selected.has(c.uid)) card.classList.add('is-selected');
-        it.wrap.replaceChildren(card);
+        const readout = h('div', { class: 'slot__readout', 'aria-hidden': 'true' },
+          h('span', null, phenoSentence(c.pheno, effBrix(c))),
+          v.genotypeText ? h('span', { class: 'slot__genotype' }, v.genotypeText) : null,
+          c.debuffed ? h('strong', null, '이번 주문에서 무효') : null,
+        );
+        it.wrap.replaceChildren(card, readout);
         it.card = card;
         it.sig = sig;
       }
       it.wrap.setAttribute('aria-label', `${i + 1}번 모종: ${phenoSentence(c.pheno, effBrix(c))}${c.debuffed ? ', 무효' : ''}`);
     });
     this.order = hand.map((c) => c.uid);
+    // A flowing touch layout follows DOM order rather than the desktop fan's transforms.
+    const wraps = this.order.map((uid) => this.items.get(uid)!.wrap);
+    if (wraps.some((wrap, i) => this.el.children[i] !== wrap)) this.el.replaceChildren(...wraps);
     this.layout();
     this.syncSelected();
     return this.deal(fresh);
@@ -190,6 +198,18 @@ export class HandView {
 
   /** 부채꼴 자리 계산 */
   layout(): void {
+    const responsive = this.ctx.stage.classList.contains('is-responsive');
+    this.el.classList.toggle('is-grid', responsive);
+    if (responsive) {
+      this.order.forEach((uid, i) => {
+        const it = this.items.get(uid);
+        if (!it) return;
+        it.wrap.style.removeProperty('transform');
+        it.wrap.style.removeProperty('z-index');
+        it.wrap.dataset.key = String(i + 1);
+      });
+      return;
+    }
     const n = this.order.length;
     const W = this.el.clientWidth || 840;
     const w = HAND_CARD_W;

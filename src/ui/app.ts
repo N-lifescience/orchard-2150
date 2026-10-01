@@ -15,10 +15,15 @@ import { openSettings } from './modals/settings';
 import { openTutorial } from './modals/tutorial';
 import { Modals, Tips, Toaster } from './overlay';
 import { loadBrand, loadPrefs, type UiPrefs } from './prefs';
-import { activeRunSlot, createRunSlot, listRunSlots, migrateLegacySave, migrateRunReflection, removeRunSlot, selectRunSlot, touchRunSlot, tutorialSeen, type RunSlot } from './runSlots';
+import { activeRunSlot, createRunSlot, listRunSlots, markTutorialSeen, migrateLegacySave, migrateRunReflection, removeRunSlot, selectRunSlot, touchRunSlot, type RunSlot } from './runSlots';
 import { RunScreen } from './run/runscreen';
 import { EndScreen } from './screens/end';
 import { TitleScreen } from './screens/title';
+import { PracticeCoach } from './practiceCoach';
+import { inferTutorialStep } from './tutorialFlow';
+import { initialPractice, loadPractice, savePractice, type PracticeProgress } from './practiceStorage';
+import { parentReason } from './learning';
+import { PRACTICE_DURATION } from './playDuration';
 
 type Mode = 'title' | 'run' | 'end';
 
@@ -47,6 +52,8 @@ export class App implements Ctx {
   private sessionRuns = 0;
   private ambientKey = '';
   private sysReduced: MediaQueryList | null = null;
+  private practice: PracticeProgress | null = null;
+  private coach: PracticeCoach | null = null;
 
   readonly open: Ctx['open'];
 
@@ -67,13 +74,14 @@ export class App implements Ctx {
     this.screenBox = h('div', { class: 'screens' });
     this.stage.appendChild(this.screenBox);
     const viewport = h('div', { class: 'viewport' }, this.stage);
-    const rotate = h('div', { class: 'rotate-hint', role: 'alert' }, h('div', { class: 'rotate-hint__icon', 'aria-hidden': 'true' }), h('p', null, '가로로 돌려 주세요'), h('p', { class: 'hint' }, '오차드 2150은 가로 화면에서 플레이해요.'));
-    root.replaceChildren(canvas, viewport, rotate);
+    root.replaceChildren(canvas, viewport);
 
     this.modals = new Modals(this.stage);
     this.tips = new Tips(this.stage);
     this.toast = new Toaster(this.stage);
     this.modals.onChange = () => this.tips.hide();
+    this.stage.addEventListener('click', () => queueMicrotask(() => this.refreshCoach()));
+    this.stage.addEventListener('keyup', () => queueMicrotask(() => this.refreshCoach()));
 
     try {
       this.bg = createBackground(canvas);
@@ -176,6 +184,7 @@ export class App implements Ctx {
     }
     this.syncAmbient(s);
     this.flushNotices(s);
+    this.refreshCoach();
   }
 
   private swapScreen(el: HTMLElement): void {
@@ -183,6 +192,8 @@ export class App implements Ctx {
     if (old === el) return;
     this.tips.hide();
     this.screenBox.replaceChildren(el);
+    this.stage.dataset.screen = this.mode;
+    if (this.stage.classList.contains('is-responsive')) queueMicrotask(() => window.scrollTo(0, 0));
     void play(el, [{ opacity: 0 }, { opacity: 1 }], { duration: 360 });
   }
 
@@ -210,6 +221,8 @@ export class App implements Ctx {
 
   private enterTitle(): void {
     this.modals.closeAll();
+    this.coach?.destroy();
+    this.coach = null;
     this.mode = 'title';
     this.run = null;
     this.swapScreen(this.title.el);
@@ -219,10 +232,96 @@ export class App implements Ctx {
 
   startRun(): void {
     this.modals.closeAll();
+    this.coach?.destroy();
+    this.coach = null;
     this.run = new RunScreen(this);
     this.mode = 'run';
     this.swapScreen(this.run.el);
     this.render();
+  }
+
+  startPractice(): void {
+    if (this.isBusy()) return;
+    const welcome = this.modals.open({
+      title: '레아와 첫 계약을 해 봐요',
+      kicker: `직접 조작하는 튜토리얼 · ${PRACTICE_DURATION}`,
+      content: h('div', { class: 'prose practice-intro' },
+        h('p', null, '부모 고르기 → 교배 → 모종 출하 → 보상 받기 → 다음 주문 준비까지 직접 해 봅니다. 화면의 레아 안내가 지금 할 일을 알려 줍니다.'),
+        h('p', null, '짧은 연대기의 첫 계약으로 연습합니다. 실패한 계약은 다시 할 수 있고, 실습을 마치면 보상과 모종을 가진 채 다음 계약을 이어갈 수 있어요.'),
+        h('p', null, '기존 연대기는 저장해 두고, “첫 계약 실습”이라는 새 과수원을 만듭니다. 중간에 홈으로 가도 실습을 이어할 수 있어요.'),
+      ),
+      actions: [button('돌아가기', () => welcome.close(), { class: 'btn--ghost' }), button('실습 시작', () => {
+        welcome.close();
+        if (this.mode !== 'title') {
+          this.game.save();
+          if (this.activeSlot) touchRunSlot(this.activeSlot.id);
+        }
+        this.brand = '첫 계약 실습';
+        this.newRun('quick', 'heritage', 'learning', 3, true);
+      }, { class: 'btn--play', 'data-autofocus': '' })],
+    });
+  }
+
+  private refreshCoach(): void {
+    if (!this.practice?.active || this.mode === 'title') return;
+    if (!this.coach) this.coach = new PracticeCoach(this.stage, {
+      acknowledge: (step) => {
+        if (!this.practice || this.isBusy()) return;
+        if (step === 'order') this.practice.orderRead = true;
+        if (step === 'observe') this.practice.observed = true;
+        this.persistPractice();
+        this.refreshCoach();
+      },
+      stop: () => this.stopPractice(),
+      finish: (fresh) => this.finishPractice(fresh),
+    });
+    const host = this.screenBox.firstElementChild as HTMLElement | null;
+    if (!host) return;
+    if (this.coach.el.parentElement !== host) host.prepend(this.coach.el);
+    host.classList.add('has-coach');
+    this.coach.el.classList.toggle('coach--end', this.mode === 'end');
+    const parents = this.run?.cross.tutorialInteraction ?? { parentCount: 0, predicted: false };
+    const selectedCards = this.run?.play.hand.selected.size ?? 0;
+    const s = this.game.state;
+    const step = inferTutorialStep(s, { ...parents, ...this.practice, selectedCards });
+    let feedback = '';
+    if (step === 'parents') feedback = `지금 ${parents.parentCount} / 2포기 선택했어요.`;
+    if (step === 'predict' || step === 'cross') {
+      const ids = this.run?.cross.chosenParents ?? [];
+      feedback = parentReason(this.game.plantById(ids[0] ?? ''), this.game.plantById(ids[1] ?? ''));
+    }
+    if (step === 'observe' && s.prediction) feedback = `실제 관찰: 루비 ${s.prediction.ruby}알 · 골드 ${s.prediction.gold}알`;
+    if (step === 'select-cards' || step === 'ship') feedback = `현재 ${selectedCards} / ${Math.min(s.maxSelect, s.hand.length)}장 선택 · 출하 ${s.handsLeft}회 남음`;
+    this.coach.update(step, s, feedback, this.isBusy());
+  }
+
+  private persistPractice(): void {
+    if (this.practice) savePractice(this.game.getSaveKey(), this.practice);
+  }
+
+  private finishPractice(fresh: boolean): void {
+    if (!this.practice || this.isBusy()) return;
+    this.practice.active = false;
+    this.practice.completed = true;
+    this.persistPractice();
+    markTutorialSeen();
+    this.coach?.destroy();
+    this.coach = null;
+    if (fresh) { this.goTitle(); this.title.prepareNew(); }
+    else this.toast.show('실습 완료. 이제 다음 계약을 자유롭게 진행하세요.', 'good');
+  }
+
+  private stopPractice(): void {
+    if (!this.practice || this.isBusy()) return;
+    const modal = this.modals.open({
+      title: '실습 안내를 종료할까요?',
+      content: h('p', { class: 'hint' }, '지금까지의 교배, 보상, 모종은 그대로 남고 이 과수원을 자유롭게 플레이합니다. 홈에서 실습을 새로 시작할 수도 있어요.'),
+      actions: [button('안내 계속 보기', () => modal.close(), { class: 'btn--ghost' }), button('안내만 종료', () => {
+        modal.close();
+        if (this.practice) { this.practice.active = false; this.persistPractice(); }
+        this.coach?.destroy(); this.coach = null;
+      }, { class: 'btn--play' })],
+    });
   }
 
   private showRun(): void {
@@ -239,7 +338,7 @@ export class App implements Ctx {
     this.end.show(s);
   }
 
-  private newRun(mode: RunMode, policy: PolicyId, playStyle: PlayStyle = 'learning', seed?: number): void {
+  private newRun(mode: RunMode, policy: PolicyId, playStyle: PlayStyle = 'learning', seed?: number, practice = false): void {
     const slot = createRunSlot(this.brand, mode, policy, undefined, playStyle);
     if (!slot) {
       const warning = this.modals.open({
@@ -252,8 +351,8 @@ export class App implements Ctx {
             this.activeSlot = null;
             this.game.setSaveKey(`${SAVE_KEY}:slot:session-${++this.sessionRuns}`);
             this.game.newRun({ mode, policy, playStyle, seed });
+            this.practice = practice ? initialPractice() : null;
             this.startRun();
-            if (!tutorialSeen()) queueMicrotask(() => openTutorial(this));
           }, { class: 'btn--play' }),
         ],
       });
@@ -262,8 +361,9 @@ export class App implements Ctx {
     this.activeSlot = slot;
     this.game.setSaveKey(slot.key);
     this.game.newRun({ mode, policy, playStyle, seed });
+    this.practice = practice ? initialPractice() : null;
+    this.persistPractice();
     this.startRun();
-    if (!tutorialSeen()) queueMicrotask(() => openTutorial(this));
   }
 
   private resumeRun(id: string): void {
@@ -281,6 +381,7 @@ export class App implements Ctx {
     this.activeSlot = slot;
     this.brand = slot.brand;
     selectRunSlot(id);
+    this.practice = loadPractice(slot.key);
     this.startRun();
   }
 
@@ -359,11 +460,14 @@ export class App implements Ctx {
   private fit(): void {
     const W = window.innerWidth;
     const H = window.innerHeight - (document.querySelector('.debug-panel')?.getBoundingClientRect().height ?? 0);
-    const s = Math.max(0.75, Math.min(W / 1280, H / 720));
+    const responsive = W <= 1100 || !!window.matchMedia?.('(pointer: coarse)').matches;
+    document.documentElement.classList.toggle('is-responsive-ui', responsive);
+    this.stage.classList.toggle('is-responsive', responsive);
+    const s = responsive ? 1 : Math.min(W / 1280, H / 720);
     stage.scale = s;
-    this.stage.style.transform = `scale(${s})`;
-    this.stage.style.left = `${Math.max(0, Math.round((W - 1280 * s) / 2))}px`;
-    this.stage.style.top = `${Math.max(0, Math.round((H - 720 * s) / 2))}px`;
+    this.stage.style.transform = responsive ? 'none' : `scale(${s})`;
+    this.stage.style.left = responsive ? '0' : `${Math.max(0, Math.round((W - 1280 * s) / 2))}px`;
+    this.stage.style.top = responsive ? '0' : `${Math.max(0, Math.round((H - 720 * s) / 2))}px`;
     this.run?.relayout();
   }
 
@@ -431,7 +535,7 @@ export class App implements Ctx {
     const mode = h('select', { 'aria-label': '검증 연대기 길이' },
       h('option', { value: 'quick' }, '빠른 4시즌'), h('option', { value: 'full' }, '전체 8시즌'),
       h('option', { value: 'unit-sex' }, '성염색체'), h('option', { value: 'unit-chromo' }, '염색체 이상'), h('option', { value: 'unit-edit' }, '유전자 편집'));
-    const style = h('select', { 'aria-label': '검증 진행 방식' }, h('option', { value: 'learning' }, '수업 모드'), h('option', { value: 'challenge' }, '도전 모드'));
+    const style = h('select', { 'aria-label': '검증 진행 방식' }, h('option', { value: 'learning' }, '재도전 허용'), h('option', { value: 'challenge' }, '실패 시 종료'));
     const status = h('output', { class: 'debug-panel__status', 'aria-live': 'polite' }, '검증 준비');
     const auto = button('자동 진행', () => {
       auto.disabled = true;

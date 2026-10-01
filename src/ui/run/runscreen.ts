@@ -2,7 +2,7 @@
 import type { Phase, RunState } from '../../contract/game';
 import type { Ctx } from '../ctx';
 import { h } from '../h';
-import { play } from '../motion';
+import { play, rectIn } from '../motion';
 import { CashoutView } from './cashout';
 import { CrossView } from './cross';
 import { PlayView } from './play';
@@ -35,8 +35,11 @@ export class RunScreen {
     this.cashout = new CashoutView(ctx, () => this.side.moneyEl);
     this.select = new SelectView(ctx);
     this.shop = new ShopView(ctx);
-    // 꼬투리 버튼 자리 (무대 좌표) — 교배 연출이 끝나면 여기로 날아간다
-    this.cross.podTarget = () => ({ cx: 300 + 980 - 16 - 48, cy: 720 - 18 - 64 });
+    // Responsive screens move the pod; use its actual stage-relative position.
+    this.cross.podTarget = () => {
+      if (!this.play.podBtn.isConnected) return null;
+      return rectIn(this.play.podBtn, ctx.stage);
+    };
     this.phaseBox = h('div', { class: 'phase' });
     this.el = h(
       'div',
@@ -64,12 +67,16 @@ export class RunScreen {
     this.reagents.update(s);
     const k = RunScreen.keyOf(s.phase);
     if (!k) return;
+    const phaseChanged = this.current !== null && k !== this.current;
+    this.el.dataset.phase = k;
     if (k !== this.current) {
       const prev = this.current;
       this.current = k;
       const next = this.viewFor(k).el;
+      next.classList.remove('is-leaving');
       if (prev) {
         const old = this.viewFor(prev).el;
+        old.classList.add('is-leaving');
         void play(old, [{ opacity: 1, translate: '0 0' }, { opacity: 0, translate: '0 20px' }], { duration: 200 }).then(() => {
           if (old !== this.viewFor(this.current ?? k).el) old.remove();
         });
@@ -96,6 +103,13 @@ export class RunScreen {
         break;
     }
     if (k !== 'play') this.side.preview(null);
+    if (phaseChanged && this.ctx.stage.classList.contains('is-responsive')) {
+      queueMicrotask(() => {
+        const coachHeight = this.el.querySelector('.coach')?.getBoundingClientRect().height ?? 0;
+        const top = window.scrollY + this.phaseBox.getBoundingClientRect().top - coachHeight - 20;
+        window.scrollTo(0, Math.max(0, top));
+      });
+    }
   }
 
   relayout(): void {

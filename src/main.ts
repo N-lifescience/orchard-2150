@@ -7,6 +7,8 @@ import './styles/readability.css';
 import './styles/title.css';
 import './styles/notebook.css';
 import './styles/effects.css';
+import './styles/practice.css';
+import './styles/responsive.css';
 import { App } from './ui/app';
 
 function boot(): void {

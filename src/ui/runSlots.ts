@@ -2,6 +2,7 @@
 import type { PlayStyle, PolicyId, RunMode } from '../contract/game';
 import { SAVE_KEY, type StorageLike } from '../game/game';
 import { sanitizeBrand, sanitizeLine } from './fmt';
+import { practiceKey } from './practiceStorage';
 
 export const SLOTS_KEY = 'seed-atelier-2150:slots:v1';
 export const TUTORIAL_KEY = 'seed-atelier-2150:tutorial:v1';
@@ -172,6 +173,7 @@ export function removeRunSlot(id: string, kv: StorageLike | null = localStore())
   if (!slot) return;
   try { kv?.removeItem(slot.key); } catch { /* no storage */ }
   try { kv?.removeItem(`${slot.key}:reflection`); } catch { /* no storage */ }
+  try { kv?.removeItem(practiceKey(slot.key)); } catch { /* no storage */ }
   index.slots = index.slots.filter((s) => s.id !== id);
   if (index.activeId === id) index.activeId = index.slots[0]?.id ?? null;
   write(kv, index);
@@ -181,6 +183,7 @@ export function removeAllRunSlots(kv: StorageLike | null = localStore()): void {
   for (const slot of read(kv).slots) {
     try { kv?.removeItem(slot.key); } catch { /* continue */ }
     try { kv?.removeItem(`${slot.key}:reflection`); } catch { /* continue */ }
+    try { kv?.removeItem(practiceKey(slot.key)); } catch { /* continue */ }
   }
   try { kv?.removeItem(SAVE_KEY); } catch { /* continue */ }
   try { kv?.removeItem(`${SAVE_KEY}:reflection`); } catch { /* continue */ }

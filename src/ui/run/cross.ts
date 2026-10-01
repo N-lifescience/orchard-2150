@@ -109,6 +109,13 @@ export class CrossView {
     this.selfingSelected = false;
   }
 
+  get tutorialInteraction(): { parentCount: number; predicted: boolean } {
+    return { parentCount: this.selfingSelected && this.sel.length === 1 ? 2 : this.sel.length, predicted: !!this.prediction };
+  }
+  get chosenParents(): string[] {
+    return this.selfingSelected && this.sel.length === 1 ? [this.sel[0], this.sel[0]] : this.sel.slice();
+  }
+
   update(s: RunState): void {
     this.renderOrder(s);
     const alive = new Set(s.garden.map((p) => p.id));
@@ -147,7 +154,11 @@ export class CrossView {
       }
       if (it.sig !== sig) {
         it.sig = sig;
-        it.wrap.replaceChildren(plantCard(v));
+        it.wrap.replaceChildren(plantCard(v), h('div', { class: 'gslot__readout', 'aria-hidden': 'true' },
+          h('strong', null, p.name),
+          h('span', null, phenoSentence(p.pheno, p.pheno.brix)),
+          v.genotypeText ? h('span', null, `유전자형 ${v.genotypeText}`) : h('span', null, '유전자형 미공개'),
+        ));
       }
       it.wrap.setAttribute('aria-label', `${i + 1}. ${p.name}: ${speciesLabel(p.pheno)}, ${phenoSentence(p.pheno, p.pheno.brix)}`);
       kids.push(it.wrap);
@@ -427,7 +438,8 @@ export class CrossView {
   private async pollen(ra: ReturnType<typeof rectIn> | null, rb: ReturnType<typeof rectIn> | null): Promise<void> {
     if (motion.fast) return;
     const stageEl = this.ctx.stage;
-    const mid = { x: 790, y: 330 };
+    const area = rectIn(this.garden, stageEl);
+    const mid = { x: area.cx, y: area.cy };
     const jobs: Promise<void>[] = [];
     const sources = [ra, rb].filter((r): r is NonNullable<typeof r> => !!r);
     if (!motion.reduced) {

@@ -1,13 +1,14 @@
 import type { Ctx } from '../ctx';
 import { button, h, replaceChildren } from '../h';
 import { markTutorialSeen } from '../runSlots';
+import { PRACTICE_DURATION } from '../playDuration';
 
 const STEPS = [
   {
     tag: '01 / 목표',
     title: '점수와 약속한 형질을 모두 납품하세요',
     body: "의뢰에는 목표 점수와 필수 형질·수량이 적혀 있어요. 둘 다 채워야 계약을 완료해요.\n\n한 시즌에 세 계약을 마치고 마지막 시즌의 특별 계약까지 끝내면 승리해요. 빠른 게임은 4시즌, 전체 게임은 8시즌이에요.",
-    action: "수업 플레이에서는 실패한 계약을 다시 시도할 수 있습니다. 도전 플레이에서는 남은 출하를 모두 쓰거나 씨앗이 떨어지면 연대기가 끝나요.",
+    action: "재도전 허용 방식에서는 실패한 계약을 다시 시도할 수 있습니다. 실패 시 종료 방식에서는 남은 출하를 모두 쓰거나 씨앗이 떨어지면 연대기가 끝나요.",
   },
   {
     tag: '02 / 교배',
@@ -25,7 +26,7 @@ const STEPS = [
     tag: '04 / 다음 계약',
     title: '보상을 써서 다음 주문을 준비하세요',
     body: "성공하면 돈을 받고 모종을 온실에 선발한 뒤 공방에서 비법·시약·씨앗을 살 수 있어요. 온실과 비법 칸은 제한되어 있으니 어떤 형질을 남길지 결정해야 해요.",
-    action: "단원 게임은 준비된 온실과 도구로 특정 단원을 다루는 2시즌 연대기예요. 수업 플레이의 첫 안내는 점차 줄어들어요. 연구 노트에서 관찰 기록과 실제 과학 설명을 함께 읽어 보세요.",
+    action: "단원 게임은 준비된 온실과 도구로 특정 단원을 다루는 2시즌 연대기예요. 재도전 허용 방식의 첫 안내는 점차 줄어들어요. 연구 노트에서 관찰 기록과 실제 과학 설명을 함께 읽어 보세요.",
   },
 ] as const;
 
@@ -51,8 +52,9 @@ export function openTutorial(ctx: Ctx): void {
       h('div', { class: 'tutorial__progress', 'aria-label': `${page + 1} / ${STEPS.length}` }, ...STEPS.map((_, i) => h('span', { class: i === page ? 'is-current' : '' }))),
     );
     replaceChildren(footer,
+      button(`직접 해 보기 · ${PRACTICE_DURATION}`, () => { modal.close(); ctx.startPractice(); }, { class: 'btn--gold' }),
       page > 0 ? button('이전', () => { page--; draw(); }, { class: 'btn--ghost' }) : null,
-      button(page === STEPS.length - 1 ? '게임으로 돌아가기' : '다음', () => {
+      button(page === STEPS.length - 1 ? ctx.screen === 'title' ? '닫기' : '게임으로 돌아가기' : '다음', () => {
         if (page === STEPS.length - 1) modal.close();
         else { page++; draw(); }
       }, { class: 'btn--play' }),

@@ -415,7 +415,7 @@ describe('게임 흐름', () => {
     st.phase = 'cashout';
     st.handsLeft = 0;
     st.money = 0;
-    expect(g.cashoutLines().at(-1)).toEqual({ label: '바이오테크 계약 보너스', amount: 1 });
+    expect(g.cashoutLines().at(-1)).toEqual({ label: '형질전환팀 계약 보너스', amount: 1 });
   });
 
   it('선발: 환경 효과(brixMod)는 버리고, 세대·부모·이름을 붙인다', () => {

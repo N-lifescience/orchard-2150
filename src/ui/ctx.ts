@@ -6,7 +6,7 @@ import type { UiPrefs } from './prefs';
 
 export interface Ctx {
   readonly game: GameImpl;
-  /** 1280×720 무대 */
+  /** 데스크톱 작업대 또는 반응형 작업대 */
   readonly stage: HTMLElement;
   readonly modals: Modals;
   readonly tips: Tips;
@@ -25,6 +25,7 @@ export interface Ctx {
   /** 화면 전환 */
   goTitle(): void;
   startRun(): void;
+  startPractice(): void;
 
   /** 모달 여는 곳 모음 */
   open: {

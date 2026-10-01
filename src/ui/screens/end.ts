@@ -71,7 +71,7 @@ export class EndScreen {
     };
     replaceChildren(this.el,
       h('header', { class: 'end__head' },
-        h('div', { class: 'end__kicker' }, `${this.ctx.brand ? this.ctx.brand + ' · ' : ''}${s.playStyle === 'learning' ? '수업 모드' : '도전 모드'} 플레이 기록`),
+        h('div', { class: 'end__kicker' }, `${this.ctx.brand ? this.ctx.brand + ' · ' : ''}${s.playStyle === 'learning' ? '재도전 허용' : '실패 시 종료'} 플레이 기록`),
         h('h1', { class: ['end__title', win ? 'is-win' : 'is-lose'] }, win ? '마지막 계약까지 완수했어요' : '이번 도전은 여기까지예요'),
         h('p', { class: 'end__sub' }, win ? '모든 계약의 점수와 납품 조건을 충족했습니다. 기록을 근거로 선택을 돌아보세요.' : `시즌 ${s.ante}의 ${order.name}: 목표 ${fmt.score(order.target)}점, 획득 ${fmt.score(s.roundScore)}점. ${s.review?.reason ?? ''}`),
       ),
@@ -157,7 +157,7 @@ export class EndScreen {
     return [
       '오차드 2150 · 플레이 보고서',
       `과수원: ${this.ctx.brand || '이름 없음'}`,
-      `진행 방식: ${s.playStyle === 'learning' ? '수업 모드' : '도전 모드'} / 운영 방식: ${pol?.name ?? s.policy}`,
+      `진행 방식: ${s.playStyle === 'learning' ? '재도전 허용' : '실패 시 종료'} / 운영 방식: ${pol?.name ?? s.policy}`,
       `결과: ${s.phase === 'victory' ? '모든 계약 완료' : '도전 종료'} / 시즌 ${s.ante}/${s.maxAnte} / 재도전 ${s.stats.retries}번`,
       `교배 ${s.stats.crosses}번 / 자가수분 ${s.stats.selfings}번 / 편집 ${s.stats.edits}번 / 꽃가루 유출 ${s.stats.lmoEvents}번`,
       ...(s.geneFlow ? [

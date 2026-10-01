@@ -1063,7 +1063,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
       const cap = 5 + 5 * countJoker('seedVault');
       const interest = Math.min(Math.floor(Math.max(0, st.money) / 5), cap);
       if (interest > 0) lines.push({ label: `이자 ($5마다 $1, 최대 $${cap})`, amount: interest });
-      if (st.policy === 'biotech') lines.push({ label: '바이오테크 계약 보너스', amount: 1 });
+      if (st.policy === 'biotech') lines.push({ label: '형질전환팀 계약 보너스', amount: 1 });
       return lines;
     },
 
@@ -1286,7 +1286,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
         case 'scissors':
           return { ok: false, reason: '편집 작업대에서 써요.' };
         case 'vector': {
-          if (st.policy !== 'biotech') return { ok: false, reason: '이 브랜드 철학에서는 형질전환을 하지 않아요.' };
+          if (st.policy !== 'biotech') return { ok: false, reason: '형질전환 도구는 형질전환팀만 사용할 수 있어요.' };
           const p = targets.length === 1 ? plantById(targets[0]) : undefined;
           if (!p) return { ok: false, reason: '온실의 포기 하나를 골라 주세요.' };
           p.genome = addTransgene(p.genome, rng());
@@ -1364,7 +1364,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
     applyEdit(reagentIndex, targetId, group, copyIndex, locus, newSeq) {
       if (!(PLAY_PHASES as readonly string[]).includes(st.phase)) return { ok: false, reason: '지금은 편집할 수 없어요.' };
       if (st.reagents[reagentIndex] !== 'scissors') return { ok: false, reason: '그 칸에 유전자 가위가 없어요.' };
-      if (st.policy === 'heritage') return { ok: false, reason: '전통 육종팀은 유전자 가위를 쓰지 않아요.' };
+      if (st.policy === 'heritage') return { ok: false, reason: '교배·선발팀은 유전자 가위를 쓰지 않아요.' };
       const h = findHolder(targetId);
       if (!h) return { ok: false, reason: '온실 포기나 손에 든 모종만 편집할 수 있어요.' };
       const g = h.kind === 'plant' ? h.plant.genome : h.card.genome;

@@ -1,0 +1,54 @@
+/* Lea's briefing uses the existing empty inventory space during the first contract. */
+.gslot__readout { display: none; }
+.title__practice-hint { margin: 10px 0 22px; color: #cbdcc7; font-size: 13px; line-height: 1.75; }
+.title__start .title__save-hint { margin-bottom: 16px; }
+.title__home { max-height: 480px; }
+.title__start { padding: 20px 25px; }
+.title__start > p { margin: 10px 0 16px; }
+.modecard__stats { flex-wrap: wrap; gap: 4px 14px; }
+.modecard__time { color: #f0d799; }
+.wiz__duration-hint { font-size: 12px; line-height: 1.65; color: #c2d2c8; max-width: 920px; }
+.wiz--mode { gap: 8px; }
+.wiz--mode .modecard { gap: 4px; padding-top: 10px; padding-bottom: 8px; }
+.wiz--mode .wiz__mode-groups { gap: 12px; }
+.wiz--name { gap: 15px; }
+.practice-intro { font-size: 16px; line-height: 1.8; }
+.coach { position: absolute; left: 308px; right: 12px; top: 12px; z-index: 8; min-width: 0; padding: 12px 18px; border: 1px solid #87ab76; border-left: 4px solid #bad599; border-radius: 8px; background: #18382b; color: #eff3e8; }
+.run.has-coach .topbar { visibility: hidden; }
+.coach__head { display: flex; align-items: center; gap: 12px; margin-bottom: 5px; }
+.coach__manager { font-size: 12px; color: #c3d8b7; }
+.coach__count { color: #eddbad; font-size: 13px; margin-left: auto; }
+.coach__head .btn { min-height: 30px; padding: 3px 9px; font-size: 12px; box-shadow: none; }
+.coach__progress { width: 100%; height: 3px; display: block; appearance: none; border: 0; accent-color: #bad599; margin-bottom: 8px; }
+.coach__progress::-webkit-progress-bar { background: #345542; }
+.coach__progress::-webkit-progress-value { background: #bad599; }
+.coach__instruction { padding-right: 200px; }
+.coach__title { font-family: var(--serif); font-size: 19px; line-height: 1.4; margin: 0 0 3px; }
+.coach__body { font-size: 13px; line-height: 1.6; }
+.coach__evidence { color: #eddbad; font-size: 12px; margin-top: 4px; line-height: 1.5; }
+.coach__actions { position: absolute; right: 18px; bottom: 12px; display: grid; gap: 7px; width: 182px; }
+.coach__actions .btn { min-height: 34px; padding: 5px 9px; font-size: 13px; white-space: normal; box-shadow: none; }
+.coach.is-folded .coach__body, .coach.is-folded .coach__evidence { display: none; }
+.coach.is-complete .coach__actions { width: 210px; }
+.coach.is-complete .coach__instruction { padding-right: 226px; }
+.coach--end { position: relative; inset: auto; width: 100%; }
+.coach-target { outline: 3px solid #b7d695; outline-offset: 4px; scroll-margin-block: 120px; }
+.coach-target:focus-visible { outline-color: #fff1c1; }
+.stage:not(.is-responsive) .view.is-leaving { visibility: hidden; pointer-events: none; }
+.stage.is-responsive .run.has-coach .topbar { display: none; }
+.stage.is-responsive .coach { padding: 16px; }
+.stage.is-responsive .coach__manager { font-size: 14px; }
+.stage.is-responsive .coach__head { flex-wrap: wrap; gap: 6px 10px; }
+.stage.is-responsive .coach__head .btn { min-height: 44px; font-size: 14px; }
+.stage.is-responsive .coach__instruction { padding-right: 0; }
+.stage.is-responsive .coach__title { font-size: 23px; }
+.stage.is-responsive .coach__body { font-size: 16px; line-height: 1.8; margin-top: 6px; }
+.stage.is-responsive .coach__evidence { font-size: 15px; margin-top: 8px; }
+.stage.is-responsive .coach__actions { position: static; width: 100%; display: flex; flex-wrap: wrap; margin-top: 12px; }
+.stage.is-responsive .coach__actions .btn { min-height: 44px; font-size: 16px; flex: 1; }
+.stage.is-responsive .coach.is-complete .coach__instruction { padding-right: 0; }
+.stage.is-responsive .coach.is-complete .coach__actions { width: 100%; }
+.stage.is-responsive .coach.is-folded .coach__actions { margin-top: 8px; }
+.stage.is-responsive .coach.is-folded .coach__manager { display: none; }
+.stage.is-responsive .coach.is-folded .coach__count { margin-left: 0; margin-right: auto; }
+.stage.is-responsive .coach.is-folded .coach__title { font-size: 20px; }
