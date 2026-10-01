@@ -11,6 +11,7 @@ import { HandView, HAND_CARD_W, type HandItem } from './hand';
 import type { Sidebar } from './sidebar';
 import type { JokerBar } from './topbar';
 import { colorExpectationText, deliveryGoals, knownColorExpectation, selectedGoalText } from '../learning';
+import { impact, scoreStream, contractSeal } from '../effects';
 
 export class PlayView {
   readonly el: HTMLElement;
@@ -133,6 +134,7 @@ export class PlayView {
       setText(this.requestEl, `추가 보상: ${order.requestedColor === 'ruby' ? '루비' : '골드'} 과육 · ${s.requestFulfilled ? '출하 완료 (+$2)' : '출하하면 +$2'}`);
     }
     this.playBtn.disabled = busy || sel.length === 0 || s.handsLeft <= 0;
+    this.playBtn.classList.toggle('is-ready', !this.playBtn.disabled);
     this.discardBtn.disabled = busy || sel.length === 0 || s.discardsLeft <= 0;
     this.sortBrix.disabled = busy;
     this.sortSuit.disabled = busy;
@@ -227,6 +229,10 @@ export class PlayView {
       try {
         await this.runScoring(uids, trace, before, target);
       } finally {
+        this.side.scoring = false;
+        this.hideBanner();
+        this.stageRow.replaceChildren();
+        this.el.querySelectorAll('.tally, .contract-seal').forEach((el) => el.remove());
         this.scoringNow = false;
         this.el.classList.remove('is-scoring');
         motion.skip = false;
@@ -262,6 +268,8 @@ export class PlayView {
     });
     this.hand.layout();
     await all(items.map((it, i) => flipFrom(it.wrap, firsts.get(it.uid) ?? it.wrap.getBoundingClientRect(), { duration: 380, delay: i * 40 })));
+    items.forEach((it) => impact(this.ctx.stage, it.card, 'leaf', .35));
+    await all(items.map((it, i) => play(it.wrap, [{ translate: '0 -7px', scale: '1.035' }, { translate: '0 3px', scale: '.985', offset: .65 }, { translate: '0 0', scale: '1' }], { duration: 180, delay: i * 20, decorative: true })));
     // 점수 내는 카드는 살짝 위로
     const scoring = new Set(trace.scoringUids);
     for (const it of items) {
@@ -296,6 +304,7 @@ export class PlayView {
     audio.play('scoreTally', { intensity: Math.min(1, trace.total / Math.max(1, target)) });
     const totalEl = h('div', { class: 'tally' }, h('span', { class: 'tally__cm' }, h('b', { class: 'c' }, fmt.mult(chips)), ' × ', h('b', { class: 'm' }, fmt.mult(mult))), h('span', { class: 'tally__num num' }, fmt.score(trace.total)));
     this.el.appendChild(totalEl);
+    impact(this.ctx.stage, totalEl, 'gold', .8);
     await play(totalEl, [{ opacity: 0, scale: '0.4' }, { opacity: 1, scale: '1.15' }, { scale: '1' }], { duration: 480, easing: 'cubic-bezier(0.2, 1.4, 0.4, 1)' });
     this.shake(Math.min(1, trace.total / Math.max(1, target)) * 0.8 + 0.2);
     await wait(420);
@@ -305,11 +314,13 @@ export class PlayView {
     await play(totalEl, [{ translate: '0 0', scale: '1', opacity: 1 }, { translate: `${to.cx - from.cx}px ${to.cy - from.cy}px`, scale: '0.35', opacity: 0.2 }], { duration: 440, easing: 'cubic-bezier(0.6, 0, 0.8, 0.4)' });
     totalEl.remove();
     const after = before + trace.total;
+    impact(this.ctx.stage, side.roundEl, 'gold', .6);
     await side.setRound(after, true);
     if (trace.cleared) {
       side.burst();
       this.ctx.bg?.pulse(1);
       this.sparks(to);
+      await contractSeal(this.el, target, after);
     } else {
       this.ctx.bg?.pulse(Math.min(0.8, 0.25 + trace.total / Math.max(1, target)));
     }
@@ -357,6 +368,10 @@ export class PlayView {
     else if (kind === 'x') audio.play(step.xmult !== undefined && step.xmult < 1 ? 'bossReveal' : 'xmult');
     else if (kind === 'void') audio.play('deselect');
     if (step.kind === 'joker') audio.play('jokerTrigger');
+    if (el && (isChip || isMult || isX)) {
+      impact(this.ctx.stage, el, isChip ? 'chip' : 'mult', isX ? .9 : .25);
+      scoreStream(this.ctx.stage, el, isChip ? side.chipsBox : side.multBox, isChip ? 'chip' : 'mult');
+    }
     this.popup(el, step.label, kind);
     const jobs: Promise<void>[] = [];
     if (step.chips !== undefined) jobs.push(side.setChips(step.chipsAfter));

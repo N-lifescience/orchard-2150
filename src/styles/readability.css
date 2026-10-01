@@ -1,0 +1,31 @@
+/* Korean text should wrap at spaces, with a real paragraph gap. */
+body { word-break: keep-all; overflow-wrap: break-word; line-height: 1.6; }
+.prose > p + p { margin-top: .85em; }
+.hint { line-height: 1.7; }
+.modal__body { line-height: 1.7; }
+.item__desc, .concept__body, .concept__box, .teacher__list, .learning-help p { line-height: 1.75; }
+.concept__body p + p, .concept__box p + p { margin-top: .9em; }
+.delivery-goal__label { overflow-wrap: break-word; }
+.side__ordername { line-height: 1.45; }
+.side__client { line-height: 1.6; }
+.side__manager { line-height: 1.65; }
+.side__bossrule { line-height: 1.6; }
+.cross__guidance { line-height: 1.65; gap: 6px; }
+.cross__prediction .hint { line-height: 1.65; }
+.ordercard__client, .ordercard__request, .next__request, .next__rule, .orderbox__client, .orderbox__rule { line-height: 1.65; }
+.tutorial__body { display: grid; gap: 14px; line-height: 1.8; }
+.tutorial__action { line-height: 1.8; }
+.teacher__list { gap: 10px; }
+.review-goals p { line-height: 1.7; }
+.report-paper { overflow-wrap: break-word; }
+.tip { line-height: 1.65; }
+.side.has-delivery .side__client { font-size: 12.5px; -webkit-line-clamp: 3; }
+.side.has-delivery .side__manager { font-size: 12px; padding: 6px 8px; }
+.side.has-delivery .side__bossrule { font-size: 12px; -webkit-line-clamp: initial; }
+.side.has-delivery .side__menu { font-size: 12.5px; }
+.side.has-delivery .stat__lbl, .delivery-goals--compact .delivery-goals__head { font-size: 12px; }
+.delivery-goals--compact .delivery-goal { font-size: 12px; line-height: 1.6; }
+.view--cross .ordercard__client { font-size: 14px; }
+.cross__guidance { font-size: 13px; }
+.cross__guidance b, .cross__guidance small, .cross__prediction .hint { font-size: 12.5px; }
+.cross__tools .btn { font-size: 12.5px; padding: 5px 10px; }

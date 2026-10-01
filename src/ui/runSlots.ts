@@ -96,6 +96,33 @@ export function listRunSlots(kv: StorageLike | null = localStore()): RunSlot[] {
   }).sort((a, b) => b.updatedAt - a.updatedAt);
 }
 
+export interface RunSlotDetails {
+  status: 'playing' | 'review' | 'victory' | 'gameover' | 'unknown';
+  label: string;
+  location: string;
+  completed: number;
+  total: number;
+}
+
+/** Describe the saved chronicle without loading or changing its game state. */
+export function runSlotDetails(slot: RunSlot, kv: StorageLike | null = localStore()): RunSlotDetails {
+  const start = slot.mode === 'unit-sex' ? 3 : slot.mode === 'unit-chromo' ? 5 : slot.mode === 'unit-edit' ? 7 : 1;
+  const end = slot.mode === 'quick' || slot.mode === 'unit-sex' ? 4 : slot.mode === 'unit-chromo' ? 6 : 8;
+  const total = (end - start + 1) * 3;
+  const unknown: RunSlotDetails = { status: 'unknown', label: '기록 확인 필요', location: '진행 정보를 확인할 수 없습니다.', completed: 0, total };
+  try {
+    const raw = kv?.getItem(slot.key);
+    if (!raw) return unknown;
+    const state = JSON.parse(raw) as { ante?: number; orderIdx?: number; phase?: string };
+    if (!Number.isInteger(state.ante) || !Number.isInteger(state.orderIdx)) return unknown;
+    const status = state.phase === 'victory' ? 'victory' : state.phase === 'gameover' ? 'gameover' : state.phase === 'review' ? 'review' : 'playing';
+    const labels = { victory: '모든 계약 완료', gameover: '도전 종료', review: '재도전 대기', playing: '진행 중' };
+    const settled = ['cashout', 'select', 'shop', 'victory'].includes(state.phase ?? '') ? 1 : 0;
+    const completed = status === 'victory' ? total : Math.max(0, Math.min(total, ((state.ante ?? start) - start) * 3 + (state.orderIdx ?? 0) + settled));
+    return { status, label: labels[status], location: `시즌 ${state.ante} · 계약 ${(state.orderIdx ?? 0) + 1} / 3`, completed, total };
+  } catch { return unknown; }
+}
+
 export function runSlotProgress(slot: RunSlot, kv: StorageLike | null = localStore()): string {
   try {
     const raw = kv?.getItem(slot.key);

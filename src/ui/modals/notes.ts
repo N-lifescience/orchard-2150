@@ -10,13 +10,17 @@ import { activeRunSlot, removeRunSlot } from '../runSlots';
 
 const ORDER = Object.keys(CONCEPTS) as ConceptId[];
 
+function paragraphs(text: string): HTMLElement[] {
+  return text.split(/\n\s*\n/).filter(Boolean).map((part) => h('p', null, part));
+}
+
 function conceptBody(c: ConceptDef): HTMLElement {
-  return h(
-    'div',
-    { class: 'concept' },
-    h('p', { class: 'concept__body' }, c.body),
-    c.fiction ? h('div', { class: 'concept__box concept__box--fiction' }, h('div', { class: 'concept__tag' }, '게임 속 설정'), h('p', null, c.fiction)) : null,
-    h('div', { class: 'concept__box concept__box--real' }, h('div', { class: 'concept__tag' }, '실제 과학'), h('p', null, c.real)),
+  return h('div', { class: 'concept' },
+    h('div', { class: 'concept__body' }, ...paragraphs(c.body)),
+    h('section', { class: 'concept__box concept__box--real' },
+      h('h4', { class: 'concept__tag' }, '실제 과학에서는'), ...paragraphs(c.real)),
+    c.fiction ? h('section', { class: 'concept__box concept__box--fiction' },
+      h('h4', { class: 'concept__tag' }, '게임에서 정한 규칙'), ...paragraphs(c.fiction)) : null,
     c.standard ? h('div', { class: 'concept__std' }, `성취기준 ${c.standard}`) : null,
   );
 }
@@ -56,15 +60,29 @@ export function showDiscoveries(ctx: Ctx, ids: ConceptId[]): Promise<void> {
   });
 }
 
+const CHAPTERS: { title: string; ids: ConceptId[] }[] = [
+  { title: '교배와 유전', ids: ['segregation', 'purebred', 'selfing', 'heterozygote', 'dominanceMolecular'] },
+  { title: '당도와 환경', ids: ['polygenic', 'environment'] },
+  { title: '성염색체', ids: ['dioecy', 'xlinked'] },
+  { title: '염색체 수', ids: ['polyploid', 'triploid', 'nondisjunction'] },
+  { title: '유전자 편집', ids: ['transcription', 'stopCodon', 'synonymous', 'frameshift'] },
+  { title: '생명공학', ids: ['lmo', 'geneFlow', 'clone'] },
+];
+
 export function openNotes(ctx: Ctx, by: 'all' | 'standard' = 'all'): void {
   const found = new Set(ctx.game.state.discoveries);
-  const firstFound = ORDER.find((id) => found.has(id)) ?? null;
-  let selected: ConceptId | null = firstFound;
-  let mode: 'all' | 'standard' = by;
-  const detail = h('div', { class: 'notes__detail', 'aria-live': 'polite' });
+  let selected: ConceptId | null = ORDER.find((id) => found.has(id)) ?? null;
+  let mode = by;
+  const detail = h('article', { class: 'notes__detail', 'aria-live': 'polite', tabindex: '0', 'aria-label': '선택한 발견 기록 본문' });
+  const grid = h('div', { class: 'notes__grid', tabindex: '0', 'aria-label': '연구 노트 목차' });
   const renderDetail = () => {
     if (!selected) {
-      replaceChildren(detail, h('div', { class: 'notes__blank' }, h('span', { class: 'notes__blank-mark', 'aria-hidden': 'true' }, '—'), h('p', null, '교배와 재배를 진행하면 발견한 개념이 이곳에 기록됩니다.')));
+      replaceChildren(detail, h('div', { class: 'notes__blank' },
+        h('span', { class: 'notes__blank-mark', 'aria-hidden': 'true' }, '관찰 노트'),
+        h('h3', null, '아직 첫 기록을 기다리고 있어요.'),
+        h('p', null, '교배하거나 모종을 출하하면, 발견한 개념이 이 노트에 남아요.'),
+        h('p', null, '왼쪽 목차에서 기록을 골라 다시 읽을 수 있어요.'),
+      ));
       return;
     }
     const c = CONCEPTS[selected];
@@ -78,69 +96,79 @@ export function openNotes(ctx: Ctx, by: 'all' | 'standard' = 'all'): void {
       if (c.id === 'lmo' || c.id === 'geneFlow') return record.goals.some((goal) => goal.trait.fluorescent !== undefined);
       return false;
     });
-    replaceChildren(
-      detail,
-      h('div', { class: 'notes__detail-head' }, h('span', null, '관찰 기록'), h('span', { class: 'notes__folio' }, `No. ${String(ORDER.indexOf(selected) + 1).padStart(2, '0')}`)),
-      h('h3', { class: 'notes__title' }, c.title),
-      conceptBody(c),
+    const no = ORDER.indexOf(selected) + 1;
+    const chapter = CHAPTERS.find((entry) => entry.ids.includes(c.id))?.title ?? '관찰 기록';
+    replaceChildren(detail,
+      h('div', { class: 'notes__detail-head' }, h('span', null, chapter), h('span', { class: 'notes__folio' }, `기록 ${String(no).padStart(2, '0')}`)),
+      h('h3', { class: 'notes__title' }, c.title), conceptBody(c),
       observed ? h('section', { class: 'notes__observations' },
-        h('h4', null, '이 연대기에서 관찰한 결과'),
-        h('p', null, `시즌 ${observed.ante} · ${observed.name} · ${observed.attempt}차 시도`),
-        observed.parentGenotypes ? h('p', null, `교배 당시 부모 유전자형: ${observed.parentGenotypes.join(' × ')}`) : null,
-        observed.prediction ? h('p', null, `꼬투리 52알: 루비 ${observed.prediction.ruby}알, 골드 ${observed.prediction.gold}알.`) : null,
-        ...observed.goals.map((goal) => h('p', null, `${goal.label}: ${observed.delivery[goal.id] ?? 0}/${goal.count} 출하`)),
+        h('h4', null, '내 과수원에서 관찰한 결과'),
+        h('p', { class: 'notes__observation-source' }, `시즌 ${observed.ante} · ${observed.name} · ${observed.attempt}차 시도`),
+        observed.parentGenotypes ? h('dl', { class: 'notes__data' },
+          h('dt', null, '부모 유전자형'), h('dd', null, observed.parentGenotypes.join(' × '))) : null,
+        observed.prediction ? h('dl', { class: 'notes__data' },
+          h('dt', null, '꼬투리 52알'), h('dd', null, `루비 ${observed.prediction.ruby}알 / 골드 ${observed.prediction.gold}알`)) : null,
+        ...observed.goals.map((goal) => h('dl', { class: 'notes__data' }, h('dt', null, goal.label), h('dd', null, `${observed.delivery[goal.id] ?? 0} / ${goal.count}포기 출하`))),
       ) : null,
       c.id === 'geneFlow' && ctx.game.state.geneFlow ? h('section', { class: 'notes__observations' },
-        h('h4', null, '이 연대기의 최근 꽃가루 유출'),
+        h('h4', null, '이 연대기의 최근 꽃가루 이동'),
         h('p', null, `${ctx.game.state.geneFlow.donor} → ${ctx.game.state.geneFlow.recipient}`),
-        h('p', null, '수분받은 포기에서 생긴 씨 표본에 형광 형질이 나타났습니다. 수분받은 성체의 유전자형은 바뀌지 않았습니다.'),
+        h('p', null, '수분받은 포기에서 생긴 씨 표본에 형광 형질이 나타났어요. 수분받은 성체의 유전자형은 바뀌지 않았어요.'),
       ) : null,
+      h('footer', { class: 'notes__page-end' }, '오차드 2150 · 교배와 재배의 기록', h('span', null, no)),
     );
+    detail.scrollTop = 0;
+    void play(detail, [{ opacity: .55 }, { opacity: 1 }], { duration: 180, decorative: true });
   };
   const cardFor = (id: ConceptId) => {
     const c = CONCEPTS[id];
     const open = found.has(id);
     const no = String(ORDER.indexOf(id) + 1).padStart(2, '0');
-    const b = h('button', { type: 'button', class: ['note', open ? 'is-open' : 'is-locked', selected === id ? 'is-selected' : ''], 'aria-label': open ? `${no}번 기록, ${c.title}` : `${no}번 기록, 아직 발견하지 못함`, 'aria-pressed': open ? String(selected === id) : undefined, disabled: !open }, h('span', { class: 'note__num' }, no), h('span', { class: 'note__q' }, open ? c.title : '미발견'), open && c.standard ? h('span', { class: 'note__std' }, c.standard) : null);
-    if (open)
-      b.addEventListener('click', () => {
-        audio.play('select');
-        selected = id;
-        fill(mode);
-        renderDetail();
+    const b = h('button', { type: 'button', class: ['note', open ? 'is-open' : 'is-locked', selected === id && 'is-selected'],
+      'aria-label': open ? `${no}번 기록, ${c.title}` : `${no}번 기록, 아직 발견하지 못함`,
+      'aria-pressed': open ? String(selected === id) : undefined, disabled: !open,
+    }, h('span', { class: 'note__num' }, no), h('span', { class: 'note__q' }, open ? c.title : '아직 발견하지 못했어요'), h('span', { class: 'note__state', 'aria-hidden': 'true' }, selected === id ? '→' : open ? '' : '—'));
+    if (open) b.addEventListener('click', () => {
+      audio.play('select'); selected = id;
+      grid.querySelectorAll<HTMLElement>('.note').forEach((entry) => {
+        const on = entry === b;
+        entry.classList.toggle('is-selected', on);
+        if (!entry.hasAttribute('disabled')) entry.setAttribute('aria-pressed', String(on));
+        const state = entry.querySelector('.note__state');
+        if (state && !entry.hasAttribute('disabled')) state.textContent = on ? '→' : '';
       });
+      renderDetail();
+    });
     return b;
   };
-  const grid = h('div', { class: 'notes__grid' });
   const fill = (nextMode: 'all' | 'standard') => {
     mode = nextMode;
-    if (mode === 'all') replaceChildren(grid, ...ORDER.map(cardFor));
+    let groups: [string, ConceptId[]][];
+    if (mode === 'all') groups = CHAPTERS.map((chapter) => [chapter.title, chapter.ids.filter((id) => ORDER.includes(id))]);
     else {
-      const groups = new Map<string, ConceptId[]>();
-      for (const id of ORDER) {
-        const k = CONCEPTS[id].standard ?? '기타';
-        groups.set(k, [...(groups.get(k) ?? []), id]);
-      }
-      replaceChildren(grid, ...[...groups.entries()].sort().map(([k, ids]) => h('div', { class: 'notes__group' }, h('div', { class: 'bar__label' }, k), h('div', { class: 'notes__row' }, ...ids.map(cardFor)))));
+      const standards = new Map<string, ConceptId[]>();
+      for (const id of ORDER) { const key = CONCEPTS[id].standard ?? '기타'; standards.set(key, [...(standards.get(key) ?? []), id]); }
+      groups = [...standards.entries()].sort();
     }
+    replaceChildren(grid, ...groups.map(([title, ids]) => h('section', { class: 'notes__group' },
+      h('div', { class: 'notes__chapter' }, h('h4', null, title), h('span', null, `${ids.filter((id) => found.has(id)).length} / ${ids.length}`)),
+      h('div', { class: 'notes__row' }, ...ids.map(cardFor)),
+    )));
     tabA.setAttribute('aria-pressed', String(mode === 'all'));
     tabB.setAttribute('aria-pressed', String(mode === 'standard'));
   };
-  const tabA = button('발견 순서', () => fill('all'), { class: 'btn--seg' });
-  const tabB = button('성취기준', () => fill('standard'), { class: 'btn--seg' });
-  fill(by);
-  renderDetail();
+  const tabA = button('단원별', () => fill('all'), { class: 'btn--seg' });
+  const tabB = button('성취기준별', () => fill('standard'), { class: 'btn--seg' });
+  fill(by); renderDetail();
   ctx.modals.open({
-    title: '연구 노트',
-    kicker: `발견 ${found.size} / ${ORDER.length}`,
-    className: 'modal--notes',
-    wide: true,
-    content: h(
-      'div', { class: 'notes' },
-      h('div', { class: 'notes__cover' }, h('span', { class: 'notes__cover-kicker' }, 'ORCHARD 2150 / FIELD RECORD'), h('span', { class: 'notes__cover-count' }, `${found.size} / ${ORDER.length} 기록`)),
+    title: '연구 노트', kicker: '오차드의 관찰 기록', className: 'modal--notes', wide: true,
+    content: h('div', { class: 'notes' },
+      h('div', { class: 'notes__cover' }, h('span', null, ctx.brand || '오차드 2150'), h('span', { class: 'notes__cover-count' }, `${found.size} / ${ORDER.length}개 발견`)),
       h('div', { class: 'notes__cols' },
-        h('section', { class: 'notes__page notes__page--index', 'aria-label': '연구 노트 목차' }, h('div', { class: 'notes__page-head' }, h('h3', null, '발견 목록'), h('span', null, 'INDEX')), h('div', { class: 'sortbox' }, tabA, tabB), grid),
-        h('section', { class: 'notes__page notes__page--detail', 'aria-label': '선택한 발견 기록' }, detail),
+        h('section', { class: 'notes__page notes__page--index', 'aria-label': '연구 노트 목차' },
+          h('div', { class: 'notes__page-head' }, h('h3', null, '목차'), h('span', null, '발견한 기록을 고르세요')),
+          h('div', { class: 'sortbox' }, tabA, tabB), grid),
+        h('section', { class: 'notes__page notes__page--detail' }, detail),
       ),
     ),
   });

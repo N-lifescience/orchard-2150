@@ -1,0 +1,24 @@
+/* The playing board uses seedlight, pollen, and a stamped delivery receipt. */
+.view--play::before { content: ''; position: absolute; left: 62px; top: 97px; width: 720px; height: 225px; border: 1px solid rgba(191, 213, 140, .2); border-radius: 50%; background: radial-gradient(ellipse, rgba(56, 107, 68, .12), transparent 70%); box-shadow: inset 0 0 30px rgba(176, 211, 138, .045); pointer-events: none; }
+.hand .slot.is-selected > .sa-card { filter: drop-shadow(0 0 4px #c9e5a0) drop-shadow(0 0 16px rgba(166, 215, 130, .5)); }
+.hand .slot.is-selected::before { content: ''; position: absolute; inset: 4px -7px -8px; border: 1px solid #c3dfa3; border-radius: 14px; pointer-events: none; opacity: .45; transform: translateY(-12px); }
+.actions .btn--play.is-ready { border-color: #d6f0b7; box-shadow: 0 4px 0 #174932, 0 0 20px rgba(167, 217, 143, .28); }
+.fx-ring, .fx-pollen, .fx-bead { position: absolute; pointer-events: none; z-index: 46; --fx-color: #bbd992; }
+.fx--chip { --fx-color: #7eede0; }
+.fx--mult { --fx-color: #ffb1cc; }
+.fx--gold { --fx-color: #f9df8b; }
+.fx-ring { margin: 0; border: 2px solid var(--fx-color); border-radius: 50%; box-shadow: 0 0 16px var(--fx-color), inset 0 0 14px var(--fx-color); transform: translate(-50%, -50%); }
+.fx-pollen { width: 5px; height: 8px; margin: -4px -2px; background: var(--fx-color); border-radius: 80% 12% 80% 12%; box-shadow: 0 0 8px var(--fx-color); }
+.fx-bead { width: 9px; height: 9px; margin: -4px; border-radius: 50%; background: #f6ffe8; box-shadow: 0 0 8px 2px var(--fx-color), 0 0 20px var(--fx-color); }
+.playrow .slot.is-scoring > .sa-card { filter: drop-shadow(0 0 11px rgba(209, 231, 152, .3)); }
+.banner__t { font-size: 39px; padding: 5px 32px; border-radius: 0; background: linear-gradient(90deg, transparent, #173629 20%, #173629 80%, transparent); color: #eef3d1; text-shadow: 0 2px 2px #091b12; }
+.banner__s { font-family: var(--sans); font-size: 14px; color: #c3d7a0; }
+.tally { border-radius: 12px; background: #142e25; border-color: #c0d699; box-shadow: 0 0 0 5px rgba(158, 186, 124, .12), 0 0 45px rgba(183, 206, 125, .22), 0 15px 35px #03110a; }
+.tally__num { color: #f3f4dc; text-shadow: 0 2px 1px #112517; }
+.contract-seal { position: absolute; top: 19px; left: 50%; transform: translateX(-50%); width: 370px; z-index: 38; display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 19px 30px 21px; border: 1px solid #c9d298; border-radius: 6px; background: #183226; box-shadow: 0 0 0 5px rgba(199, 208, 145, .12), 0 15px 35px rgba(0, 0, 0, .5); pointer-events: none; }
+.contract-seal__rule { width: 46px; height: 3px; background: #e4d888; margin-bottom: 3px; }
+.contract-seal__label { font-size: 12px; color: #d5dcb0; }
+.contract-seal > strong { font-family: var(--serif); font-size: 31px; color: #f4ecc1; }
+.contract-seal__score { font-size: 13px; font-variant-numeric: tabular-nums; color: #baceb0; }
+.sa-reduced-motion .hand .slot.is-selected::before { display: none; }
+.sa-reduced-motion .view--play::before { box-shadow: none; }

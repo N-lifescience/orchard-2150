@@ -3,6 +3,10 @@ import './art'; // 글꼴·그림 스타일 (art.css)
 import './styles/main.css';
 import './styles/learning.css';
 import './styles/feedback.css';
+import './styles/readability.css';
+import './styles/title.css';
+import './styles/notebook.css';
+import './styles/effects.css';
 import { App } from './ui/app';
 
 function boot(): void {

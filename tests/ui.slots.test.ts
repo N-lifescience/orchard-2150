@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createGame, SAVE_KEY, type StorageLike } from '../src/game/game';
 import { wipeAll } from '../src/ui/prefs';
-import { createRunSlot, listRunSlots, loadRunReflection, migrateLegacySave, migrateRunReflection, removeRunSlot, runSlotProgress, saveRunReflection } from '../src/ui/runSlots';
+import { createRunSlot, listRunSlots, loadRunReflection, migrateLegacySave, migrateRunReflection, removeRunSlot, runSlotProgress, runSlotDetails, saveRunReflection } from '../src/ui/runSlots';
 
 class MemoryStore implements StorageLike {
   values = new Map<string, string>();
@@ -11,6 +11,22 @@ class MemoryStore implements StorageLike {
 }
 
 describe('여러 연대기 저장', () => {
+  it('단원 진행은 시작 시즌을 빼고 세며, 완료한 계약만 진행 막대에 포함한다', () => {
+    const kv = new MemoryStore();
+    const slot = createRunSlot('단원 과수원', 'unit-sex', 'heritage', kv)!;
+    kv.setItem(slot.key, JSON.stringify({ ante: 3, orderIdx: 0, phase: 'cross' }));
+    expect(runSlotDetails(slot, kv)).toMatchObject({ status: 'playing', completed: 0, total: 6 });
+    kv.setItem(slot.key, JSON.stringify({ ante: 3, orderIdx: 0, phase: 'shop' }));
+    expect(runSlotDetails(slot, kv).completed).toBe(1);
+    kv.setItem(slot.key, JSON.stringify({ ante: 4, orderIdx: 1, phase: 'review' }));
+    expect(runSlotDetails(slot, kv)).toMatchObject({ status: 'review', completed: 4, total: 6 });
+    kv.setItem(slot.key, JSON.stringify({ ante: 4, orderIdx: 2, phase: 'victory' }));
+    expect(runSlotDetails(slot, kv)).toMatchObject({ status: 'victory', completed: 6, total: 6 });
+    kv.setItem(slot.key, JSON.stringify({ ante: 4, orderIdx: 2, phase: 'gameover' }));
+    expect(runSlotDetails(slot, kv)).toMatchObject({ status: 'gameover', completed: 5, total: 6 });
+    kv.setItem(slot.key, 'damaged');
+    expect(runSlotDetails(slot, kv).status).toBe('unknown');
+  });
   it('새 연대기가 기존 연대기를 덮어쓰지 않고 각각 이어진다', () => {
     const kv = new MemoryStore();
     const game = createGame({ storage: kv });

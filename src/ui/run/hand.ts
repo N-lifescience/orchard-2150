@@ -5,7 +5,8 @@ import type { SeedCard } from '../../contract/game';
 import { seedView, viewSig, phenoSentence, effBrix, speciesLabel } from '../cards';
 import type { Ctx } from '../ctx';
 import { h } from '../h';
-import { flipFrom, wait, all, stage, motion } from '../motion';
+import { flipFrom, wait, all, stage, motion, play } from '../motion';
+import { impact } from '../effects';
 import { fx } from '../rng';
 
 export interface HandItem {
@@ -104,6 +105,8 @@ export class HandView {
       }
       this.selected.add(uid);
       audio.play('select');
+      impact(this.ctx.stage, it.card, 'leaf', .5);
+      void play(it.card, [{ scale: '1' }, { scale: '1.045', offset: .35 }, { scale: '1' }], { duration: 210, decorative: true });
     }
     this.syncSelected();
     this.onChange();
