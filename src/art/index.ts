@@ -3,6 +3,7 @@ import '@fontsource/gowun-batang/700.css';
 import '@fontsource/gowun-batang/400.css';
 import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css';
 import './art.css';
+import './raster.css';
 
 import type { ArtApi } from '../contract/art';
 import { fruitArt } from './fruit';
@@ -14,6 +15,8 @@ import { karyotype } from './karyotype';
 import { jokerIcon, reagentIcon } from './icons';
 import { logo } from './logo';
 import { createBackground } from './background';
+
+export { characterPortrait, characterName, CHARACTER_NAMES } from './characters';
 
 export {
   fruitArt,

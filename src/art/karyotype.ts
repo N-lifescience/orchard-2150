@@ -1,164 +1,104 @@
-// 핵형(염색체) 미니 그림. 사본 수대로 그리므로 배수체·이수성이 그대로 보인다.
-// revealed=false 면 모양(개수)만 회색 윤곽으로 — 대립유전자 색 띠는 숨긴다.
+// Scientific diagrams remain driven by actual chromosome copies, not generated art.
 import type { Genome, HomologGroup, ChromosomeCopy } from '../contract/genetics';
-import { Kit, S, G, P, Txt, num } from './dom';
 
 const GROUPS: HomologGroup[] = ['c1', 'c2', 'c3', 'c4', 'c5', 'sex'];
 const LEN: Record<string, number> = { c1: 34, c2: 31, c3: 28, c4: 25, c5: 22, X: 30, Y: 15 };
-const CEN: Record<string, number> = { c1: 0.42, c2: 0.36, c3: 0.46, c4: 0.3, c5: 0.4, X: 0.38, Y: 0.35 };
-const HUE: Record<string, [string, string, string]> = {
-  c1: ['#c9fff8', '#2fd4c4', '#0a4f49'],
-  c2: ['#d6f8c8', '#4fb86a', '#124d31'],
-  c3: ['#fff3c4', '#e0b52c', '#5e4006'],
-  c4: ['#d6e4ff', '#5a8cff', '#15307a'],
-  c5: ['#ecd4ff', '#9a6ae0', '#361566'],
-  X: ['#ffd0e0', '#ff4f8b', '#6e0c35'],
-  Y: ['#d6ecff', '#3aa0ff', '#0d3a78'],
-};
-
-/** 대립유전자 → 띠 색 */
+const CEN: Record<string, number> = { c1: .42, c2: .36, c3: .46, c4: .3, c5: .4, X: .38, Y: .35 };
+const COLOR: Record<string, string> = { c1: '#2fd4c4', c2: '#4fb86a', c3: '#e0b52c', c4: '#5a8cff', c5: '#9a6ae0', X: '#ff4f8b', Y: '#3aa0ff' };
+const SLOT = 12;
 function alleleColor(a: string): string {
   if (a.includes('*ko')) return '#8a8f8c';
   if (a.startsWith('T')) return '#6ff7ff';
   if (/^Q\d\+/.test(a)) return '#fff3a0';
   if (/^Q\d/.test(a)) return '#5a4a2a';
-  switch (a) {
-    case 'R':
-      return '#d7263d';
-    case 'r':
-      return '#f2b632';
-    case 'S':
-      return '#fff6d8';
-    case 's':
-      return '#3a3a3a';
-    case 'B':
-      return '#5a6a1a';
-    case 'b':
-      return '#d8d0a8';
-    case 'L':
-      return '#e6eef1';
-    case 'l':
-      return '#2e8a4a';
-  }
-  return /^[A-Z]/.test(a) ? '#f3ead6' : '#3a3a3a';
+  return ({ R: '#d7263d', r: '#f2b632', S: '#fff6d8', s: '#3a3a3a', B: '#5a6a1a', b: '#d8d0a8', L: '#e6eef1', l: '#2e8a4a' } as Record<string, string>)[a] ?? '#f3ead6';
 }
 
-interface Shape {
-  kind: string; // 'c1'..'c5' | 'X' | 'Y'
-  copy: ChromosomeCopy;
-}
-
-const W = 2.7; // 염색분체 굵기
-const SLOT = 12; // 한 염색체 폭
-
-function drawChromo(k: Kit, x: number, cenY: number, sh: Shape, revealed: boolean): SVGGElement {
-  const key = sh.kind;
-  const L = LEN[key] ?? 26;
-  const c = CEN[key] ?? 0.4;
-  const top = cenY - L * c;
-  const bot = cenY + L * (1 - c);
-  const g = G({ class: `sa-chromo sa-chromo--${key}` });
-  const col = HUE[key] ?? HUE.c1;
-  const fill = revealed ? k.lin(`ch${key}`, [[0, col[0]], [0.45, col[1]], [1, col[2]]], 0, 0, 1, 0) : '#8d9794';
-  const outline = revealed ? col[2] : '#5a625f';
-  let paths: string[];
-  if (key === 'Y') {
-    // Y: 위쪽 두 팔이 벌어지고 아래는 하나로
-    paths = [
-      `M${num(x - 3.2)},${num(top)} Q${num(x - 0.8)},${num(cenY - 1)} ${num(x - 0.9)},${num(cenY + 1)}`,
-      `M${num(x + 3.2)},${num(top)} Q${num(x + 0.8)},${num(cenY - 1)} ${num(x + 0.9)},${num(cenY + 1)}`,
-      `M${num(x)},${num(cenY)} L${num(x)},${num(bot)}`,
-    ];
+function drawCopy(ctx: CanvasRenderingContext2D, x: number, kind: string, copy: ChromosomeCopy, revealed: boolean): void {
+  const cenY = 20;
+  const length = LEN[kind] ?? 26;
+  const top = cenY - length * (CEN[kind] ?? .4);
+  const bottom = cenY + length * (1 - (CEN[kind] ?? .4));
+  ctx.lineCap = 'round';
+  ctx.lineWidth = 2.7;
+  ctx.strokeStyle = revealed ? COLOR[kind] ?? COLOR.c1 : '#8d9794';
+  ctx.globalAlpha = revealed ? 1 : .65;
+  ctx.beginPath();
+  if (kind === 'Y') {
+    ctx.moveTo(x - 3.2, top);
+    ctx.quadraticCurveTo(x - .8, cenY - 1, x, cenY + 1);
+    ctx.moveTo(x + 3.2, top);
+    ctx.quadraticCurveTo(x + .8, cenY - 1, x, cenY + 1);
+    ctx.moveTo(x, cenY);
+    ctx.lineTo(x, bottom);
   } else {
-    const sp = key === 'X' ? 3.9 : 3.5;
-    paths = [
-      `M${num(x - sp)},${num(top)} Q${num(x + 0.9)},${num(cenY)} ${num(x - sp)},${num(bot)}`,
-      `M${num(x + sp)},${num(top)} Q${num(x - 0.9)},${num(cenY)} ${num(x + sp)},${num(bot)}`,
-    ];
+    const spread = kind === 'X' ? 3.9 : 3.5;
+    ctx.moveTo(x - spread, top);
+    ctx.quadraticCurveTo(x + .9, cenY, x - spread, bottom);
+    ctx.moveTo(x + spread, top);
+    ctx.quadraticCurveTo(x - .9, cenY, x + spread, bottom);
   }
-  const wOf = (i: number) => (key === 'Y' && i === 2 ? W * 1.5 : W);
-  if (revealed) paths.forEach((d, i) => g.appendChild(P(d, { stroke: outline, 'stroke-width': wOf(i) + 1.1, fill: 'none', 'stroke-linecap': 'round' })));
-  paths.forEach((d, i) =>
-    g.appendChild(P(d, { stroke: fill, 'stroke-width': wOf(i), fill: 'none', 'stroke-linecap': 'round', opacity: revealed ? 1 : 0.55 })),
-  );
-  if (!revealed) {
-    paths.forEach((d, i) =>
-      g.appendChild(P(d, { stroke: '#c9d1ce', 'stroke-width': wOf(i) + 0.9, fill: 'none', 'stroke-linecap': 'round', opacity: 0.35, 'stroke-dasharray': '0.1 1.6' })),
-    );
-    return g;
-  }
-  paths.forEach((d, i) => g.appendChild(P(d, { stroke: '#ffffff', 'stroke-width': wOf(i) * 0.25, fill: 'none', 'stroke-linecap': 'round', opacity: 0.45, transform: 'translate(-0.5 0)' })));
-  // 대립유전자 띠: 긴 팔을 따라 차례로
-  const alleles = Object.values(sh.copy.alleles ?? {}).filter((a): a is string => typeof a === 'string');
-  const n = alleles.length;
-  alleles.forEach((a, i) => {
-    const f = (i + 1) / (n + 1);
-    const y = cenY + (bot - cenY) * (0.18 + f * 0.72);
-    const t = (y - cenY) / (bot - cenY);
-    const sp = key === 'X' ? 3.9 : 3.5;
-    const u = 0.5 + 0.5 * t;
-    const off = key === 'Y' ? 0 : Math.abs(-sp * ((1 - u) * (1 - u) + u * u) + 0.9 * 2 * u * (1 - u));
-    const bw = key === 'Y' ? W * 1.5 : W;
-    const colr = alleleColor(a);
-    const glow = a.startsWith('T');
-    const band = (cx: number) =>
-      P(`M${num(cx - bw / 2 + 0.2)},${num(y)} L${num(cx + bw / 2 - 0.2)},${num(y)}`, { stroke: colr, 'stroke-width': 1.5, 'stroke-linecap': 'butt', filter: glow ? k.blur(0.5) : null });
-    if (key === 'Y') g.appendChild(band(x));
-    else {
-      g.appendChild(band(x - off));
-      g.appendChild(band(x + off));
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  if (!revealed) return;
+  const alleles = Object.values(copy.alleles ?? {}).filter((a): a is string => typeof a === 'string');
+  alleles.forEach((allele, i) => {
+    const t = .18 + (i + 1) / (alleles.length + 1) * .72;
+    const y = cenY + (bottom - cenY) * t;
+    const u = .5 + .5 * t;
+    const spread = kind === 'X' ? 3.9 : 3.5;
+    const off = kind === 'Y' ? 0 : Math.abs(-spread * ((1 - u) ** 2 + u ** 2) + .9 * 2 * u * (1 - u));
+    ctx.strokeStyle = alleleColor(allele);
+    ctx.lineWidth = 1.5;
+    ctx.lineCap = 'butt';
+    for (const center of kind === 'Y' ? [x] : [x - off, x + off]) {
+      ctx.beginPath();
+      ctx.moveTo(center - 1.15, y);
+      ctx.lineTo(center + 1.15, y);
+      ctx.stroke();
     }
   });
-  g.appendChild(S('circle', { cx: x, cy: cenY, r: 1.2, fill: '#ffffff', opacity: 0.55 }));
-  return g;
 }
 
-export function karyotype(g: Genome, opts?: { revealed?: boolean; width?: number }): SVGSVGElement {
+export function karyotype(genome: Genome, opts?: { revealed?: boolean; width?: number }): HTMLCanvasElement {
   const revealed = opts?.revealed ?? true;
-  const groups = GROUPS.map((gr) => ({ gr, copies: g?.chromosomes?.[gr] ?? [] })).filter((x) => x.copies.length > 0);
+  const groups = GROUPS.map((group) => ({ group, copies: genome.chromosomes[group] ?? [] })).filter(({ copies }) => copies.length > 0);
   const gap = 7;
-  let wTotal = 6;
-  for (const gg of groups) wTotal += gg.copies.length * SLOT + gap;
-  wTotal = Math.max(40, wTotal - gap + 6);
-  const H = 58;
+  const worldWidth = Math.max(40, 12 + groups.reduce((sum, { copies }) => sum + copies.length * SLOT + gap, 0) - gap);
   const width = opts?.width ?? 220;
-  const k = new Kit('ky', wTotal, H, width, (width * H) / wTotal, `sa-karyo${revealed ? '' : ' is-hidden'}`);
-  const cenY = 20;
+  const height = width * 58 / worldWidth;
+  const canvas = document.createElement('canvas');
+  const pixelRatio = Math.max(1, Math.min(3, globalThis.devicePixelRatio || 1));
+  canvas.width = Math.ceil(width * pixelRatio);
+  canvas.height = Math.ceil(height * pixelRatio);
+  canvas.style.width = width + 'px';
+  canvas.style.aspectRatio = width + ' / ' + height;
+  canvas.className = 'sa-karyo' + (revealed ? '' : ' is-hidden');
+  const total = groups.reduce((sum, { copies }) => sum + copies.length, 0);
+  const odd = groups.filter(({ copies }) => copies.length !== genome.ploidy).map(({ group }) => group === 'sex' ? '성염색체' : group.slice(1) + '번');
+  const label = '핵형: 염색체 ' + total + '개, ' + genome.ploidy + '배체' + (odd.length ? ', 수가 다른 염색체: ' + odd.join(', ') : '');
+  canvas.setAttribute('role', 'img');
+  canvas.setAttribute('aria-label', label);
+  canvas.textContent = label;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return canvas;
+  ctx.scale(canvas.width / worldWidth, canvas.height / 58);
   let x = 6 + SLOT / 2;
-  const ploidy = g?.ploidy ?? 2;
-  for (const { gr, copies } of groups) {
-    const x0 = x - SLOT / 2;
-    const shapes: Shape[] = copies.map((c) => ({ kind: gr === 'sex' ? (c.kind === 'Y' ? 'Y' : 'X') : gr, copy: c }));
-    if (gr === 'sex') shapes.sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'X' ? -1 : 1));
-    for (const sh of shapes) {
-      k.add(drawChromo(k, x, cenY, sh, revealed));
-      x += SLOT;
-    }
-    const x1 = x - SLOT / 2;
-    const odd = copies.length !== ploidy;
-    const label = gr === 'sex' ? shapes.map((s) => s.kind).join('') : gr.slice(1);
-    const lc = odd ? '#ff4f8b' : '#c9b98f';
-    k.add(P(`M${num(x0 + 1)},${H - 11} L${num(x1 - 1)},${H - 11}`, { stroke: lc, 'stroke-width': odd ? 1.1 : 0.6, opacity: 0.85 }));
-    k.add(
-      Txt(
-        {
-          x: (x0 + x1) / 2,
-          y: H - 3,
-          'text-anchor': 'middle',
-          'font-size': gr === 'sex' ? 6.2 : 7,
-          'font-weight': 700,
-          fill: lc,
-          'font-family': "'Gowun Batang', serif",
-        },
-        gr === 'sex' ? label : `${label}번`,
-      ),
-    );
+  for (const { group, copies } of groups) {
+    const left = x - SLOT / 2;
+    const sorted = copies.map((copy) => ({ kind: group === 'sex' ? copy.kind === 'Y' ? 'Y' : 'X' : group, copy }));
+    if (group === 'sex') sorted.sort((a, b) => a.kind === b.kind ? 0 : a.kind === 'X' ? -1 : 1);
+    for (const { kind, copy } of sorted) { drawCopy(ctx, x, kind, copy, revealed); x += SLOT; }
+    ctx.strokeStyle = ctx.fillStyle = copies.length !== genome.ploidy ? '#ff4f8b' : '#c9b98f';
+    ctx.lineWidth = .8;
+    ctx.beginPath();
+    ctx.moveTo(left + 1, 47);
+    ctx.lineTo(x - SLOT / 2 - 1, 47);
+    ctx.stroke();
+    ctx.font = '700 7px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(group === 'sex' ? sorted.map(({ kind }) => kind).join('') : group.slice(1) + '번', (left + x - SLOT / 2) / 2, 55);
     x += gap;
   }
-  k.svg.removeAttribute('aria-hidden');
-  k.svg.setAttribute('role', 'img');
-  const total = groups.reduce((s, gg) => s + gg.copies.length, 0);
-  const odd = groups.filter((gg) => gg.copies.length !== ploidy).map((gg) => (gg.gr === 'sex' ? '성염색체' : `${gg.gr.slice(1)}번`));
-  k.svg.setAttribute('aria-label', `핵형: 염색체 ${total}개, ${ploidy}배체${odd.length ? `, 수가 다른 염색체: ${odd.join(', ')}` : ''}`);
-  return k.svg;
+  return canvas;
 }

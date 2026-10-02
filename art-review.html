@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>오차드 2150 · 새 그림 검토</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; background: #101f1c; color: #f3ecd9; font: 16px/1.6 'Pretendard Variable', sans-serif; }
+    main { max-width: 1150px; padding: 24px; margin: auto; }
+    h1 { font-size: 28px; } h2 { margin: 42px 0 18px; font-size: 22px; }
+    p { max-width: 65ch; color: #c8cbbd; word-break: keep-all; }
+    a { color: #e6c77a; }
+    .review-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 22px 18px; align-items: start; }
+    .review-cell { display: flex; flex-direction: column; align-items: center; gap: 12px; min-width: 0; }
+    .review-name { text-align: center; font-weight: 650; font-size: 14px; word-break: keep-all; }
+    .review-cell .sa-joker, .review-cell .sa-reagent, .review-cell .sa-pack { --card-w: 170px; }
+    .review-note { color: #b9c6b8; font-size: 13px; }
+    @media (max-width: 600px) { main { padding: 18px; } .review-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 10px; } .review-cell .sa-joker, .review-cell .sa-reagent, .review-cell .sa-pack { --card-w: min(170px, calc((100vw - 46px) / 2)); } }
+  </style>
+</head>
+<body><main id="art-review"></main><script type="module" src="/src/art/review.ts"></script></body>
+</html>

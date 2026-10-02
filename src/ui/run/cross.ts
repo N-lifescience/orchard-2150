@@ -180,7 +180,7 @@ export class CrossView {
     replaceChildren(
       this.orderCard,
       h('div', { class: 'ordercard__kicker' }, `시즌 ${s.ante} · ${kindLabel}`),
-      h('div', { class: 'ordercard__emblem', 'aria-hidden': 'true' }, o.kind === 'boss' && o.boss ? bossEmblem(o.boss, 132) : orderEmblem(o.kind === 'big' ? 'big' : 'small', 120)),
+      h('div', { class: 'ordercard__emblem', 'aria-hidden': 'true' }, o.kind === 'boss' && o.boss ? bossEmblem(o.boss, 132) : orderEmblem(o.kind === 'big' ? 'big' : 'small', 120, o.client)),
       h('h2', { class: 'ordercard__name' }, o.name),
       h('p', { class: 'ordercard__client' }, o.client),
       o.goals?.length ? deliveryGoals(o, s.delivery) : o.requestedColor ? h('div', { class: 'ordercard__request' }, `추가 보상: ${o.requestedColor === 'ruby' ? '루비' : '골드'} 과육 출하 +$2`) : null,

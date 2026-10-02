@@ -57,7 +57,7 @@ export function openOrders(ctx: Ctx): void {
         h(
           'article',
           { class: ['orderbox', `orderbox--${o.kind}`, i === s.orderIdx && 'is-now', i < s.orderIdx && 'is-done'] },
-          h('div', { class: 'orderbox__emblem', 'aria-hidden': 'true' }, o.kind === 'boss' && o.boss ? bossEmblem(o.boss, 88) : orderEmblem(o.kind === 'big' ? 'big' : 'small', 80)),
+          h('div', { class: 'orderbox__emblem', 'aria-hidden': 'true' }, o.kind === 'boss' && o.boss ? bossEmblem(o.boss, 88) : orderEmblem(o.kind === 'big' ? 'big' : 'small', 80, o.client)),
           h('h3', { class: 'orderbox__name' }, o.name),
           h('p', { class: 'orderbox__client' }, o.client),
           o.requestedColor ? h('p', { class: 'orderbox__request' }, `요청 과육: ${o.requestedColor === 'ruby' ? '루비빛' : '골드빛'} · 출하 시 +$2`) : null,

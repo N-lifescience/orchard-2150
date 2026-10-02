@@ -183,7 +183,7 @@ export class ShopView {
     replaceChildren(
       this.nextBox,
       h('div', { class: 'next__kicker' }, '다음 주문'),
-      h('div', { class: 'next__emblem', 'aria-hidden': 'true' }, o.boss ? bossEmblem(o.boss, 72) : orderEmblem(o.kind === 'big' ? 'big' : 'small', 64)),
+      h('div', { class: 'next__emblem', 'aria-hidden': 'true' }, o.boss ? bossEmblem(o.boss, 72) : orderEmblem(o.kind === 'big' ? 'big' : 'small', 64, o.client)),
       h('div', { class: 'next__name' }, o.name),
       h('div', { class: 'next__target' }, `목표 ${fmt.score(o.target)} · 보상 $${o.reward}`),
       o.requestedColor ? h('div', { class: 'next__request' }, `요청 과육: ${o.requestedColor === 'ruby' ? '루비빛' : '골드빛'} · 출하 시 +$2`) : null,

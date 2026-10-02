@@ -1,0 +1,37 @@
+/* Bitmap artwork has its own surface; labels remain live, accessible text. */
+.sa-sprite { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: none; vertical-align: middle; overflow: hidden; background: #092b2b; }
+.sa-sprite__crop { position: relative; display: block; overflow: hidden; flex: none; }
+.sa-sprite__crop > img { position: absolute; max-width: none; max-height: none; display: block; user-select: none; pointer-events: none; }
+.sa-character { border-radius: 50%; outline: 2px solid #c4a262; outline-offset: -2px; box-shadow: 0 3px 10px #0006; }
+.sa-character .sa-sprite__crop { width: 100% !important; height: 100% !important; }
+.sa-frame { object-fit: fill; }
+.sa-icon { border-radius: 14%; }
+.sa-joker__icon, .sa-reagent__icon { top: 34%; width: 7.4em; height: 7.4em; border-radius: .5em; overflow: hidden; filter: none; }
+.sa-joker__icon > .sa-sprite, .sa-reagent__icon > .sa-sprite { width: 100% !important; height: 100% !important; border-radius: inherit; }
+.sa-joker__name, .sa-reagent__name { top: 62%; left: 9%; right: 9%; height: 12%; color: #2e2415; text-shadow: none; font-size: .9em; line-height: 1.35; padding: 0 .1em; }
+.sa-joker__name.is-long, .sa-joker__name.is-xlong, .sa-reagent__name.is-long { font-size: .79em; line-height: 1.35; }
+.sa-joker__desc, .sa-reagent__desc { top: 79%; bottom: 7%; left: 10%; right: 10%; color: #392e1f; font-size: .65em; line-height: 1.45; -webkit-line-clamp: 3; }
+.sa-joker__rarity { top: 5%; right: 9%; font-size: .6em; letter-spacing: .05em; }
+.sa-pack__art { inset: auto; top: 11%; left: 15%; width: 7em !important; height: 7em !important; border-radius: .4em; }
+.sa-pack__label { top: 62%; left: 10%; right: 10%; height: 12%; bottom: auto; display: flex; align-items: center; justify-content: center; color: #302412; text-shadow: none; line-height: 1.4; }
+.sa-pack__kind { position: absolute; top: 80%; left: 12%; right: 12%; color: #514331; text-align: center; font: 600 .66em/1.4 var(--sa-sans); }
+.sa-boss, .sa-order { border-radius: 18%; box-shadow: 0 3px 10px #0005; }
+.sa-medal { border-radius: 12%; }
+.sa-suit { position: relative; display: inline-block; flex: none; vertical-align: middle; }
+.sa-suit__shape { position: absolute; inset: 17%; box-shadow: inset 0 0 0 1px #0005; }
+.sa-suit--ruby .sa-suit__shape { background: #c5394d; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+.sa-suit--gold .sa-suit__shape { background: #f2bd4f; border-radius: 50%; border: 1px solid #8d6218; }
+.sa-suit__mark { position: absolute; top: -9%; right: -9%; font: 800 .7em/1 sans-serif; color: #fff5d4; text-shadow: 0 1px 2px #000; background: #163f33; border-radius: 50%; padding: .12em; }
+.sa-mini { display: inline-flex; align-items: center; justify-content: center; flex: none; font-family: system-ui, sans-serif; font-weight: 700; line-height: 1; vertical-align: middle; }
+.sa-sparkle { display: inline-block; line-height: 1; }
+.sa-card__art .sa-fruit { width: 100%; height: 100%; object-fit: contain; }
+.sa-card .sa-face { background: #082b2b; }
+.sa-card__brixnum, .sa-card__brixunit { color: #fff1ca; text-shadow: 0 1px 3px #000; }
+.sa-card__geno { color: #302719; background: #f0e2c5; border-radius: .2em; }
+.sa-plant__owner { position: absolute; left: 40%; top: 4%; z-index: 4; width: 2em !important; height: 2em !important; }
+.sa-logo__crest { display: block; margin: 0 auto .8rem; width: 76px !important; height: 76px !important; border-radius: 50%; box-shadow: 0 3px 18px #0004; }
+.coach__portrait { width: 52px !important; height: 52px !important; }
+.coach.is-folded .coach__portrait { width: 32px !important; height: 32px !important; }
+.sa-card__missing { display: grid; place-items: center; height: 100%; padding: .5em; color: #fff1ca; font: .75em/1.5 var(--sa-sans); text-align: center; }
+.sa-karyo { display: inline-block; max-width: 100%; height: auto; vertical-align: middle; }
+@media (max-width: 600px) { .sa-logo__crest { width: 60px !important; height: 60px !important; } .coach__portrait { width: 40px !important; height: 40px !important; } }

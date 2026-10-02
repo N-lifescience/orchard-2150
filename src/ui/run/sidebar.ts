@@ -142,7 +142,7 @@ export class Sidebar {
     const key = `${s.ante}:${s.orderIdx}:${o.name}:${o.boss?.desc ?? ''}`;
     if (key !== this.orderKey) {
       this.orderKey = key;
-      replaceChildren(this.emblemBox, o.kind === 'boss' && o.boss ? bossEmblem(o.boss, 58) : orderEmblem(o.kind === 'big' ? 'big' : 'small', 58));
+      replaceChildren(this.emblemBox, o.kind === 'boss' && o.boss ? bossEmblem(o.boss, 58) : orderEmblem(o.kind === 'big' ? 'big' : 'small', 58, o.client));
       setText(this.orderName, o.name);
       setText(this.orderClient, o.client);
       setText(this.bossRule, o.boss ? o.boss.desc : '');

@@ -1,9 +1,13 @@
 // 게임 이름은 실제 글자로 그린다. 장식적인 SVG 문장 대신 읽히는 표제와 작은 재배 표식을 쓴다.
 import { H } from './dom';
+import { characterPortrait } from './characters';
 
 export function logo(): HTMLElement {
   const root = H('div', 'sa-logo');
   root.setAttribute('aria-label', '오차드 2150, 유전 육종 전략 게임');
+  const crest = characterPortrait('', 76);
+  crest.classList.add('sa-logo__crest');
+  root.appendChild(crest);
 
   const masthead = H('div', 'sa-logo__masthead');
   masthead.appendChild(H('span', 'sa-logo__rule'));

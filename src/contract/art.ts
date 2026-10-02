@@ -1,9 +1,9 @@
 // ─────────────────────────────────────────────────────────────
 // 계약서: 그림 (src/art/** 가 구현한다)
-// 이 파일은 협의 대상이 아니다. 바꾸려면 오케스트레이터에게 말할 것.
+// 그림 모듈의 공개 API. 사용자 요청에 따라 장식은 생성된 비트맵을 쓴다.
 // 구현은 src/art/index.ts 에서 아래 ArtApi 의 모든 이름을 export 하고, 스타일은 src/art/art.css 에 둔다
 // (src/art/index.ts 가 art.css 를 import 한다).
-// 규칙: innerHTML 금지. document.createElement / createElementNS 만. 외부 이미지 파일 없이도 그려져야 한다.
+// 규칙: innerHTML 금지. document.createElement 만. 그림 파일은 프로젝트에 포함하고 이름과 효과는 실제 글자로 표시한다.
 // ─────────────────────────────────────────────────────────────
 import type { Genome, Phenotype, SpeciesId, SuitKey } from './genetics';
 import type { JokerDef, PackKind, ReagentDef, BossDef, HandTypeId } from './game';
@@ -30,7 +30,7 @@ export interface CardView {
 
 export interface ArtApi {
   /** 과일(암그루·양성화) 또는 꽃(수그루) 그림. size = 한 변 px */
-  fruitArt(p: Phenotype, seed: number, size?: number): SVGSVGElement;
+  fruitArt(p: Phenotype, seed: number, size?: number): HTMLElement;
 
   /** 모종 카드 전체 요소. 루트에 class 'sa-card' + data-uid.
    *  크기는 CSS 변수 --card-w (기본 132px), 비율 2:3. 호버 기울기·광택은 CSS 만으로.
@@ -50,25 +50,25 @@ export interface ArtApi {
   packArt(kind: PackKind, opts?: { price?: number }): HTMLElement;
 
   /** 보스 의뢰인 휘장 (지름 px) */
-  bossEmblem(def: BossDef, size?: number): SVGSVGElement;
+  bossEmblem(def: BossDef, size?: number): HTMLElement;
 
   /** 주문 휘장: 장터/식당 */
-  orderEmblem(kind: 'small' | 'big', size?: number): SVGSVGElement;
+  orderEmblem(kind: 'small' | 'big', size?: number, client?: string): HTMLElement;
 
   /** 빛깔 기호: 색 + 모양(루비 ◆ / 골드 ●) + 무늬(✦). 색약도 구분 가능해야 함 */
-  suitGlyph(suit: SuitKey, species: SpeciesId, size?: number): SVGSVGElement;
+  suitGlyph(suit: SuitKey, species: SpeciesId, size?: number): HTMLElement;
 
   /** 핵형(염색체) 미니 그림. revealed=false 면 윤곽만 */
-  karyotype(g: Genome, opts?: { revealed?: boolean; width?: number }): SVGSVGElement;
+  karyotype(g: Genome, opts?: { revealed?: boolean; width?: number }): HTMLCanvasElement;
 
   /** 족보 메달(품평회 메달) 그림 */
-  medalArt(hand: HandTypeId, size?: number): SVGSVGElement;
+  medalArt(hand: HandTypeId, size?: number): HTMLElement;
 
   /** 시약 아이콘만 (작게) */
-  reagentIcon(id: string, size?: number): SVGSVGElement;
+  reagentIcon(id: string, size?: number): HTMLElement;
 
   /** 비법 아이콘만 (작게) */
-  jokerIcon(id: string, size?: number): SVGSVGElement;
+  jokerIcon(id: string, size?: number): HTMLElement;
 
   /** 타이틀 로고 */
   logo(): HTMLElement;

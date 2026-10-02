@@ -1,4 +1,5 @@
 import type { RunState } from '../contract/game';
+import { characterPortrait } from '../art';
 import { button, h, replaceChildren } from './h';
 import { tutorialStep, type TutorialStep, type TutorialTarget } from './tutorialFlow';
 
@@ -38,8 +39,10 @@ export class PracticeCoach {
       this.collapse.setAttribute('aria-expanded', String(!this.folded));
     }, { class: 'btn--ghost', 'aria-expanded': 'true' });
     this.stop = button('안내 종료', () => callbacks.stop(), { class: 'btn--ghost' });
+    const portrait = characterPortrait('레아 모레노', 52);
+    portrait.classList.add('coach__portrait');
     this.el = h('aside', { class: 'coach', 'aria-label': '레아의 플레이 튜토리얼' },
-      h('div', { class: 'coach__head' }, h('span', { class: 'coach__manager' }, '레아 모레노 · 첫 계약 실습'), this.count, this.collapse, this.stop),
+      h('div', { class: 'coach__head' }, portrait, h('span', { class: 'coach__manager' }, '레아 모레노 · 첫 계약 실습'), this.count, this.collapse, this.stop),
       this.progress,
       h('div', { class: 'coach__instruction', 'aria-live': 'polite', 'aria-atomic': 'true' }, this.title, this.body, this.evidence),
       this.actions,
