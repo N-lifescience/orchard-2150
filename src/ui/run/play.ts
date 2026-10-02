@@ -28,7 +28,8 @@ export class PlayView {
   readonly podBtn: HTMLButtonElement;
   private podCount: HTMLElement;
   private podFill: HTMLElement;
-  private sortBy: 'brix' | 'suit' = 'brix';
+  private sortBy: 'brix' | 'suit' | null = null;
+  private dealtCards = '';
   private scoringNow = false;
 
   constructor(
@@ -45,7 +46,7 @@ export class PlayView {
     this.requestEl = h('div', { class: 'play__request', 'aria-live': 'polite' });
     this.playBtn = button(h('span', null, '출하'), () => void this.doPlay(), { class: 'btn--play', 'aria-keyshortcuts': 'Enter', title: '출하 (Enter)' });
     this.discardBtn = button(h('span', null, '솎아내기'), () => void this.doDiscard(), { class: 'btn--discard', 'aria-keyshortcuts': 'D', title: '솎아내기 (D)' });
-    this.sortBrix = button('당도', () => this.sort('brix'), { class: 'btn--seg', 'aria-pressed': 'true', title: '당도순 정렬 (S)' });
+    this.sortBrix = button('당도', () => this.sort('brix'), { class: 'btn--seg', 'aria-pressed': 'false', title: '당도순 정렬 (S)' });
     this.sortSuit = button('빛깔', () => this.sort('suit'), { class: 'btn--seg', 'aria-pressed': 'false', title: '빛깔순 정렬 (S)' });
     this.podCount = h('span', { class: 'pod__count num' });
     this.podFill = h('span', { class: 'pod__fill' });
@@ -82,6 +83,13 @@ export class PlayView {
   }
 
   update(s: RunState): Promise<void> {
+    const dealtCards = s.hand.map((card) => card.uid).sort().join('|');
+    if (dealtCards !== this.dealtCards) {
+      this.dealtCards = dealtCards;
+      this.sortBy = null;
+      this.sortBrix.setAttribute('aria-pressed', 'false');
+      this.sortSuit.setAttribute('aria-pressed', 'false');
+    }
     const prediction = s.prediction;
     this.predictionEl.hidden = !prediction;
     if (prediction) {

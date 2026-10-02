@@ -52,7 +52,7 @@ export function openTutorial(ctx: Ctx): void {
       h('div', { class: 'tutorial__progress', 'aria-label': `${page + 1} / ${STEPS.length}` }, ...STEPS.map((_, i) => h('span', { class: i === page ? 'is-current' : '' }))),
     );
     replaceChildren(footer,
-      button(`직접 해 보기 · ${PRACTICE_DURATION}`, () => { modal.close(); ctx.startPractice(); }, { class: 'btn--gold' }),
+      button(`튜토리얼 · ${PRACTICE_DURATION}`, () => { modal.close(); ctx.startPractice(); }, { class: 'btn--gold' }),
       page > 0 ? button('이전', () => { page--; draw(); }, { class: 'btn--ghost' }) : null,
       button(page === STEPS.length - 1 ? ctx.screen === 'title' ? '닫기' : '게임으로 돌아가기' : '다음', () => {
         if (page === STEPS.length - 1) modal.close();

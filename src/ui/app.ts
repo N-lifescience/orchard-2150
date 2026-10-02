@@ -21,9 +21,8 @@ import { EndScreen } from './screens/end';
 import { TitleScreen } from './screens/title';
 import { PracticeCoach } from './practiceCoach';
 import { inferTutorialStep } from './tutorialFlow';
-import { initialPractice, loadPractice, savePractice, type PracticeProgress } from './practiceStorage';
+import { acknowledgePractice, initialPractice, loadPractice, savePractice, type PracticeProgress } from './practiceStorage';
 import { parentReason } from './learning';
-import { PRACTICE_DURATION } from './playDuration';
 
 type Mode = 'title' | 'run' | 'end';
 
@@ -154,6 +153,7 @@ export class App implements Ctx {
     this.busy++;
     this.stage.classList.add('is-busy');
     this.run?.play.refreshPreview();
+    this.refreshCoach();
     try {
       return await fn();
     } finally {
@@ -242,24 +242,12 @@ export class App implements Ctx {
 
   startPractice(): void {
     if (this.isBusy()) return;
-    const welcome = this.modals.open({
-      title: '레아와 첫 계약을 해 봐요',
-      kicker: `직접 조작하는 튜토리얼 · ${PRACTICE_DURATION}`,
-      content: h('div', { class: 'prose practice-intro' },
-        h('p', null, '부모 고르기 → 교배 → 모종 출하 → 보상 받기 → 다음 주문 준비까지 직접 해 봅니다. 화면의 레아 안내가 지금 할 일을 알려 줍니다.'),
-        h('p', null, '짧은 연대기의 첫 계약으로 연습합니다. 실패한 계약은 다시 할 수 있고, 실습을 마치면 보상과 모종을 가진 채 다음 계약을 이어갈 수 있어요.'),
-        h('p', null, '기존 연대기는 저장해 두고, “첫 계약 실습”이라는 새 과수원을 만듭니다. 중간에 홈으로 가도 실습을 이어할 수 있어요.'),
-      ),
-      actions: [button('돌아가기', () => welcome.close(), { class: 'btn--ghost' }), button('실습 시작', () => {
-        welcome.close();
-        if (this.mode !== 'title') {
-          this.game.save();
-          if (this.activeSlot) touchRunSlot(this.activeSlot.id);
-        }
-        this.brand = '첫 계약 실습';
-        this.newRun('quick', 'heritage', 'learning', 3, true);
-      }, { class: 'btn--play', 'data-autofocus': '' })],
-    });
+    if (this.mode !== 'title') {
+      this.game.save();
+      if (this.activeSlot) touchRunSlot(this.activeSlot.id);
+    }
+    this.brand = '튜토리얼 과수원';
+    this.newRun('quick', 'heritage', 'learning', 3, true);
   }
 
   private refreshCoach(): void {
@@ -267,8 +255,7 @@ export class App implements Ctx {
     if (!this.coach) this.coach = new PracticeCoach(this.stage, {
       acknowledge: (step) => {
         if (!this.practice || this.isBusy()) return;
-        if (step === 'order') this.practice.orderRead = true;
-        if (step === 'observe') this.practice.observed = true;
+        acknowledgePractice(this.practice, step);
         this.persistPractice();
         this.refreshCoach();
       },
@@ -285,7 +272,7 @@ export class App implements Ctx {
     const s = this.game.state;
     const step = inferTutorialStep(s, { ...parents, ...this.practice, selectedCards });
     let feedback = '';
-    if (step === 'parents') feedback = `지금 ${parents.parentCount} / 2포기 선택했어요.`;
+    if (step === 'parent-first' || step === 'parent-second') feedback = `지금 ${parents.parentCount} / 2포기 선택했어요.`;
     if (step === 'predict' || step === 'cross') {
       const ids = this.run?.cross.chosenParents ?? [];
       feedback = parentReason(this.game.plantById(ids[0] ?? ''), this.game.plantById(ids[1] ?? ''));
@@ -308,14 +295,14 @@ export class App implements Ctx {
     this.coach?.destroy();
     this.coach = null;
     if (fresh) { this.goTitle(); this.title.prepareNew(); }
-    else this.toast.show('실습 완료. 이제 다음 계약을 자유롭게 진행하세요.', 'good');
+    else this.toast.show('튜토리얼 완료. 다음 계약을 자유롭게 진행하세요.', 'good');
   }
 
   private stopPractice(): void {
     if (!this.practice || this.isBusy()) return;
     const modal = this.modals.open({
-      title: '실습 안내를 종료할까요?',
-      content: h('p', { class: 'hint' }, '지금까지의 교배, 보상, 모종은 그대로 남고 이 과수원을 자유롭게 플레이합니다. 홈에서 실습을 새로 시작할 수도 있어요.'),
+      title: '튜토리얼 안내를 종료할까요?',
+      content: h('p', { class: 'hint' }, '지금까지의 교배, 보상, 모종은 이 과수원에 남습니다. 안내를 끝내고 자유롭게 플레이할 수 있어요. 홈에서 튜토리얼을 다시 시작할 수도 있습니다.'),
       actions: [button('안내 계속 보기', () => modal.close(), { class: 'btn--ghost' }), button('안내만 종료', () => {
         modal.close();
         if (this.practice) { this.practice.active = false; this.persistPractice(); }

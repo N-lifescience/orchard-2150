@@ -81,8 +81,6 @@ html.is-responsive-ui body { height: auto; min-height: 100%; overflow: visible; 
 /* The order ledger becomes a compact summary above the workbench. */
 .stage.is-responsive .run { position: relative; inset: auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; padding: 16px; min-height: 100dvh; }
 .stage.is-responsive .run.has-coach { padding-top: 16px; }
-.stage.is-responsive .run.has-coach .coach { position: relative; inset: auto; grid-column: 1 / -1; width: auto; margin: 0; }
-.stage.is-responsive .run.has-coach .side__manager { display: none; }
 .stage.is-responsive .side, .stage.is-responsive .side.has-delivery {
   position: relative; inset: auto; width: 100%; height: auto; padding: 16px;
   display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; overflow: visible;
@@ -402,11 +400,8 @@ html.is-responsive-ui body { height: auto; min-height: 100%; overflow: visible; 
   .stage.is-responsive .sa-body { --rx: 0deg !important; --ry: 0deg !important; }
 }
 
-/* Keep the current instruction reachable while scrolling the touch workbench. */
-.stage.is-responsive .run.has-coach .coach { position: sticky; top: max(8px, env(safe-area-inset-top)); z-index: 20; }
 .stage.is-responsive .gslot__readout { display: grid; gap: 5px; width: 160px; max-width: 100%; font-size: 16px; line-height: 1.65; color: #e3edde; white-space: normal; margin-top: 12px; }
 .stage.is-responsive .gslot__readout strong { font-size: 16px; color: #d6e8b7; }
 .stage.is-responsive .view--cross .garden { min-height: 390px; }
 .stage.is-responsive .view--cross .gslot { height: auto; }
 .stage.is-responsive .gslot > .sa-card.is-selected { --_lift: 0%; }
-.stage.is-responsive .coach-target { scroll-margin-block: 230px; }

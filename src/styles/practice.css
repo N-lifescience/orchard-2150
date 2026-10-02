@@ -1,4 +1,4 @@
-/* Lea's briefing uses the existing empty inventory space during the first contract. */
+/* Tutorial entry and the viewport-level character dialogue. */
 .gslot__readout { display: none; }
 .title__practice-hint { margin: 10px 0 22px; color: #cbdcc7; font-size: 13px; line-height: 1.75; }
 .title__start .title__save-hint { margin-bottom: 16px; }
@@ -13,42 +13,67 @@
 .wiz--mode .wiz__mode-groups { gap: 12px; }
 .wiz--name { gap: 15px; }
 .practice-intro { font-size: 16px; line-height: 1.8; }
-.coach { position: absolute; left: 308px; right: 12px; top: 12px; z-index: 8; min-width: 0; padding: 12px 18px; border: 1px solid #87ab76; border-left: 4px solid #bad599; border-radius: 8px; background: #18382b; color: #eff3e8; }
-.run.has-coach .topbar { visibility: hidden; }
-.coach__head { display: flex; align-items: center; gap: 12px; margin-bottom: 5px; }
-.coach__manager { font-size: 12px; color: #c3d8b7; }
-.coach__count { color: #eddbad; font-size: 13px; margin-left: auto; }
-.coach__head .btn { min-height: 30px; padding: 3px 9px; font-size: 12px; box-shadow: none; }
-.coach__progress { width: 100%; height: 3px; display: block; appearance: none; border: 0; accent-color: #bad599; margin-bottom: 8px; }
-.coach__progress::-webkit-progress-bar { background: #345542; }
-.coach__progress::-webkit-progress-value { background: #bad599; }
-.coach__instruction { padding-right: 200px; }
-.coach__title { font-family: var(--serif); font-size: 19px; line-height: 1.4; margin: 0 0 3px; }
-.coach__body { font-size: 13px; line-height: 1.6; }
-.coach__evidence { color: #eddbad; font-size: 12px; margin-top: 4px; line-height: 1.5; }
-.coach__actions { position: absolute; right: 18px; bottom: 12px; display: grid; gap: 7px; width: 182px; }
-.coach__actions .btn { min-height: 34px; padding: 5px 9px; font-size: 13px; white-space: normal; box-shadow: none; }
-.coach.is-folded .coach__body, .coach.is-folded .coach__evidence { display: none; }
-.coach.is-complete .coach__actions { width: 210px; }
-.coach.is-complete .coach__instruction { padding-right: 226px; }
-.coach--end { position: relative; inset: auto; width: 100%; }
-.coach-target { outline: 3px solid #b7d695; outline-offset: 4px; scroll-margin-block: 120px; }
-.coach-target:focus-visible { outline-color: #fff1c1; }
+
+/* Deep leather, warm brass, and Lea's illustrated portrait frame the live board. */
+.coach-anchor { display: none !important; }
+.guide { position: fixed; inset: 0; z-index: 100; pointer-events: none; color: #f5e8c9; font-family: var(--sans); }
+.guide__shade { position: fixed; pointer-events: auto; background: rgba(3, 10, 13, .79); }
+.guide__spotlight { position: fixed; border: 3px solid #f5d58a; border-radius: 12px; box-shadow: 0 0 0 1px #7a511e, 0 0 22px rgba(255, 205, 103, .65), inset 0 0 16px rgba(255, 220, 140, .15); pointer-events: none; }
+.guide__tap { position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%); width: max-content; max-width: min(290px, calc(100vw - 24px)); padding: 7px 13px; border: 1px solid #c59c54; border-radius: 5px; background: #302113; color: #ffe5aa; font-size: 13px; font-weight: 700; line-height: 1.45; text-align: center; }
+.guide__spotlight.is-below .guide__tap { top: calc(100% + 10px); bottom: auto; }
+.guide__dialogue { position: fixed; display: grid; grid-template-columns: 130px minmax(0, 1fr); min-width: 0; max-height: calc(100dvh - 32px); padding: 0; border: 2px solid #bd9450; border-radius: 18px 7px 18px 7px; background: linear-gradient(155deg, #29403d, #162827 45%, #101d20); box-shadow: inset 0 0 0 3px #152021, inset 0 0 0 4px #6e6746, 0 16px 60px #000a; pointer-events: auto; overflow: hidden; }
+.guide__portrait { position: relative; align-self: stretch; min-height: 214px; background: radial-gradient(ellipse at 40% 35%, #658679, #213c36 66%, #172723); border-right: 1px solid #9e844f; overflow: hidden; }
+.guide__portrait img { position: absolute; width: 100%; height: 100%; display: block; object-fit: cover; object-position: 50% 22%; }
+.guide__speech { min-width: 0; padding: 17px 20px 18px; overflow-y: auto; overscroll-behavior: contain; }
+.guide__head { display: flex; align-items: center; gap: 10px; min-height: 24px; }
+.guide__name { font-family: var(--serif); font-size: 17px; color: #f2ce83; font-weight: 700; white-space: nowrap; }
+.guide__count { margin-left: auto; font-size: 11px; color: #c8c8a8; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.guide__stop.btn { min-height: 32px; padding: 4px 7px; border: 0; background: transparent; box-shadow: none; color: #d5d7c4; font-size: 11px; }
+.guide__stop.btn:hover { color: white; background: #ffffff12; }
+.guide__progress { display: block; width: 100%; height: 3px; appearance: none; border: 0; margin: 8px 0 12px; accent-color: #d6b56e; }
+.guide__progress::-webkit-progress-bar { background: #324741; }
+.guide__progress::-webkit-progress-value { background: #d6b56e; }
+.guide__title { font-family: var(--serif); font-size: 22px; line-height: 1.45; color: #fff0cd; margin: 0 0 8px; word-break: keep-all; overflow-wrap: anywhere; }
+.guide__body { font-size: 15px; line-height: 1.75; word-break: keep-all; overflow-wrap: anywhere; }
+.guide__evidence { margin-top: 8px; font-size: 13px; line-height: 1.6; color: #e7c88e; word-break: keep-all; }
+.guide__actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 13px; }
+.guide__actions .btn { min-height: 42px; font-size: 14px; padding: 8px 14px; white-space: normal; line-height: 1.5; box-shadow: 0 3px 0 #051510; }
+.guide__instruction { font-size: 13px; color: #e4c37f; }
+.guide :focus-visible { outline: 3px solid #fff0b0; outline-offset: 3px; }
+.guide.is-busy .guide__shade { background: rgba(3, 10, 13, .45); }
+.guide.is-busy .guide__dialogue { opacity: .82; }
+.is-tutorial-target { scroll-margin: 18px; }
+.hand .slot.is-tutorial-target { z-index: 30 !important; }
 .stage:not(.is-responsive) .view.is-leaving { visibility: hidden; pointer-events: none; }
-.stage.is-responsive .run.has-coach .topbar { display: none; }
-.stage.is-responsive .coach { padding: 16px; }
-.stage.is-responsive .coach__manager { font-size: 14px; }
-.stage.is-responsive .coach__head { flex-wrap: wrap; gap: 6px 10px; }
-.stage.is-responsive .coach__head .btn { min-height: 44px; font-size: 14px; }
-.stage.is-responsive .coach__instruction { padding-right: 0; }
-.stage.is-responsive .coach__title { font-size: 23px; }
-.stage.is-responsive .coach__body { font-size: 16px; line-height: 1.8; margin-top: 6px; }
-.stage.is-responsive .coach__evidence { font-size: 15px; margin-top: 8px; }
-.stage.is-responsive .coach__actions { position: static; width: 100%; display: flex; flex-wrap: wrap; margin-top: 12px; }
-.stage.is-responsive .coach__actions .btn { min-height: 44px; font-size: 16px; flex: 1; }
-.stage.is-responsive .coach.is-complete .coach__instruction { padding-right: 0; }
-.stage.is-responsive .coach.is-complete .coach__actions { width: 100%; }
-.stage.is-responsive .coach.is-folded .coach__actions { margin-top: 8px; }
-.stage.is-responsive .coach.is-folded .coach__manager { display: none; }
-.stage.is-responsive .coach.is-folded .coach__count { margin-left: 0; margin-right: auto; }
-.stage.is-responsive .coach.is-folded .coach__title { font-size: 20px; }
+
+@media (max-width: 600px) {
+  .guide__dialogue { grid-template-columns: 70px minmax(0, 1fr); border-radius: 13px 5px 13px 5px; max-height: min(47dvh, 410px); }
+  .guide__portrait { min-height: 0; }
+  .guide__portrait img { object-position: 49% 18%; }
+  .guide__speech { padding: 11px 12px 12px; }
+  .guide__head { flex-wrap: wrap; gap: 3px 8px; }
+  .guide__name { font-size: 15px; }
+  .guide__count { font-size: 11px; }
+  .guide__stop.btn { margin-left: auto; min-height: 44px; padding: 4px 2px; font-size: 12px; }
+  .guide__title { font-size: 18px; line-height: 1.5; margin-bottom: 6px; }
+  .guide__body { font-size: 15px; line-height: 1.7; }
+  .guide__evidence { font-size: 12px; margin-top: 6px; }
+  .guide__progress { margin: 4px 0 9px; }
+  .guide__actions { margin-top: 9px; gap: 7px; }
+  .guide__actions .btn { min-height: 44px; font-size: 14px; padding: 7px 10px; }
+  .guide__instruction { font-size: 12px; }
+  .guide__tap { font-size: 12px; padding: 5px 9px; }
+}
+@media (max-height: 540px) and (min-width: 601px) {
+  .guide__dialogue { grid-template-columns: 88px minmax(0, 1fr); }
+  .guide__portrait { min-height: 150px; }
+  .guide__speech { padding: 10px 16px; }
+  .guide__title { font-size: 18px; margin-bottom: 5px; }
+  .guide__body { font-size: 14px; line-height: 1.6; }
+  .guide__progress { margin: 4px 0 7px; }
+  .guide__actions { margin-top: 7px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .guide__spotlight { animation: guide-glow 1.8s ease-in-out infinite; }
+  @keyframes guide-glow { 50% { box-shadow: 0 0 0 1px #b4863b, 0 0 30px rgba(255, 205, 103, .9), inset 0 0 16px rgba(255, 220, 140, .18); } }
+}

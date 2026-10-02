@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { createGame, type StorageLike } from '../src/game/game';
 import { createRunSlot, listRunSlots, removeRunSlot } from '../src/ui/runSlots';
-import { initialPractice, loadPractice, practiceKey, savePractice } from '../src/ui/practiceStorage';
+import { acknowledgePractice, initialPractice, loadPractice, practiceKey, savePractice } from '../src/ui/practiceStorage';
 import { wipeAll } from '../src/ui/prefs';
-import { inferTutorialStep, tutorialStep, type TutorialInteraction } from '../src/ui/tutorialFlow';
+import { inferTutorialStep, tutorialStep, TUTORIAL_INTRO, TUTORIAL_PLAY_TOOLS, type TutorialInteraction } from '../src/ui/tutorialFlow';
 
 class MemoryStore implements StorageLike {
   values = new Map<string, string>();
@@ -20,21 +20,68 @@ function guidedRun(storage: StorageLike | null = null, saveKey?: string) {
 }
 
 const interaction = (overrides: Partial<TutorialInteraction> = {}): TutorialInteraction => ({
-  orderRead: true, parentCount: 2, predicted: true, observed: true, selectedCards: 5,
+  introStep: 6, orderRead: true, parentCount: 2, predicted: true, observed: true, selectedCards: 5,
   ...overrides,
 });
 
 describe('실제 플레이 튜토리얼', () => {
+  it('목표와 도구 안내를 실제 조작 전에 순서대로 저장하며 재접속해 이어간다', () => {
+    const storage = new MemoryStore();
+    const slot = createRunSlot('튜토리얼 검증', 'quick', 'heritage', storage)!;
+    const game = guidedRun(storage, slot.key);
+    let progress = initialPractice();
+    const before = JSON.stringify(game.state);
+    for (const expected of TUTORIAL_INTRO) {
+      const current = inferTutorialStep(game.state, interaction({ ...progress, parentCount: 0, predicted: false }));
+      expect(current).toBe(expected);
+      expect(tutorialStep(current).actionLabel).toBeTruthy();
+      acknowledgePractice(progress, current);
+      savePractice(slot.key, progress, storage);
+      progress = loadPractice(slot.key, storage)!;
+    }
+    expect(progress.introStep).toBe(6);
+    expect(inferTutorialStep(game.state, interaction({ ...progress, parentCount: 0, predicted: false }))).toBe('order');
+    acknowledgePractice(progress, 'order');
+    expect(inferTutorialStep(game.state, interaction({ ...progress, parentCount: 0, predicted: false }))).toBe('parent-first');
+    expect(JSON.stringify(game.state)).toBe(before);
+  });
+
+  it('기존 튜토리얼 저장은 이미 확인한 주문 이전 소개를 반복하지 않는다', () => {
+    const game = guidedRun();
+    expect(inferTutorialStep(game.state, interaction({ introStep: undefined, orderRead: true, parentCount: 0 }))).toBe('parent-first');
+    expect(inferTutorialStep(game.state, interaction({ introStep: undefined, orderRead: false, parentCount: 0 }))).toBe('welcome');
+    expect(tutorialStep('parent-first').target).toBe('parent-first');
+    expect(tutorialStep('parent-second').target).toBe('parent-second');
+  });
+
+  it('교배 후 도구 안내를 저장해 이어가며 씨앗과 횟수는 소모하지 않는다', () => {
+    const storage = new MemoryStore();
+    const slot = createRunSlot('도구 안내 검증', 'quick', 'heritage', storage)!;
+    const game = guidedRun(storage, slot.key);
+    game.chooseCross(game.state.garden[0].id, game.state.garden[1].id, 'ruby');
+    let progress = { ...initialPractice(), introStep: 6, orderRead: true };
+    acknowledgePractice(progress, 'observe');
+    const before = JSON.stringify(game.state);
+    for (const expected of TUTORIAL_PLAY_TOOLS) {
+      expect(inferTutorialStep(game.state, interaction(progress))).toBe(expected);
+      acknowledgePractice(progress, expected);
+      savePractice(slot.key, progress, storage);
+      progress = loadPractice(slot.key, storage)! as typeof progress;
+    }
+    expect(inferTutorialStep(game.state, interaction({ ...progress, selectedCards: 0 }))).toBe('select-cards');
+    expect(JSON.stringify(game.state)).toBe(before);
+  });
+
   it('읽기 확인과 실제 조작을 구분하며, 선택을 바꾸면 필요한 단계로 돌아간다', () => {
     const game = guidedRun();
     const step = (changes: Partial<TutorialInteraction>) => inferTutorialStep(game.state, interaction(changes));
     expect(step({ orderRead: false })).toBe('order');
     expect(step({ orderRead: undefined })).toBe('order');
-    expect(step({ parentCount: 0, predicted: false })).toBe('parents');
-    expect(step({ parentCount: 1, predicted: false })).toBe('parents');
+    expect(step({ parentCount: 0, predicted: false })).toBe('parent-first');
+    expect(step({ parentCount: 1, predicted: false })).toBe('parent-second');
     expect(step({ predicted: false })).toBe('predict');
     expect(step({})).toBe('cross');
-    expect(step({ parentCount: 1 })).toBe('parents');
+    expect(step({ parentCount: 1 })).toBe('parent-second');
 
     game.chooseCross(game.state.garden[0].id, game.state.garden[1].id, 'ruby');
     expect(step({ observed: false })).toBe('observe');
@@ -123,7 +170,7 @@ describe('실제 플레이 튜토리얼', () => {
     expect(game.retryOrder()).toBe(true);
     expect(game.state.phase).toBe('cross');
     expect(game.state.orderAttempt).toBe(2);
-    expect(inferTutorialStep(game.state, interaction({ parentCount: 0, predicted: false, observed: false }))).toBe('parents');
+    expect(inferTutorialStep(game.state, interaction({ parentCount: 0, predicted: false, observed: false }))).toBe('parent-first');
   });
 
   it('손패가 5장보다 적어도 출하할 수 있고, 안내 계산은 게임 상태를 바꾸지 않는다', () => {
@@ -132,7 +179,7 @@ describe('실제 플레이 튜토리얼', () => {
     game.state.hand = game.state.hand.slice(0, 3);
     const before = JSON.stringify(game.state);
     expect(inferTutorialStep(game.state, interaction({ selectedCards: 3 }))).toBe('ship');
-    expect(tutorialStep('ship')).toMatchObject({ number: 7, total: 10, target: 'shipment' });
+    expect(tutorialStep('ship')).toMatchObject({ number: 17, total: 20, target: 'shipment' });
     expect(JSON.stringify(game.state)).toBe(before);
   });
 });
@@ -167,6 +214,14 @@ describe('연대기별 튜토리얼 저장', () => {
     const key = 'tutorial-save';
     for (const damaged of ['{', 'null', '[]', '{}', '{"active":"true","orderRead":true,"observed":true,"completed":false}']) {
       storage.setItem(practiceKey(key), damaged);
+      expect(loadPractice(key, storage)).toBeNull();
+    }
+    for (const introStep of [-1, 7, 0.5, '1', null]) {
+      storage.setItem(practiceKey(key), JSON.stringify({ ...initialPractice(), introStep }));
+      expect(loadPractice(key, storage)).toBeNull();
+    }
+    for (const playIntroStep of [-1, 4, 0.5, '1', null]) {
+      storage.setItem(practiceKey(key), JSON.stringify({ ...initialPractice(), playIntroStep }));
       expect(loadPractice(key, storage)).toBeNull();
     }
     expect(loadPractice('missing', storage)).toBeNull();

@@ -105,8 +105,7 @@ export class RunScreen {
     if (k !== 'play') this.side.preview(null);
     if (phaseChanged && this.ctx.stage.classList.contains('is-responsive')) {
       queueMicrotask(() => {
-        const coachHeight = this.el.querySelector('.coach')?.getBoundingClientRect().height ?? 0;
-        const top = window.scrollY + this.phaseBox.getBoundingClientRect().top - coachHeight - 20;
+        const top = window.scrollY + this.phaseBox.getBoundingClientRect().top - 20;
         window.scrollTo(0, Math.max(0, top));
       });
     }

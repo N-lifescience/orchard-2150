@@ -45,8 +45,8 @@ export class Sidebar {
   private shownMoney = 0;
 
   constructor(private ctx: Ctx) {
-    const menu = (label: string, key: string, fn: () => void) =>
-      h('button', { type: 'button', class: 'btn btn--ghost side__menu', 'aria-label': label, 'aria-keyshortcuts': key || undefined, onclick: () => !ctx.isBusy() && fn() }, label);
+    const menu = (label: string, key: string, fn: () => void, tutorial?: string) =>
+      h('button', { type: 'button', class: 'btn btn--ghost side__menu', 'aria-label': label, 'aria-keyshortcuts': key || undefined, 'data-tutorial': tutorial, onclick: () => !ctx.isBusy() && fn() }, label);
 
     this.brandEl = h('div', { class: 'side__brand' });
     this.managerEl = h('p', { class: 'side__manager' });
@@ -54,7 +54,7 @@ export class Sidebar {
     this.orderName = h('div', { class: 'side__ordername' });
     this.orderClient = h('div', { class: 'side__client' });
     this.bossRule = h('div', { class: 'side__bossrule' });
-    this.orderBox = h('div', { class: 'side__order' }, this.emblemBox, h('div', { class: 'side__ordertext' }, this.orderName, this.orderClient), this.bossRule);
+    this.orderBox = h('div', { class: 'side__order', 'data-tutorial': 'order' }, this.emblemBox, h('div', { class: 'side__ordertext' }, this.orderName, this.orderClient), this.bossRule);
     ctx.tips.attach(this.orderBox, () => {
       const o = ctx.game.state.orders[ctx.game.state.orderIdx];
       return h('div', null, h('b', null, o.name), h('div', null, o.client), o.goals?.length ? deliveryGoals(o, ctx.game.state.delivery) : null, o.boss ? h('div', { class: 'tip__rule' }, o.boss.desc) : null);
@@ -85,13 +85,13 @@ export class Sidebar {
       { class: 'side panel', 'aria-label': '주문 정보' },
       h('div', { class: 'side__header' },
         this.brandEl,
-        button('⌂ 홈', () => {
+        button('홈', () => {
           if (!ctx.isBusy()) ctx.goTitle();
         }, { class: 'btn--ghost side__home', 'aria-label': '홈으로 돌아가기', title: '진행을 저장하고 홈으로 돌아가기' }),
       ),
       this.orderBox,
       this.managerEl,
-      h('div', { class: 'side__target' }, h('div', { class: 'side__label' }, '목표 점수'), h('div', { class: 'side__target-row' }, this.targetEl, this.rewardEl), this.deliveryEl),
+      h('div', { class: 'side__target', 'data-tutorial': 'goal' }, h('div', { class: 'side__label' }, '목표 점수'), h('div', { class: 'side__target-row' }, this.targetEl, this.rewardEl), this.deliveryEl),
       this.roundBox,
       h(
         'div',
@@ -101,9 +101,9 @@ export class Sidebar {
       ),
       h(
         'div',
-        { class: 'side__stats' },
-        h('div', { class: 'stat stat--hands', title: '남은 출하' }, h('span', { class: 'stat__lbl' }, '출하'), this.handsEl),
-        h('div', { class: 'stat stat--discards', title: '남은 솎아내기' }, h('span', { class: 'stat__lbl' }, '솎아내기'), this.discardsEl),
+        { class: 'side__stats', 'data-tutorial': 'resources' },
+        h('div', { class: 'stat stat--hands', title: '남은 출하' }, h('span', { class: 'stat__lbl' }, '남은 출하'), this.handsEl),
+        h('div', { class: 'stat stat--discards', title: '남은 솎아내기' }, h('span', { class: 'stat__lbl' }, '남은 솎아내기'), this.discardsEl),
       ),
       h(
         'div',
@@ -113,10 +113,10 @@ export class Sidebar {
       ),
       h(
         'nav',
-        { class: 'side__menus', 'aria-label': '메뉴' },
+        { class: 'side__menus', 'aria-label': '메뉴', 'data-tutorial': 'navigation' },
         menu('주문 정보', '', () => ctx.open.orders()),
         menu('온실', '', () => ctx.open.greenhouse()),
-        menu('연구 노트', '', () => ctx.open.notes()),
+        menu('연구 노트', '', () => ctx.open.notes(), 'notebook'),
         menu('플레이 방법', '', () => ctx.open.tutorial()),
         menu('설정', '', () => ctx.open.settings()),
       ),
