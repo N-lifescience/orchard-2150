@@ -65,8 +65,10 @@ export class EndScreen {
     reflectInput.addEventListener('keydown', (e) => e.stopPropagation());
     const saved = h('span', { class: 'reflect__saved', 'aria-live': 'polite' });
     const saveWriting = () => {
-      reflectInput.value = saveRunReflection(saveKey, reflectInput.value);
-      saved.textContent = '이 연대기에 적어 두었습니다.';
+      reflectInput.value = fmt.sanitizeLine(reflectInput.value);
+      const ok = saveRunReflection(saveKey, reflectInput.value);
+      saved.textContent = ok ? '이 연대기에 적어 두었습니다.'
+        : '이 기기에 성찰을 저장하지 못했어요. 글을 복사하거나 플레이 보고서의 텍스트 파일 저장을 눌러 보관해 주세요.';
       return reflectInput.value;
     };
     replaceChildren(this.el,
@@ -94,7 +96,7 @@ export class EndScreen {
         h('section', { class: 'end__reveal panel' }, h('h2', { class: 'h2' }, '추론과 실제 유전자형 비교'), reveal),
         h('section', { class: 'end__reflect panel panel--gold' },
           h('h2', { class: 'h2' }, '기록을 근거로 돌아보기'),
-          record ? h('div', { class: 'reflect__evidence' }, h('b', null, `시즌 ${record.ante} · ${record.name}`), h('p', null, record.prediction ? predictionText(record.prediction) : `획득 ${fmt.score(record.score)}점 / 목표 ${fmt.score(record.target)}점.`), h('p', null, ...record.goals.map((goal) => `${goal.label} ${record.delivery[goal.id] ?? 0}/${goal.count} · `))) : null,
+          record ? h('div', { class: 'reflect__evidence' }, h('b', null, `시즌 ${record.ante} · ${record.name}`), h('p', null, record.prediction ? predictionText(record.prediction) : `획득 ${fmt.score(record.score)}점 / 목표 ${fmt.score(record.target)}점.`), h('p', null, record.goals.map((goal) => `${goal.label} ${record.delivery[goal.id] ?? 0}/${goal.count}`).join(' · '))) : null,
           earlier && record ? h('p', { class: 'hint' }, `첫 시도 ${fmt.score(earlier.score)}점 → ${record.attempt}차 시도 ${fmt.score(record.score)}점. 기록에서 바꾼 선택을 찾아보세요.`) : null,
           h('ol', { class: 'debrief-prompts' },
             h('li', null, '부모의 유전자형으로 관찰한 비율을 어떻게 설명할 수 있나요?'),

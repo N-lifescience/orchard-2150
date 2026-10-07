@@ -210,6 +210,9 @@ export function openEditor(ctx: Ctx, reagentIndex: number): void {
     delMode = false;
     audio.play('edit');
     render();
+    // 서열을 다시 그려도 방금 조작한 염기에서 키보드 탐색을 이어간다.
+    const nextPos = Math.min(pos, currentSeq(st).length - 1);
+    strands.querySelectorAll<HTMLButtonElement>('button.base')[nextPos]?.focus({ preventScroll: true });
   }
 
   function confirm(): void {

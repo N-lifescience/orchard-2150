@@ -204,13 +204,14 @@ export function loadRunReflection(saveKey: string, kv: StorageLike | null = loca
   try { return sanitizeLine(kv?.getItem(`${saveKey}:reflection`) ?? ''); } catch { return ''; }
 }
 
-export function saveRunReflection(saveKey: string, value: string, kv: StorageLike | null = localStore()): string {
+export function saveRunReflection(saveKey: string, value: string, kv: StorageLike | null = localStore()): boolean {
   const clean = sanitizeLine(value);
   try {
-    if (clean) kv?.setItem(`${saveKey}:reflection`, clean);
-    else kv?.removeItem(`${saveKey}:reflection`);
-  } catch { /* Writing remains available when persistent storage is blocked. */ }
-  return clean;
+    if (!kv) return false;
+    if (clean) kv.setItem(`${saveKey}:reflection`, clean);
+    else kv.removeItem(`${saveKey}:reflection`);
+    return true;
+  } catch { return false; }
 }
 
 export function tutorialSeen(kv: StorageLike | null = localStore()): boolean {

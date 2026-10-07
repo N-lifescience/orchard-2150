@@ -199,12 +199,14 @@ export class App implements Ctx {
 
   goTitle(): void {
     if (this.mode === 'run' || this.mode === 'end') {
-      this.game.save();
-      if (this.activeSlot) touchRunSlot(this.activeSlot.id);
-      if (!this.game.hasSave()) {
+      const saved = this.game.save();
+      if (saved && this.activeSlot) touchRunSlot(this.activeSlot.id);
+      if (!saved) {
         const warning = this.modals.open({
           title: '진행을 저장할 수 없어요',
-          content: h('p', { class: 'hint' }, '브라우저 저장 공간을 사용할 수 없어요. 홈으로 가면 이 연대기를 이어할 수 없어요.'),
+          content: h('p', { class: 'hint' }, this.game.hasSave()
+            ? '최근 진행을 저장할 수 없어요. 홈으로 가면 마지막으로 저장된 시점부터 이어서 하게 돼요.'
+            : '브라우저 저장 공간을 사용할 수 없어요. 홈으로 가면 이 연대기를 이어할 수 없어요.'),
           actions: [
             button('계속 플레이', () => warning.close(), { class: 'btn--play' }),
             button('저장 없이 홈으로', () => {
@@ -360,8 +362,10 @@ export class App implements Ctx {
       this.title.show();
       return;
     }
+    const previousKey = this.game.getSaveKey();
     this.game.setSaveKey(slot.key);
     if (!this.game.load()) {
+      this.game.setSaveKey(previousKey);
       this.toast.error('저장된 연대기를 불러오지 못했어요.');
       return;
     }

@@ -248,7 +248,9 @@
 .run .cross__guidance { border-left-color: #b8924b; background: #091c1759; border-radius: 0 5px 5px 0; }
 .run .view--cross .garden {
   align-items: flex-start;
-  justify-content: center;
+  justify-content: flex-start;
+  justify-content: safe center;
+  scroll-padding-inline: 10px;
   gap: 18px;
   min-height: 201px;
   padding: 22px 10px 14px;

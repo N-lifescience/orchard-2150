@@ -5,6 +5,11 @@
 .title__tag p + p { margin-top: 2px; color: #c2d2c8; }
 .title__panel { min-height: 0; flex: 1; margin-top: 6px; width: 100%; }
 .title__home { width: 100%; display: grid; grid-template-columns: 310px minmax(0, 1fr); gap: 40px; max-height: 450px; }
+/* A long chronicle shelf must remain reachable inside the fixed desktop stage. */
+.stage:not(.is-responsive) .title-screen:not(.is-wiz) { overflow-y: auto; }
+.stage:not(.is-responsive) .title-screen:not(.is-wiz) .title__panel { flex: none; }
+.stage:not(.is-responsive) .title-screen:not(.is-wiz) .title__home { max-height: none; align-items: start; }
+.stage:not(.is-responsive) .title-screen:not(.is-wiz) .title__foot { position: static; flex-shrink: 0; }
 .title__start { padding: 26px 25px; border: 1px solid #446a5c; border-radius: 8px; background: #102b23; display: flex; flex-direction: column; align-items: stretch; }
 .title__start h2, .save-library__head h2 { font-family: var(--serif); font-size: 24px; color: #eef1df; }
 .title__start > p { margin: 14px 0 22px; font-size: 15px; line-height: 1.75; color: #d2ddd3; }

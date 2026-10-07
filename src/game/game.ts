@@ -319,12 +319,14 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
     }
   }
 
-  function save() {
-    if (!storage || st.phase === 'title') return;
+  function save(): boolean {
+    if (!storage || st.phase === 'title') return false;
     try {
       storage.setItem(saveKey, JSON.stringify(st));
+      return true;
     } catch {
       /* 저장 실패는 게임을 멈추지 않는다 */
+      return false;
     }
   }
 
@@ -1404,11 +1406,19 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
     // ── 저장 ──
     save,
     load() {
+      const previous = st;
       try {
         const raw = storage?.getItem(saveKey);
         if (!raw) return false;
         const parsed = JSON.parse(raw) as InternalState;
-        if (!parsed || parsed.v !== 1 || typeof parsed.phase !== 'string' || !Array.isArray(parsed.garden) || !Array.isArray(parsed.orders)) return false;
+        if (!parsed || parsed.v !== 1 ||
+          !['cross', 'play', 'cashout', 'select', 'shop', 'review', 'gameover', 'victory'].includes(parsed.phase) ||
+          !Object.hasOwn(START_ANTE, parsed.mode) ||
+          !['heritage', 'precision', 'biotech'].includes(parsed.policy) ||
+          !Number.isInteger(parsed.orderIdx) || parsed.orderIdx < 0 || parsed.orderIdx > 2 ||
+          !Array.isArray(parsed.orders) || parsed.orders.length !== 3 || !parsed.orders[parsed.orderIdx] ||
+          ![parsed.garden, parsed.hand, parsed.pod, parsed.seen, parsed.jokers, parsed.reagents, parsed.toasts, parsed.discoveries, parsed.pendingDiscoveries].every(Array.isArray) ||
+          !parsed.stats || typeof parsed.stats !== 'object' || !parsed.handLevels || typeof parsed.handLevels !== 'object') return false;
         st = parsed;
         refreshSavedCopy(st);
         st.prediction ??= null;
@@ -1429,6 +1439,8 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
         notify();
         return true;
       } catch {
+        // 실패한 불러오기가 현재 플레이를 손상시키지 않도록 복원한다.
+        st = previous;
         return false;
       }
     },

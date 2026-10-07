@@ -319,7 +319,8 @@ export interface Game {
   ackToasts(): void;
 
   // ── 저장
-  save(): void;
+  /** 현재 진행을 저장했는지 반환한다. 기존 저장의 존재와는 별개다. */
+  save(): boolean;
   load(): boolean;
   hasSave(): boolean;
   clearSave(): void;

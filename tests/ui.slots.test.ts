@@ -11,6 +11,23 @@ class MemoryStore implements StorageLike {
 }
 
 describe('여러 연대기 저장', () => {
+  it('성찰 저장 실패를 성공으로 반환하지 않고 이전 글을 보존한다', () => {
+    const kv = new MemoryStore();
+    const key = `${SAVE_KEY}:slot:reflection-test`;
+    expect(saveRunReflection(key, '이전 관찰', kv)).toBe(true);
+    const blocked: StorageLike = {
+      getItem: (name) => kv.getItem(name),
+      setItem: () => { throw new Error('QuotaExceededError'); },
+      removeItem: () => { throw new Error('SecurityError'); },
+    };
+    expect(saveRunReflection(key, '새 관찰', blocked)).toBe(false);
+    expect(saveRunReflection(key, '', blocked)).toBe(false);
+    expect(saveRunReflection(key, '새 관찰', null)).toBe(false);
+    expect(loadRunReflection(key, kv)).toBe('이전 관찰');
+    expect(saveRunReflection(key, '', kv)).toBe(true);
+    expect(loadRunReflection(key, kv)).toBe('');
+  });
+
   it('단원 진행은 시작 시즌을 빼고 세며, 완료한 계약만 진행 막대에 포함한다', () => {
     const kv = new MemoryStore();
     const slot = createRunSlot('단원 과수원', 'unit-sex', 'heritage', kv)!;

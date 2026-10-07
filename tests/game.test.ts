@@ -745,6 +745,62 @@ describe('시약과 편집', () => {
 
 // ── 저장·재현성 ─────────────────────────────────────────────────
 describe('저장과 재현성', () => {
+  it.each([
+    ['없는 단계', { phase: 'missing' }],
+    ['범위를 벗어난 계약', { orderIdx: 3 }],
+    ['누락된 손패', { hand: null }],
+    ['누락된 통계', { stats: null }],
+    ['손상된 부모', { garden: [null] }],
+  ])('손상된 저장(%s)을 거부해도 현재 진행과 저장 원본을 보존한다', (_label, invalid) => {
+    const { g, storage } = newGame(5, 'quick');
+    g.chooseCross(g.state.garden[0].id, g.state.garden[1].id);
+    const current = g.state;
+    const snapshot = structuredClone(current);
+    const damaged = JSON.stringify({ ...snapshot, ...invalid });
+    storage.setItem(SAVE_KEY, damaged);
+    expect(g.load()).toBe(false);
+    expect(g.state).toBe(current);
+    expect(g.state).toEqual(snapshot);
+    expect(storage.getItem(SAVE_KEY)).toBe(damaged);
+    expect(g.simulate(g.state.hand.slice(0, 5).map((card) => card.uid))).not.toBeNull();
+  });
+
+  it('이전 저장이 있어도 최신 진행 저장에 실패하면 false를 반환하며 플레이는 계속된다', () => {
+    const backing = new MemStorage();
+    let blocked = false;
+    const storage: StorageLike = {
+      getItem: (key) => backing.getItem(key),
+      setItem: (key, value) => {
+        if (blocked) throw new Error('QuotaExceededError');
+        backing.setItem(key, value);
+      },
+      removeItem: (key) => backing.removeItem(key),
+    };
+    const g = createGame({ storage });
+    g.newRun({ seed: 3, mode: 'quick', policy: 'heritage' });
+    expect(g.save()).toBe(true);
+    const previous = backing.getItem(SAVE_KEY);
+    blocked = true;
+    expect(() => g.chooseCross(g.state.garden[0].id, g.state.garden[1].id)).not.toThrow();
+    expect(g.state.phase).toBe('play');
+    expect(g.hasSave()).toBe(true);
+    expect(g.save()).toBe(false);
+    expect(backing.getItem(SAVE_KEY)).toBe(previous);
+    blocked = false;
+    expect(g.save()).toBe(true);
+    const restored = createGame({ storage });
+    expect(restored.load()).toBe(true);
+    expect(restored.state).toEqual(g.state);
+  });
+
+  it('저장소가 없거나 아직 플레이를 시작하지 않았다면 저장 성공으로 표시하지 않는다', () => {
+    const g = createGame({ storage: null });
+    expect(g.save()).toBe(false);
+    g.newRun({ seed: 3, mode: 'quick', policy: 'heritage' });
+    expect(g.save()).toBe(false);
+    expect(createGame({ storage: new MemStorage() }).save()).toBe(false);
+  });
+
   it('저장/불러오기 왕복', () => {
     const { g, st, storage } = newGame(50);
     g.chooseCross(st.garden[0].id, st.garden[1].id);

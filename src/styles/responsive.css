@@ -366,7 +366,7 @@ html.is-responsive-ui body { height: auto; min-height: 100%; overflow: visible; 
   .stage.is-responsive .modal-wrap { padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)); }
   .stage.is-responsive .modal { max-height: calc(100dvh - 16px); padding: 18px 14px; }
   .stage.is-responsive .modal__title { font-size: 24px; }
-  .stage.is-responsive .modal__actions .btn { flex: 1; }
+  .stage.is-responsive .modal__actions .btn { flex: 1 1 120px; }
   .stage.is-responsive .notes__cols { grid-template-columns: minmax(0, 1fr); }
   .stage.is-responsive .notes__page--index { min-height: 0; max-height: 340px; border-right: 0; border-bottom: 2px solid #bcc9b1; padding: 18px; box-shadow: none; }
   .stage.is-responsive .notes__grid { flex: 1 1 auto; min-height: 0; max-height: 210px; }
