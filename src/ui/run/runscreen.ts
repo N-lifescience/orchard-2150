@@ -10,6 +10,7 @@ import { SelectView } from './select';
 import { ShopView } from './shop';
 import { Sidebar } from './sidebar';
 import { JokerBar, ReagentBar } from './topbar';
+import { ClientVisit } from './client';
 
 type ViewKey = 'cross' | 'play' | 'cashout' | 'select' | 'shop';
 
@@ -25,6 +26,7 @@ export class RunScreen {
   readonly shop: ShopView;
   private phaseBox: HTMLElement;
   private current: ViewKey | null = null;
+  private client: ClientVisit;
 
   constructor(private ctx: Ctx) {
     this.side = new Sidebar(ctx);
@@ -47,6 +49,7 @@ export class RunScreen {
       this.side.el,
       h('main', { class: 'main', 'aria-label': '작업대' }, h('div', { class: 'topbar' }, this.jokers.el, this.reagents.el), this.phaseBox),
     );
+    this.client = new ClientVisit(ctx, this.el);
   }
 
   private viewFor(k: ViewKey): { el: HTMLElement } {
@@ -103,6 +106,7 @@ export class RunScreen {
         break;
     }
     if (k !== 'play') this.side.preview(null);
+    this.client.update(s);
     if (phaseChanged && this.ctx.stage.classList.contains('is-responsive')) {
       queueMicrotask(() => {
         const top = window.scrollY + this.phaseBox.getBoundingClientRect().top - 20;

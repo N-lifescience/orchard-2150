@@ -1,4 +1,4 @@
-// 출하 화면 (phase 'play') — 무대 + 손패 + 버튼 + 꼬투리. 점수 연출은 ScoreTrace.steps 를 그대로 재생한다.
+// 출하 화면 (phase 'play') — 무대 + 손패 + 버튼 + 자손 덱. 점수 연출은 ScoreTrace.steps 를 그대로 재생한다.
 import { audio } from '../../audio';
 import type { RunState, ScoreStep, ScoreTrace } from '../../contract/game';
 import { hasGlasses } from '../cards';
@@ -27,7 +27,6 @@ export class PlayView {
   private requestEl: HTMLElement;
   readonly podBtn: HTMLButtonElement;
   private podCount: HTMLElement;
-  private podFill: HTMLElement;
   private sortBy: 'brix' | 'suit' | null = null;
   private dealtCards = '';
   private scoringNow = false;
@@ -49,13 +48,12 @@ export class PlayView {
     this.sortBrix = button('당도', () => this.sort('brix'), { class: 'btn--seg', 'aria-pressed': 'false', title: '당도순 정렬 (S)' });
     this.sortSuit = button('빛깔', () => this.sort('suit'), { class: 'btn--seg', 'aria-pressed': 'false', title: '빛깔순 정렬 (S)' });
     this.podCount = h('span', { class: 'pod__count num' });
-    this.podFill = h('span', { class: 'pod__fill' });
     this.podBtn = h(
       'button',
-      { type: 'button', class: 'pod', 'aria-label': '씨앗 꼬투리 — 남은 씨앗 분포 보기', onclick: () => !ctx.isBusy() && ctx.open.pod() },
-      h('span', { class: 'pod__shell', 'aria-hidden': 'true' }, this.podFill, h('i'), h('i'), h('i')),
+      { type: 'button', class: 'pod', 'aria-label': '자손 덱 — 남은 개체 분포 보기', onclick: () => !ctx.isBusy() && ctx.open.pod() },
+      h('span', { class: 'pod__deck', 'aria-hidden': 'true' }, h('i'), h('i'), h('i', null, '✦')),
       this.podCount,
-      h('span', { class: 'pod__lbl' }, '꼬투리'),
+      h('span', { class: 'pod__lbl' }, '자손 덱'),
     );
     ctx.tips.attach(this.podBtn, '남은 씨앗의 빛깔·당도 분포를 봐요');
     this.hand.dealFrom = () => this.podBtn.getBoundingClientRect();
@@ -102,21 +100,20 @@ export class PlayView {
         h('div', { class: 'play__prediction-head' }, h('b', null, '교배 결과'), h('span', null, `내 예측: ${chosen}`)),
         h('div', { class: 'play__comparison' },
           h('span', null, expected ? colorExpectationText(expected) : cold ? '기대: 비분리 때문에 단순 비율 적용 어려움' : '기대: 공개된 정보로 계산하기 어려움'),
-          h('strong', null, `관찰 ${prediction.ruby + prediction.gold}알: 루비 ${prediction.ruby} · 골드 ${prediction.gold}`),
+          h('strong', null, `관찰 ${prediction.ruby + prediction.gold}개체: 루비 ${prediction.ruby} · 골드 ${prediction.gold}`),
         ),
         h('details', { class: 'play__evidence' },
           h('summary', null, '예측과 관찰값을 어떻게 읽나요?'),
           expected ? h('p', null, `${expected.a} × ${expected.b} → ${expected.offspring}. ${expected.reasoning}`) : h('p', null, cold
             ? '냉해 계약에서는 염색체 비분리가 늘어납니다. 정상 감수분열의 RR·Rr·rr 비율을 그대로 적용할 수 없어요. 실제 핵형과 자손 분포를 함께 관찰하세요.'
-            : '부모의 유전자형이 모두 공개되지 않았거나 배수성·편집 상태가 달라 정확한 기대 비율을 표시하지 않았습니다. 검사 결과와 여러 꼬투리의 관찰을 함께 보세요.'),
+            : '부모의 유전자형이 모두 공개되지 않았거나 배수성·편집 상태가 달라 정확한 기대 비율을 표시하지 않았습니다. 검사 결과와 여러 교배의 관찰을 함께 보세요.'),
           h('p', null, expected && (expected.gold === 0 || expected.ruby === 0)
             ? '이 R 자리 교배는 과육색 한 종류만 기대됩니다. 무늬·당도 같은 다른 형질은 별도로 살펴보세요.'
-            : '52알은 한 번의 관찰입니다. 표본이 작으면 기대 비율과 차이가 날 수 있어요. 한 꼬투리만으로 부모 유전자형이나 다음 결과를 확정할 수 없습니다.'),
+            : '52개체는 한 번의 관찰입니다. 표본이 작으면 기대 비율과 차이가 날 수 있어요. 한 번의 교배만으로 부모 유전자형이나 다음 결과를 확정할 수 없습니다.'),
         ),
       );
     }
-    setText(this.podCount, `${s.pod.length}/${s.podTotal}`);
-    this.podFill.style.setProperty('--f', String(s.podTotal ? s.pod.length / s.podTotal : 0));
+    setText(this.podCount, `${s.pod.length} / ${s.podTotal}개체`);
     const p = this.hand.update(s.hand, hasGlasses(s));
     this.refreshPreview();
     return p;
@@ -148,7 +145,7 @@ export class PlayView {
     this.sortSuit.disabled = busy;
     if (sel.length === 0) {
       this.side.preview(null);
-      setText(this.previewEl, s.phase === 'play' ? `모종을 1~${s.maxSelect}포기 골라요` : '');
+      setText(this.previewEl, s.phase === 'play' ? `모종을 1~${s.maxSelect}개체 골라요` : '');
       this.previewEl.classList.remove('is-on');
       return;
     }

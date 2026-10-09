@@ -48,12 +48,12 @@ export class CrossView {
   private sel: string[] = [];
   private items = new Map<string, { wrap: HTMLElement; sig: string }>();
   private orderKey = '';
-  /** 교배 연출 뒤 꼬투리 모양이 날아갈 곳 */
+  /** 교배 연출 뒤 자손 덱 모양이 날아갈 곳 */
   podTarget: () => { cx: number; cy: number } | null = () => null;
 
   constructor(private ctx: Ctx) {
     this.orderCard = h('div', { class: 'ordercard panel' });
-    this.garden = h('div', { class: 'garden', role: 'group', 'aria-label': '온실 — 부모로 쓸 포기 고르기' });
+    this.garden = h('div', { class: 'garden', role: 'group', 'aria-label': '온실 — 부모로 쓸 개체 고르기' });
     this.pickA = h('div', { class: 'pick' });
     this.pickB = h('div', { class: 'pick' });
     this.reason = h('div', { class: 'cross__reason', 'aria-live': 'polite' });
@@ -78,9 +78,9 @@ export class CrossView {
     }
     replaceChildren(
       this.predictionBox,
-      h('div', { class: 'cross__prediction-title' }, '예측해 봐요: 자손 52알에는 어느 과육색이 더 많을까요?'),
+      h('div', { class: 'cross__prediction-title' }, '예측해 봐요: 자손 52개체에는 어느 과육색이 더 많을까요?'),
       h('div', { class: 'cross__prediction-actions' }, ...this.predictionButtons),
-      h('p', { class: 'hint' }, '예측을 고른 뒤 교배할 수 있어요. 결과는 꼬투리가 만들어진 후 비교해요.'),
+      h('p', { class: 'hint' }, '예측을 고른 뒤 교배할 수 있어요. 결과는 자손 덱이 만들어진 후 비교해요.'),
     );
     this.el = h(
       'div',
@@ -91,7 +91,7 @@ export class CrossView {
         { class: 'cross__right' },
         h('div', { class: 'cross__head' },
           h('div', { class: 'cross__headrow' }, h('h2', { class: 'h2' }, '교배할 부모를 고르세요'), h('div', { class: 'cross__tools' }, this.exampleBtn, this.helpBtn)),
-          h('p', { class: 'hint' }, '같은 종 두 포기를 고르거나, 한 포기를 골라 자가수분하세요.'),
+          h('p', { class: 'hint' }, '같은 종 두 개체를 고르거나 한 개체를 골라 자가수분하세요.'),
         ),
         this.guidanceBox,
         this.garden,
@@ -165,8 +165,7 @@ export class CrossView {
     });
     const same = kids.length === this.garden.children.length && kids.every((k, i) => this.garden.children[i] === k);
     if (!same) this.garden.replaceChildren(...kids);
-    const n = s.garden.length;
-    this.garden.style.setProperty('--card-w', `${n <= 4 ? 112 : n === 5 ? 100 : 88}px`);
+    this.garden.style.removeProperty('--card-w');
     this.refresh();
   }
 
@@ -229,9 +228,9 @@ export class CrossView {
     }
     const name = (id: string | undefined) => (id ? g.plantById(id)?.name ?? '?' : '');
     const [a, b] = this.sel;
-    setText(this.pickA, a ? name(a) : '첫째 포기');
+    setText(this.pickA, a ? name(a) : '첫째 개체');
     this.pickA.classList.toggle('is-empty', !a);
-    setText(this.pickB, b ? name(b) : a && this.selfingSelected ? '자기 자신' : a ? '둘째 포기 (또는 자가수분)' : '둘째 포기');
+    setText(this.pickB, b ? name(b) : a && this.selfingSelected ? '자기 자신' : a ? '둘째 개체 (또는 자가수분)' : '둘째 개체');
     this.pickB.classList.toggle('is-empty', !b && !this.selfingSelected);
     const busy = this.ctx.isBusy();
     let reason = '';
@@ -341,7 +340,7 @@ export class CrossView {
           ),
           h('p', { class: 'hint' }, '예시를 다른 부모에게 그대로 적용하지 마세요. Rr × rr에서는 루비·골드가 각각 50%, Rr × Rr에서는 75%·25%로 기대됩니다.'),
         ),
-        h('p', { class: 'learning-help__note' }, '예측은 교배 전에 세운 생각입니다. 교배 뒤 52알의 관찰값과 비교하고, 다음 부모 선택에 써 보세요.'),
+        h('p', { class: 'learning-help__note' }, '예측은 교배 전에 세운 생각입니다. 교배 뒤 52개체의 관찰값과 비교하고 다음 부모 선택에 써 보세요.'),
       ),
     });
   }
@@ -434,7 +433,7 @@ export class CrossView {
     });
   }
 
-  /** 꽃가루가 두 부모에서 흘러나와 가운데서 만나 꼬투리가 된다 */
+  /** 꽃가루가 두 부모에서 흘러나와 가운데서 만나 자손 덱이 된다 */
   private async pollen(ra: ReturnType<typeof rectIn> | null, rb: ReturnType<typeof rectIn> | null): Promise<void> {
     if (motion.fast) return;
     const stageEl = this.ctx.stage;
@@ -464,7 +463,7 @@ export class CrossView {
       });
     }
     await all(jobs);
-    const pod = h('div', { class: 'podfx', 'aria-hidden': 'true' }, h('i'), h('i'), h('i'));
+    const pod = h('div', { class: 'podfx podfx--deck', 'aria-hidden': 'true' }, h('span', { class: 'pod__deck' }, h('i'), h('i'), h('i', null, '✦')));
     pod.style.left = `${mid.x}px`;
     pod.style.top = `${mid.y}px`;
     stageEl.appendChild(pod);

@@ -109,7 +109,11 @@ export class ShopView {
     const label = it.kind === 'pack' ? '고르기' : it.kind === 'upgrade' ? '증축' : '구매';
     const buyBtn = button(it.sold ? '팔림' : `${label} $${it.price}`, () => this.buy(it.slot), { class: ['btn--buy', it.kind === 'pack' && 'btn--gold'].filter(Boolean).join(' '), 'aria-label': `${name} ${label}, $${it.price}${why ? ` (${why})` : ''}` });
     buyBtn.disabled = it.sold || !!why;
-    const wrap = h('div', { class: ['shopitem', `shopitem--${it.kind}`, it.sold && 'is-sold'], role: 'listitem' }, h('div', { class: 'shopitem__art' }, art), buyBtn);
+    const wrap = h('div', { class: ['shopitem', `shopitem--${it.kind}`, it.sold && 'is-sold'], role: 'listitem' },
+      h('div', { class: 'shopitem__art' }, art),
+      h('div', { class: 'shopitem__copy' }, h('h3', null, name), h('p', null, desc)),
+      buyBtn,
+      why && !it.sold ? h('p', { class: 'shopitem__why' }, why) : null);
     if (it.kind === 'pack' && it.choices && !it.sold) {
       wrap.appendChild(button('구입 전 살펴보기', () => this.previewOffer(it), { class: 'btn--ghost shopitem__preview', 'aria-label': `${name} 내용 살펴보기` }));
     }
@@ -237,7 +241,7 @@ export class ShopView {
     const row = h('div', { class: 'packopen__row' });
     body.appendChild(h('p', { class: 'hint' }, pack.picks > 1 ? `${pack.picks}개를 고를 수 있어요.` : '하나를 골라요.'));
     if (pack.choices.some((ch) => ch.kind === 'plant')) {
-      body.appendChild(h('p', { class: 'hint' }, '겉모습이 같은 포기도 숨은 유전자형은 다를 수 있어요. 유전자 검사 키트로 확인할 수 있어요.'));
+      body.appendChild(h('p', { class: 'hint' }, '겉모습이 같은 개체도 숨은 유전자형은 다를 수 있어요. 유전자 검사 키트로 확인할 수 있어요.'));
     }
     body.appendChild(row);
     pack.choices.forEach((ch, i) => {
@@ -309,7 +313,7 @@ export class ShopView {
     if (!ch || this.ctx.isBusy()) return;
     let replace: string | undefined;
     if (ch.kind === 'plant' && s.garden.length >= s.gardenCap) {
-      const out = await pickPlant(this.ctx, { title: '온실이 가득 찼어요', hint: `${fmt.josa(ch.plant.name, '을를')} 들이려면 한 포기를 내보내야 해요.`, confirm: '내보내고 들이기' });
+      const out = await pickPlant(this.ctx, { title: '온실이 가득 찼어요', hint: `${fmt.josa(ch.plant.name, '을를')} 들이려면 한 개체를 내보내야 해요.`, confirm: '내보내고 들이기' });
       if (!out) return;
       replace = out;
     }

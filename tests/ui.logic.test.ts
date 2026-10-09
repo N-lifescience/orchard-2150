@@ -133,11 +133,11 @@ describe('카드 보기', () => {
     const child = { ...base, id: 'p3', name: '2세대 선발 1호', origin: 'seedling' as const, generation: 2, parents: ['p1', 'p2'] as [string, string] };
     const self = { ...base, id: 'p4', name: '3세대', origin: 'seedling' as const, generation: 3, parents: ['p3', 'p3'] as [string, string] };
     const find = (id: string) => [a, b, child].find((p) => p.id === id);
-    expect(lineageText(a, find)).toBe('처음부터 온실에 있던 포기');
+    expect(lineageText(a, find)).toBe('처음부터 온실에 있던 개체');
     expect(lineageText(b, find)).toContain('시장');
     expect(lineageText(child, find)).toBe('엘레나 로시의 루비 × 이웃 루비 · 2세대');
     expect(lineageText(self, find)).toContain('자가수분');
-    expect(lineageText({ ...child, parents: ['gone', 'p2'] }, find)).toContain('떠나보낸 포기');
+    expect(lineageText({ ...child, parents: ['gone', 'p2'] }, find)).toContain('떠나보낸 개체');
     expect(plantView(a, { glasses: false }).title).toBe('엘레나 로시의 루비');
   });
 });

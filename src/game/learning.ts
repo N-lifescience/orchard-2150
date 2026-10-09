@@ -37,7 +37,7 @@ export function goalHint(goal: DeliveryGoal): string {
   if (t.species === 'stella') return '별다래는 암그루와 수그루가 필요해요. 열매가 있는 암그루 모종을 남기고 수그루는 솎아내세요.';
   if (t.minBrix) return '당도가 높은 자손을 선발해 다음 부모로 남기세요. 비료로 오른 당도는 유전 형질 납품 수에 포함되지 않아요.';
   if (t.color === 'gold') return '골드 과육에는 기능 있는 R이 없어야 해요. 골드 부모의 자가수분이나 r을 가진 부모끼리의 교배를 비교해 보세요.';
-  if (t.marked === false) return '루미의 매끈한 껍질은 열성 형질이에요. ss 포기를 부모로 고르면 어떤 자손이 나올지 생각해 보세요.';
+  if (t.marked === false) return '루미의 매끈한 껍질은 열성 형질이에요. ss 개체를 부모로 고르면 어떤 자손이 나올지 생각해 보세요.';
   return '부모의 공개된 유전자형을 보고 원하는 형질을 낼 조합을 고르세요. 같은 겉모습이어도 자손 분포는 달라질 수 있어요.';
 }
 

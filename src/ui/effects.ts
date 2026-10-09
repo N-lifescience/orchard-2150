@@ -44,9 +44,9 @@ export function scoreStream(root: HTMLElement, source: Element, destination: Ele
 
 export async function contractSeal(root: HTMLElement, target: number, score: number): Promise<void> {
   const seal = h('div', { class: 'contract-seal', 'aria-hidden': 'true' },
-    h('span', { class: 'contract-seal__rule' }),
+    h('span', { class: 'contract-seal__mark' }, '✓'),
     h('span', { class: 'contract-seal__label' }, '주문한 형질 · 목표 점수 달성'),
-    h('strong', null, '계약 완료'),
+    h('strong', null, '납품 완료'),
     h('span', { class: 'contract-seal__score' }, `${score.toLocaleString('ko-KR')} / ${target.toLocaleString('ko-KR')}점`),
   );
   root.appendChild(seal);
@@ -58,7 +58,7 @@ export async function contractSeal(root: HTMLElement, target: number, score: num
         { opacity: 1, translate: '0 0', scale: '1.04', offset: .22 },
         { opacity: 1, scale: '1', offset: .8 },
         { opacity: 0, translate: '0 -8px', scale: '1' },
-      ], { duration: motion.reduced ? 520 : 1050 }),
+      ], { duration: motion.reduced ? 520 : 1050, easing: 'linear' }),
     ]);
   } finally { seal.remove(); }
 }

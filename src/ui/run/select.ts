@@ -1,4 +1,4 @@
-// 선발 (phase 'select') — 이번 주문에서 본 모종 중 한 포기를 온실에 들인다
+// 선발 (phase 'select') — 이번 주문에서 본 모종 중 한 개체를 온실에 들인다
 import { audio } from '../../audio';
 import { plantCard, seedCard } from '../../art';
 import type { RunState, SeedCard } from '../../contract/game';
@@ -42,7 +42,7 @@ export class SelectView {
         h(
           'header',
           { class: 'sel__head' },
-          h('div', null, h('h2', { class: 'h2' }, '선발 — 한 포기를 온실에 들여요'), h('p', { class: 'hint' }, '이번 주문에서 본 모종 중 한 포기가 다음 교배의 부모가 돼요. 씨 없는(3배체) 모종은 부모가 될 수 없어요.')),
+          h('div', null, h('h2', { class: 'h2' }, '선발 — 한 개체를 온실에 들여요'), h('p', { class: 'hint' }, '이번 주문에서 본 모종 중 한 개체가 다음 교배의 부모가 돼요. 씨 없는(3배체) 모종은 부모가 될 수 없어요.')),
           h('div', { class: 'sortbox' }, sortB, sortS),
         ),
         this.grid,
@@ -130,9 +130,9 @@ export class SelectView {
       }),
     );
     const parts: string[] = [];
-    if (opts.mustReplace) parts.push(`온실이 가득 찼어요(${s.garden.length}/${s.gardenCap}). 내보낼 포기도 골라요.`);
+    if (opts.mustReplace) parts.push(`온실이 가득 찼어요(${s.garden.length}/${s.gardenCap}). 내보낼 개체도 골라요.`);
     else parts.push(`온실 ${s.garden.length}/${s.gardenCap}`);
-    if (opts.extraPicks > 0 || (s as { selectPicked?: unknown }).selectPicked) parts.push('조직배양 랩: 한 포기 더 들일 수 있어요. 같은 모종을 한 번 더 고르면 클론이에요.');
+    if (opts.extraPicks > 0 || (s as { selectPicked?: unknown }).selectPicked) parts.push('조직배양 랩: 한 개체 더 들일 수 있어요. 같은 모종을 한 번 더 고르면 클론이에요.');
     setText(this.info, parts.join(' '));
     this.confirmBtn.disabled = !this.pick || (opts.mustReplace && !this.out) || this.ctx.isBusy();
     if (fresh) void play(this.el.firstElementChild, [{ opacity: 0, translate: '0 40px' }, { opacity: 1, translate: '0 0' }], { duration: 380 });
@@ -156,7 +156,7 @@ export class SelectView {
     if (this.ctx.isBusy() || !this.pick) return;
     const opts = this.ctx.game.selectOptions();
     if (opts.mustReplace && !this.out) {
-      this.ctx.toast.error('내보낼 포기를 골라 주세요.');
+      this.ctx.toast.error('내보낼 개체를 골라 주세요.');
       return;
     }
     audio.play('buy');

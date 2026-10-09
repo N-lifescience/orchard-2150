@@ -21,18 +21,18 @@ export const HAND_RANK: HandTypeId[] = [
 ];
 
 export const HAND_TYPES: Record<HandTypeId, HandTypeDef> = {
-  high: { id: 'high', name: '단품', desc: '족보가 없으면 가장 단 모종 1포기만 점수를 내요.', chips: 5, mult: 1, perLevel: { chips: 10, mult: 1 } },
-  pair: { id: 'pair', name: '한 쌍', desc: '당도가 같은 모종 2포기.', chips: 10, mult: 2, perLevel: { chips: 15, mult: 1 } },
+  high: { id: 'high', name: '단품', desc: '족보가 없으면 가장 단 모종 1개체만 점수를 내요.', chips: 5, mult: 1, perLevel: { chips: 10, mult: 1 } },
+  pair: { id: 'pair', name: '한 쌍', desc: '당도가 같은 모종 2개체.', chips: 10, mult: 2, perLevel: { chips: 15, mult: 1 } },
   twoPair: { id: 'twoPair', name: '두 쌍', desc: '당도가 같은 쌍이 두 개.', chips: 20, mult: 2, perLevel: { chips: 20, mult: 1 } },
-  three: { id: 'three', name: '세 쌍', desc: '당도가 같은 모종 3포기.', chips: 30, mult: 3, perLevel: { chips: 20, mult: 2 } },
-  straight: { id: 'straight', name: '당도 계단', desc: '당도가 1씩 이어지는 모종 5포기. 잡종 꼬투리에서 잘 나와요.', chips: 30, mult: 4, perLevel: { chips: 30, mult: 3 } },
-  flush: { id: 'flush', name: '한 빛깔', desc: '빛깔(과육색·무늬)이 같은 모종 5포기. 겉모습만 보는 족보라 순계의 증거는 아니에요.', chips: 35, mult: 4, perLevel: { chips: 15, mult: 2 } },
+  three: { id: 'three', name: '세 쌍', desc: '당도가 같은 모종 3개체.', chips: 30, mult: 3, perLevel: { chips: 20, mult: 2 } },
+  straight: { id: 'straight', name: '당도 계단', desc: '당도가 1씩 이어지는 모종 5개체. 잡종 자손 덱에서 잘 나와요.', chips: 30, mult: 4, perLevel: { chips: 30, mult: 3 } },
+  flush: { id: 'flush', name: '한 빛깔', desc: '빛깔(과육색·무늬)이 같은 모종 5개체. 겉모습만 보는 족보라 순계의 증거는 아니에요.', chips: 35, mult: 4, perLevel: { chips: 15, mult: 2 } },
   fullHouse: { id: 'fullHouse', name: '풀 바구니', desc: '세 쌍 + 한 쌍.', chips: 40, mult: 4, perLevel: { chips: 25, mult: 2 } },
-  four: { id: 'four', name: '네 쌍', desc: '당도가 같은 모종 4포기.', chips: 60, mult: 7, perLevel: { chips: 30, mult: 3 } },
-  straightFlush: { id: 'straightFlush', name: '빛깔 계단', desc: '빛깔이 모두 같고 당도가 1씩 이어지는 5포기.', chips: 100, mult: 8, perLevel: { chips: 40, mult: 4 } },
-  five: { id: 'five', name: '다섯 쌍', desc: '당도가 같은 모종 5포기.', chips: 120, mult: 12, perLevel: { chips: 35, mult: 3 } },
+  four: { id: 'four', name: '네 쌍', desc: '당도가 같은 모종 4개체.', chips: 60, mult: 7, perLevel: { chips: 30, mult: 3 } },
+  straightFlush: { id: 'straightFlush', name: '빛깔 계단', desc: '빛깔이 모두 같고 당도가 1씩 이어지는 5개체.', chips: 100, mult: 8, perLevel: { chips: 40, mult: 4 } },
+  five: { id: 'five', name: '다섯 쌍', desc: '당도가 같은 모종 5개체.', chips: 120, mult: 12, perLevel: { chips: 35, mult: 3 } },
   flushHouse: { id: 'flushHouse', name: '빛깔 바구니', desc: '빛깔이 모두 같은 풀 바구니.', chips: 140, mult: 14, perLevel: { chips: 40, mult: 4 } },
-  flushFive: { id: 'flushFive', name: '완전 균일', desc: '빛깔과 당도가 모두 같은 5포기. 겉모습과 당도가 같아도 유전자형까지 같은지는 몰라요.', chips: 160, mult: 16, perLevel: { chips: 50, mult: 3 } },
+  flushFive: { id: 'flushFive', name: '완전 균일', desc: '빛깔과 당도가 모두 같은 5개체. 겉모습과 당도가 같아도 유전자형까지 같은지는 몰라요.', chips: 160, mult: 16, perLevel: { chips: 50, mult: 3 } },
 };
 
 /** 한 빛깔 계열 (빛깔 인증서·균일성 심사·박람회가 본다) */
@@ -48,7 +48,7 @@ export const JOKERS: JokerDef[] = [
   { id: 'purebredCert', name: '빛깔 인증서', rarity: 'uncommon', cost: 6, desc: '한 빛깔 계열 족보(한 빛깔·빛깔 계단·빛깔 바구니·완전 균일)면 ×3 배수. 빛깔만 확인하며 순계 인증은 아니에요.', flavor: '겉모습이 같아도 숨은 대립유전자는 다를 수 있어요.', concept: 'purebred' },
   { id: 'heterosis', name: '잡종강세', rarity: 'uncommon', cost: 6, desc: '과육색·무늬 유전자 중 하나라도 이형접합인 모종이 점수 낼 때마다 +2 배수.', flavor: '겉은 같아 보여도 속은 섞여 있어요.', concept: 'heterozygote' },
   { id: 'hideAndSeek', name: '숨바꼭질 대립유전자', rarity: 'uncommon', cost: 7, desc: '과육색이나 무늬가 두 부모 어느 쪽에도 없던 모종마다 ×1.5 배수.', flavor: '부모가 숨겨 둔 대립유전자가 얼굴을 내밀었어요.', concept: 'segregation' },
-  { id: 'selfingMaster', name: '자가수분 명인', rarity: 'uncommon', cost: 6, desc: '이번 교배가 자가수분이면 ×2 배수.', flavor: '한 포기, 한 꽃, 한 가족.', concept: 'selfing' },
+  { id: 'selfingMaster', name: '자가수분 명인', rarity: 'uncommon', cost: 6, desc: '이번 교배가 자가수분이면 ×2 배수.', flavor: '한 개체, 한 꽃, 한 가족.', concept: 'selfing' },
   { id: 'breedingLog', name: '교배 일지', rarity: 'common', cost: 5, desc: '골드 또는 무늬 없는 모종이 점수를 낸 출하마다 +1 배수가 쌓여요.', flavor: '엘레나의 기록에는 실패한 교배도 빠짐없이 적혀 있어요.' },
   { id: 'mendelGlasses', name: '멘델의 안경', rarity: 'common', cost: 3, desc: '겉모습만으로 확실한 유전자형을 카드에 표시해요.', flavor: '완두밭을 오래 들여다본 사람의 눈을 빌려요.' },
   { id: 'punnettNote', name: '퍼넷 노트', rarity: 'uncommon', cost: 4, desc: '유전자형이 공개된 두 부모의 자손 빛깔·당도 기대 분포를 보여 줘요.', flavor: '관찰한 부모 정보를 토대로 다음 자손을 예상해요.' },
@@ -62,16 +62,16 @@ export const JOKERS: JokerDef[] = [
   { id: 'jellyfishGene', name: '형광 해파리 유전자', rarity: 'rare', cost: 6, desc: '점수 내는 형광 모종마다 ×1.5 배수. 대신 주문이 끝날 때 꽃가루 유출 확률 +25%.', flavor: '바닷속 빛을 과일에 옮겼어요. 대가도 따라와요.', concept: 'lmo', policy: ['biotech'] },
   { id: 'climateHouse', name: '기후 적응 온실', rarity: 'rare', cost: 8, desc: '의뢰인(보스)의 특별 규칙을 무시해요. 목표 점수는 그대로예요.', flavor: '2150년 날씨에도 끄떡없는 돔.' },
   { id: 'grandpaNotes', name: '마테오 비앙키의 향기 노트', rarity: 'legendary', cost: 10, desc: '당도 16 이상 모종은 칩을 한 번 더 더해요.', flavor: '마테오는 향과 당도를 함께 기록했어요.' },
-  { id: 'tissueLab', name: '조직배양 랩', rarity: 'uncommon', cost: 6, desc: '선발 때 1포기를 더 들일 수 있어요. 같은 모종을 한 번 더 고르면 클론이에요.', flavor: '잎 한 조각이면 충분해요.', concept: 'clone' },
+  { id: 'tissueLab', name: '조직배양 랩', rarity: 'uncommon', cost: 6, desc: '선발 때 1개체를 더 들일 수 있어요. 같은 모종을 한 번 더 고르면 클론이에요.', flavor: '잎 한 조각이면 충분해요.', concept: 'clone' },
 ];
 
 // ── 연구 시약(타로) ────────────────────────────────────────────
 export const REAGENTS: ReagentDef[] = [
-  { id: 'genetest', name: '유전자 검사 키트', desc: '손에 든 모종이나 온실 포기 최대 2개의 유전자형을 공개해요.', cost: 3, target: 'hand2', concept: 'heterozygote' },
-  { id: 'colchicine', name: '콜히친', desc: '온실의 2배체 포기 하나를 4배체로 만들어요. 4배체는 열매가 커요.', cost: 4, target: 'garden1', concept: 'polyploid', minAnte: 5 },
+  { id: 'genetest', name: '유전자 검사 키트', desc: '손에 든 모종이나 온실 개체 최대 2개의 유전자형을 공개해요.', cost: 3, target: 'hand2', concept: 'heterozygote' },
+  { id: 'colchicine', name: '콜히친', desc: '온실의 2배체 개체 하나를 4배체로 만들어요. 4배체는 열매가 커요.', cost: 4, target: 'garden1', concept: 'polyploid', minAnte: 5 },
   { id: 'scissors', name: '유전자 가위', desc: '편집 작업대에서 과육색·쓴맛 유전자의 DNA를 한 글자씩 고쳐요.', cost: 5, target: 'garden1', concept: 'transcription', minAnte: 7, policy: ['precision', 'biotech'] },
-  { id: 'vector', name: '형질전환 벡터', desc: '온실 포기 하나에 형광 해파리 유전자를 넣어요. 유전자 변형 생물체(LMO)가 돼요.', cost: 5, target: 'garden1', concept: 'lmo', minAnte: 7, policy: ['biotech'] },
-  { id: 'tissue', name: '조직배양', desc: '온실 포기 하나를 똑같이 복제해요. 온실에 빈 칸이 있어야 해요.', cost: 4, target: 'garden1', concept: 'clone' },
+  { id: 'vector', name: '형질전환 벡터', desc: '온실 개체 하나에 형광 해파리 유전자를 넣어요. 유전자 변형 생물체(LMO)가 돼요.', cost: 5, target: 'garden1', concept: 'lmo', minAnte: 7, policy: ['biotech'] },
+  { id: 'tissue', name: '조직배양', desc: '온실 개체 하나를 똑같이 복제해요. 온실에 빈 칸이 있어야 해요.', cost: 4, target: 'garden1', concept: 'clone' },
   { id: 'fertilizer', name: '선발 비료', desc: '손에 든 모종 최대 2개의 당도 +2. 이번 주문에서만이고 유전되지 않아요.', cost: 2, target: 'hand2', concept: 'environment' },
   { id: 'brush', name: '붓 한 자루', desc: '출하 중에 써요. 남은 출하·솎아내기는 그대로 두고 교배를 다시 골라요.', cost: 3, target: 'none' },
 ];
@@ -79,7 +79,7 @@ export const REAGENTS: ReagentDef[] = [
 // ── 보스(명품 의뢰인) ──────────────────────────────────────────
 export const BOSSES: BossDef[] = [
   { id: 'coldsnap', name: '냉해 계약', client: '나디아 볼코바 · 트롬쇠 종자은행', desc: '추위 때문에 감수분열 중 비분리가 늘어요(염색체 쌍마다 8%).', minAnte: 5, concept: 'nondisjunction' },
-  { id: 'nobees', name: '자가수분 계약', client: '에바 린드 · 스톡홀름 도시농장', desc: '다른 포기와 교배할 수 없어요. 한 포기를 골라 자가수분하세요.', minAnte: 2, concept: 'selfing' },
+  { id: 'nobees', name: '자가수분 계약', client: '에바 린드 · 스톡홀름 도시농장', desc: '다른 개체와 교배할 수 없어요. 한 개체를 골라 자가수분하세요.', minAnte: 2, concept: 'selfing' },
   { id: 'uniformity', name: '균일성 검사', client: '오스카 베르너 · 취리히 품종등록소', desc: '한 빛깔 계열 족보가 아니면 점수가 절반이에요. 같은 빛깔이 순계의 증거는 아니에요.', minAnte: 1, concept: 'purebred' },
   { id: 'drought', name: '가뭄 계약', client: '라일라 만수르 · 마라케시 과일상', desc: '모든 모종의 당도가 3 낮아요. 환경 변화이므로 자손에게 남지 않아요.', minAnte: 1, concept: 'environment' },
   { id: 'judge', name: '열매 검사', client: '에밀 뒤랑 · 리옹 과일 경매장', desc: '수그루에는 열매가 없어요. 수그루 모종은 점수를 못 내요.', minAnte: 3, concept: 'dioecy' },
@@ -116,7 +116,7 @@ export const CONCEPTS: Record<ConceptId, ConceptDef> = {
   selfing: {
     id: 'selfing',
     title: '자가수분',
-    body: '한 포기에서 나온 꽃가루로 그 포기를 수분했어요. 같은 계통을 거듭 자가수분하면 이형접합이 줄어요.',
+    body: '한 개체에서 나온 꽃가루로 그 개체를 수분했어요. 같은 계통을 거듭 자가수분하면 이형접합이 줄어요.',
     fiction: '루미는 한 꽃에 암술과 수술이 함께 있는 가상의 식물이에요.',
     real: '완두도 자가수분을 해요. Aa를 자가수분한 자손의 유전자형은 AA : Aa : aa = 1 : 2 : 1이에요. 그중 이형접합인 Aa는 절반이에요.',
     standard: '12유전01-01',
@@ -124,7 +124,7 @@ export const CONCEPTS: Record<ConceptId, ConceptDef> = {
   polygenic: {
     id: 'polygenic',
     title: '당도가 여러 값으로 퍼지는 이유',
-    body: '같은 꼬투리에서 나온 모종인데 당도가 제각각이에요. 당도에 관여하는 유전자가 여러 개이기 때문이에요.',
+    body: '같은 자손 덱에서 나온 모종인데 당도가 제각각이에요. 당도에 관여하는 유전자가 여러 개이기 때문이에요.',
     fiction: '게임에서는 유전자 6개(Q1~Q6)의 + 대립유전자 수를 더해 당도 8~20을 정해요.',
     real: "과일의 당도나 사람의 키처럼 여러 유전자와 환경이 함께 정하는 형질은 값이 연속적으로 퍼져요. 이를 다유전자유전이라고 해요.",
     standard: '12유전01-03',
@@ -164,7 +164,7 @@ export const CONCEPTS: Record<ConceptId, ConceptDef> = {
   polyploid: {
     id: 'polyploid',
     title: '염색체가 두 배가 되면',
-    body: '콜히친을 쓴 포기가 2배체(2n)에서 4배체(4n)로 바뀌었어요. 열매도 커졌어요.',
+    body: '콜히친을 쓴 개체가 2배체(2n)에서 4배체(4n)로 바뀌었어요. 열매도 커졌어요.',
     fiction: '게임에서는 4배체 모종에 칩 10개를 더해요.',
     real: '콜히친은 세포 분열 때 염색체를 양쪽으로 끌어당기는 방추사의 형성을 막아요. 복제된 염색체가 한 세포에 남으면 염색체 수가 두 배가 될 수 있어요. 배수체 식물은 세포나 기관이 커지는 경우가 많아요.',
     standard: '12유전01-04',
@@ -172,7 +172,7 @@ export const CONCEPTS: Record<ConceptId, ConceptDef> = {
   triploid: {
     id: 'triploid',
     title: '3배체와 씨 없는 열매',
-    body: '4배체와 2배체를 교배해 3배체(3n)가 나왔어요. 이 포기는 다시 교배할 수 없어요.',
+    body: '4배체와 2배체를 교배해 3배체(3n)가 나왔어요. 이 개체는 다시 교배할 수 없어요.',
     fiction: "게임은 3배체를 모두 씨 없는 불임 모종으로 단순화하고 출하 배수에 ×1.5를 적용해요. 실제 씨 없는 수박도 열매가 자라려면 수분용 2배체의 꽃가루가 필요해요.",
     real: "3배체는 감수분열 때 염색체가 고르게 나뉘기 어려워 정상적인 씨를 만들기 어려워요.\n\n기하라 히토시는 1940년대에 4배체와 2배체를 교배해 씨 없는 수박을 개발했어요. 우장춘 박사는 훗날 한국에 재배를 알렸지만 처음 만든 사람은 아니에요.",
     standard: '12유전01-04',
@@ -224,25 +224,25 @@ export const CONCEPTS: Record<ConceptId, ConceptDef> = {
   lmo: {
     id: 'lmo',
     title: '유전자 변형 생물체(LMO)',
-    body: '다른 생물의 유전자를 넣은 포기가 형광을 내요. 유전자를 옮겨 새 형질을 얻었어요.',
-    fiction: '형광 포기에 점수 보너스가 붙는 것은 게임 규칙이에요.',
+    body: '다른 생물의 유전자를 넣은 개체가 형광을 내요. 유전자를 옮겨 새 형질을 얻었어요.',
+    fiction: '형광 개체에 점수 보너스가 붙는 것은 게임 규칙이에요.',
     real: '해파리에서 발견된 녹색 형광 단백질(GFP)의 유전자는 생물학 연구에서 표지로 쓰여요. 외부 유전자를 도입한 생물은 이용 목적과 환경 영향을 살펴 관리해야 해요.',
     standard: '12유전03-04',
   },
   geneFlow: {
     id: 'geneFlow',
     title: '꽃가루를 따라 이동한 유전자',
-    body: "형광 포기의 꽃가루로 수정한 뒤 자손에서 형광 유전자를 확인했어요. 수분받은 원래 포기의 유전자형은 그대로예요.",
+    body: "형광 개체의 꽃가루로 수정한 뒤 자손에서 형광 유전자를 확인했어요. 수분받은 원래 개체의 유전자형은 그대로예요.",
     fiction: "꽃가루 이동 가능성과 조사에 걸리는 시간은 게임을 위해 단순화했어요. 이동 여부는 씨 하나의 관찰 기록으로 남겨요.",
     real: '꽃가루는 바람이나 곤충을 따라 이동해요. 그 꽃가루가 다른 식물과 수정하면 다음 세대에 유전자가 옮겨 갈 수 있어요. 그래서 LMO를 재배할 때는 주변 작물과 환경에 미칠 영향을 살펴야 해요.',
     standard: '12유전03-05',
   },
   clone: {
     id: 'clone',
-    title: '조직 한 조각에서 새 포기로',
-    body: '온실 포기의 조직을 배양해 같은 유전자형의 포기를 얻었어요.',
+    title: '조직 한 조각에서 새 개체로',
+    body: '온실 개체의 조직을 배양해 같은 유전자형의 개체를 얻었어요.',
     fiction: '한 주문 만에 다 자라는 속도는 게임 설정이에요.',
-    real: '식물은 분화한 조직 한 조각에서도 온전한 개체로 자랄 수 있어요. 이를 분화 전능성이라고 해요. 조직배양으로 얻은 포기는 원래 포기와 유전자형이 같은 클론이에요.',
+    real: '식물은 분화한 조직 한 조각에서도 온전한 개체로 자랄 수 있어요. 이를 분화 전능성이라고 해요. 조직배양으로 얻은 개체는 원래 개체와 유전자형이 같은 클론이에요.',
     standard: '12유전02-04',
   },
 };
@@ -262,8 +262,8 @@ export const UPGRADE_ORDER: UpgradeId[] = ['greenhouse', 'hands', 'discards', 'h
 // ── 씨앗 봉투(부스터 팩) ───────────────────────────────────────
 export interface PackDef { kind: PackKind; name: string; desc: string; price: number; size: number; picks: number }
 export const PACKS: Record<PackKind, PackDef> = {
-  seed: { kind: 'seed', name: '시장 묘목 목록', desc: '구입 전에 품종 3포기를 살펴보고 1포기를 골라요. 유전자형은 검사로 확인해요.', price: 4, size: 3, picks: 1 },
-  rareSeed: { kind: 'rareSeed', name: '연구 품종 목록', desc: '당도 높은 품종·순계·4배체·은빛 수그루 3포기를 미리 보고 1포기를 골라요.', price: 6, size: 3, picks: 1 },
+  seed: { kind: 'seed', name: '시장 묘목 목록', desc: '구입 전에 품종 3개체를 살펴보고 1개체를 골라요. 유전자형은 검사로 확인해요.', price: 4, size: 3, picks: 1 },
+  rareSeed: { kind: 'rareSeed', name: '연구 품종 목록', desc: '당도 높은 품종·순계·4배체·은빛 수그루 3개체를 미리 보고 1개체를 골라요.', price: 6, size: 3, picks: 1 },
   reagent: { kind: 'reagent', name: '시약 꾸러미', desc: '연구 시약 3개 중 1개.', price: 4, size: 3, picks: 1 },
   medal: { kind: 'medal', name: '품평회 메달함', desc: '족보 3개 중 하나의 레벨을 올려요.', price: 4, size: 3, picks: 1 },
   joker: { kind: 'joker', name: '비법 두루마리', desc: '장인의 비법 2개 중 1개.', price: 6, size: 2, picks: 1 },

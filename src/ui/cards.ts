@@ -78,12 +78,12 @@ export function seedView(c: SeedCard, o: ViewOpts): CardView {
 }
 
 export function lineageText(p: Plant, find: (id: string) => Plant | undefined): string {
-  if (p.origin === 'starter') return '처음부터 온실에 있던 포기';
+  if (p.origin === 'starter') return '처음부터 온실에 있던 개체';
   if (p.origin === 'market') return '시장에서 들인 품종';
   const parents = p.parents;
   if (!parents) return `${p.generation}세대`;
-  const a = find(parents[0])?.name ?? '떠나보낸 포기';
-  const b = find(parents[1])?.name ?? '떠나보낸 포기';
+  const a = find(parents[0])?.name ?? '떠나보낸 개체';
+  const b = find(parents[1])?.name ?? '떠나보낸 개체';
   if (p.origin === 'clone') return `${a}의 클론`;
   if (parents[0] === parents[1]) return `${a} 자가수분 · ${p.generation}세대`;
   return `${a} × ${b} · ${p.generation}세대`;

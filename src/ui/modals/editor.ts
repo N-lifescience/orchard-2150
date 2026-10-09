@@ -20,7 +20,7 @@ export function openEditor(ctx: Ctx, reagentIndex: number): void {
   const s = g.state;
   if (s.reagents[reagentIndex] !== 'scissors') return;
 
-  // 대상: 온실 포기 + (출하 중이면) 손패
+  // 대상: 온실 개체 + (출하 중이면) 손패
   const targets: { id: string; label: string; species: 'lumi' | 'stella' }[] = [
     ...s.garden.map((p) => ({ id: p.id, label: `${p.name} · ${speciesLabel(p.pheno)}`, species: p.genome.species })),
     ...(s.phase === 'play' ? s.hand.map((c, i) => ({ id: c.uid, label: `손패 ${i + 1}번 · ${phenoSentence(c.pheno, effBrix(c))}`, species: c.genome.species })) : []),

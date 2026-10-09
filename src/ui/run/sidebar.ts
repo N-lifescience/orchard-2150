@@ -5,7 +5,7 @@ import type { RunState } from '../../contract/game';
 import type { Ctx } from '../ctx';
 import { button, h, replaceChildren, setText } from '../h';
 import * as fmt from '../fmt';
-import { play, roll, motion } from '../motion';
+import { play, roll } from '../motion';
 import { fx, between } from '../rng';
 import { deliveryComplete } from '../../game';
 import { deliveryGoals } from '../learning';
@@ -24,7 +24,7 @@ export class Sidebar {
   private deliveryEl: HTMLElement;
   readonly roundBox: HTMLElement;
   readonly roundEl: HTMLElement;
-  private flames: HTMLElement;
+  private aura: HTMLElement;
   readonly handName: HTMLElement;
   private handLevel: HTMLElement;
   readonly chipsBox: HTMLElement;
@@ -64,8 +64,8 @@ export class Sidebar {
     this.rewardEl = h('span', { class: 'side__reward' });
     this.deliveryEl = h('div', { class: 'side__delivery', 'aria-live': 'polite' });
     this.roundEl = h('span', { class: 'side__round-num num' }, '0');
-    this.flames = h('div', { class: 'flames', 'aria-hidden': 'true' });
-    this.roundBox = h('div', { class: 'side__round' }, this.flames, h('div', { class: 'side__label' }, '이번 주문 점수'), this.roundEl);
+    this.aura = h('div', { class: 'score-aura', 'aria-hidden': 'true' });
+    this.roundBox = h('div', { class: 'side__round' }, this.aura, h('div', { class: 'side__label' }, '이번 주문 점수'), this.roundEl, h('span', { class: 'side__complete' }, '✓ 납품 완료'));
 
     this.handName = h('span', { class: 'side__handname' }, ' ');
     this.handLevel = h('span', { class: 'side__handlv' });
@@ -126,10 +126,10 @@ export class Sidebar {
   update(s: RunState): void {
     setText(this.brandEl, this.ctx.brand || '오차드 2150');
     const briefing: Record<RunState['phase'], string> = {
-      title: '', cross: '레아 · 같은 종의 부모 두 포기를 고르세요.',
+      title: '', cross: '레아 · 같은 종의 부모 두 개체를 고르세요.',
       play: '레아 · 점수와 필수 납품을 함께 채우세요.',
       cashout: '레아 · 계약 완료. 보상을 받고 품종을 고르세요.',
-      select: '레아 · 다음 계약에 쓸 포기를 남기세요.',
+      select: '레아 · 다음 계약에 쓸 개체를 남기세요.',
       shop: '레아 · 다음 계약을 보고 필요한 것만 사세요.',
       review: '레아 · 남은 조건을 확인하고 다시 교배하세요.',
       gameover: '', victory: '',
@@ -230,12 +230,6 @@ export class Sidebar {
 
   setFlames(on: boolean): void {
     this.roundBox.classList.toggle('is-over', on);
-    if (on && this.flames.childElementCount === 0 && !motion.reduced) {
-      for (let i = 0; i < 9; i++) {
-        this.flames.appendChild(h('i', { style: { '--i': i, '--d': `${(0.5 + fx() * 0.6).toFixed(2)}s`, '--x': `${(i / 8) * 100}%` } }));
-      }
-    }
-    if (!on) replaceChildren(this.flames);
   }
 
   /** 목표 돌파 순간 */

@@ -1,10 +1,10 @@
 // 계약 재검토와 연대기 종료 — 관찰 근거, 실제 유전자형, 성찰, 로컬 보고서.
 import { audio } from '../../audio';
-import { karyotype, plantCard } from '../../art';
+import { fruitArt, karyotype } from '../../art';
 import type { HandTypeId, OrderRecord, PredictionRecord, RunState } from '../../contract/game';
 import { describeGenotype } from '../../genetics';
 import { HAND_RANK, HAND_TYPES, POLICIES } from '../../game';
-import { lineageText, plantView, speciesLabel } from '../cards';
+import { artSeedOf, lineageText, speciesLabel } from '../cards';
 import type { Ctx } from '../ctx';
 import { h, button, replaceChildren } from '../h';
 import * as fmt from '../fmt';
@@ -13,7 +13,7 @@ import { loadRunReflection, saveRunReflection } from '../runSlots';
 
 function predictionText(p: PredictionRecord): string {
   const choice = p.choice === 'ruby' ? '루비가 더 많다' : p.choice === 'gold' ? '골드가 더 많다' : '두 빛깔이 비슷하다';
-  return `예측: ${choice}. 관찰: 루비 ${p.ruby}알, 골드 ${p.gold}알.`;
+  return `예측: ${choice}. 관찰: 루비 ${p.ruby}개체, 골드 ${p.gold}개체.`;
 }
 
 function predictionContrastsObservation(p: PredictionRecord): boolean {
@@ -58,7 +58,7 @@ export class EndScreen {
     const order = s.orders[s.orderIdx];
     const record = evidenceRecord(s);
     const earlier = record && record.attempt > 1 ? s.records.find((r) => r.ante === record.ante && r.orderIdx === record.orderIdx && r.attempt < record.attempt) : undefined;
-    const reveal = h('div', { class: 'reveal', role: 'list', 'aria-label': '온실 포기들의 실제 유전자형' });
+    const reveal = h('div', { class: 'reveal', role: 'list', 'aria-label': '온실 개체들의 실제 유전자형' });
     const reflectInput = h('textarea', { class: 'input reflect__input', rows: '3', maxlength: '200', placeholder: '관찰한 숫자 하나와 다음에 바꿀 선택을 함께 적어 보세요.', 'aria-label': '이 연대기의 성찰' });
     const saveKey = this.ctx.game.getSaveKey();
     reflectInput.value = loadRunReflection(saveKey);
@@ -163,7 +163,7 @@ export class EndScreen {
       `결과: ${s.phase === 'victory' ? '모든 계약 완료' : '도전 종료'} / 시즌 ${s.ante}/${s.maxAnte} / 재도전 ${s.stats.retries}번`,
       `교배 ${s.stats.crosses}번 / 자가수분 ${s.stats.selfings}번 / 편집 ${s.stats.edits}번 / 꽃가루 유출 ${s.stats.lmoEvents}번`,
       ...(s.geneFlow ? [
-        `최근 유전자 흐름: 꽃가루 제공 ${s.geneFlow.donor} → 수분받은 포기 ${s.geneFlow.recipient}.`,
+        `최근 유전자 흐름: 꽃가루 제공 ${s.geneFlow.donor} → 수분받은 개체 ${s.geneFlow.recipient}.`,
         `자손 씨 표본: ${s.geneFlow.offspring.fluorescent ? '형광 형질 있음' : '형광 형질 없음'}. 수분받은 성체의 유전자형은 바뀌지 않았습니다.`,
       ] : []),
       '', '계약별 관찰 기록',
@@ -201,8 +201,7 @@ export class EndScreen {
   private async revealCards(s: RunState, box: HTMLElement): Promise<void> {
     const g = this.ctx.game;
     const items = s.garden.map((p) => {
-      const v = plantView({ ...p, revealed: true }, { glasses: false, subtitle: lineageText(p, (id) => g.plantById(id)) });
-      const front = h('div', { class: 'flip__front' }, plantCard(v));
+      const front = h('div', { class: 'flip__front reveal__specimen' }, fruitArt(p.pheno, artSeedOf(p.id), 120));
       const back = h('div', { class: 'flip__back', 'aria-hidden': 'true' }, h('span', null, '?'));
       const flip = h('div', { class: 'flip' }, h('div', { class: 'flip__inner' }, back, front));
       const item = h('div', { class: 'reveal__item', role: 'listitem' }, flip,

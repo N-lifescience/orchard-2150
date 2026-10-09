@@ -253,6 +253,11 @@ export class App implements Ctx {
   }
 
   private refreshCoach(): void {
+    if (this.modals.has('modal--client')) {
+      if (this.coach) this.coach.el.hidden = true;
+      return;
+    }
+    if (this.coach) this.coach.el.hidden = false;
     if (!this.practice?.active || this.mode === 'title') return;
     if (!this.coach) this.coach = new PracticeCoach(this.stage, {
       acknowledge: (step) => {
@@ -274,12 +279,12 @@ export class App implements Ctx {
     const s = this.game.state;
     const step = inferTutorialStep(s, { ...parents, ...this.practice, selectedCards });
     let feedback = '';
-    if (step === 'parent-first' || step === 'parent-second') feedback = `지금 ${parents.parentCount} / 2포기 선택했어요.`;
+    if (step === 'parent-first' || step === 'parent-second') feedback = `지금 ${parents.parentCount} / 2개체 선택했어요.`;
     if (step === 'predict' || step === 'cross') {
       const ids = this.run?.cross.chosenParents ?? [];
       feedback = parentReason(this.game.plantById(ids[0] ?? ''), this.game.plantById(ids[1] ?? ''));
     }
-    if (step === 'observe' && s.prediction) feedback = `실제 관찰: 루비 ${s.prediction.ruby}알 · 골드 ${s.prediction.gold}알`;
+    if (step === 'observe' && s.prediction) feedback = `실제 관찰: 루비 ${s.prediction.ruby}개체 · 골드 ${s.prediction.gold}개체`;
     if (step === 'select-cards' || step === 'ship') feedback = `현재 ${selectedCards} / ${Math.min(s.maxSelect, s.hand.length)}장 선택 · 출하 ${s.handsLeft}회 남음`;
     this.coach.update(step, s, feedback, this.isBusy());
   }
@@ -449,16 +454,14 @@ export class App implements Ctx {
   }
 
   private fit(): void {
-    const W = window.innerWidth;
-    const H = window.innerHeight - (document.querySelector('.debug-panel')?.getBoundingClientRect().height ?? 0);
-    const responsive = W <= 1100 || !!window.matchMedia?.('(pointer: coarse)').matches;
-    document.documentElement.classList.toggle('is-responsive-ui', responsive);
-    this.stage.classList.toggle('is-responsive', responsive);
-    const s = responsive ? 1 : Math.min(W / 1280, H / 720);
-    stage.scale = s;
-    this.stage.style.transform = responsive ? 'none' : `scale(${s})`;
-    this.stage.style.left = responsive ? '0' : `${Math.max(0, Math.round((W - 1280 * s) / 2))}px`;
-    this.stage.style.top = responsive ? '0' : `${Math.max(0, Math.round((H - 720 * s) / 2))}px`;
+    // Every screen uses document flow. A fixed, scaled 720px stage clipped
+    // taller content and made text shrink on short desktop windows.
+    document.documentElement.classList.add('is-responsive-ui');
+    this.stage.classList.add('is-responsive');
+    stage.scale = 1;
+    this.stage.style.transform = 'none';
+    this.stage.style.left = '0';
+    this.stage.style.top = '0';
     this.run?.relayout();
   }
 
@@ -575,6 +578,10 @@ export class App implements Ctx {
         continue;
       }
       // 발견 카드·일반 모달은 닫는다 (봉투 모달은 봇이 고른다)
+      if (this.modals.has('modal--client')) {
+        this.stage.querySelector<HTMLButtonElement>('.client__next')?.click();
+        continue;
+      }
       if (this.modals.count > 0 && !this.modals.has('modal--pack')) {
         this.modals.closeTop();
         continue;

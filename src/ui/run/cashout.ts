@@ -1,5 +1,6 @@
 // 정산 (phase 'cashout') — 줄마다 동전이 튀며 합산, [받기]
 import { audio } from '../../audio';
+import { characterName, characterPortrait } from '../../art';
 import type { RunState } from '../../contract/game';
 import type { Ctx } from '../ctx';
 import { h, button, replaceChildren, setText } from '../h';
@@ -14,15 +15,20 @@ export class CashoutView {
   private totalEl: HTMLElement;
   private collectBtn: HTMLButtonElement;
   private head: HTMLElement;
+  private delivery: HTMLElement;
   private shownKey = '';
   private running = false;
 
   constructor(private ctx: Ctx, private moneyTarget: () => HTMLElement) {
     this.head = h('div', { class: 'cash__head' });
+    this.delivery = h('div', { class: 'cash__delivery' });
     this.lines = h('ul', { class: 'cash__lines' });
     this.totalEl = h('span', { class: 'num' }, '$0');
-    this.collectBtn = button('받기', () => void this.collect(), { class: 'btn--gold btn--big', 'aria-keyshortcuts': 'Enter' });
-    this.card = h('div', { class: 'cash panel panel--gold', role: 'region', 'aria-label': '정산' }, this.head, this.lines, h('div', { class: 'cash__total' }, h('span', null, '합계'), this.totalEl), this.collectBtn);
+    this.collectBtn = button('보상 받기', () => void this.collect(), { class: 'btn--gold btn--big', 'aria-keyshortcuts': 'Enter' });
+    this.card = h('div', { class: 'cash panel panel--gold', role: 'region', 'aria-label': '계약 정산서' }, this.head, this.delivery,
+      h('div', { class: 'cash__section-label' }, '보상 내역'), this.lines,
+      h('div', { class: 'cash__total' }, h('span', null, '이번 계약 보상'), this.totalEl), this.collectBtn,
+      h('p', { class: 'cash__next' }, '보상을 받으면 다음 교배에 쓸 개체를 선발합니다.'));
     this.el = h('div', { class: 'view view--cashout' }, this.card);
   }
 
@@ -39,9 +45,15 @@ export class CashoutView {
     const o = s.orders[s.orderIdx];
     replaceChildren(
       this.head,
-      h('div', { class: 'cash__kicker' }, `${o.name} 완료`),
-      h('div', { class: 'cash__score' }, h('span', { class: 'num' }, fmt.score(s.roundScore)), h('span', { class: 'cash__of' }, ` / 목표 ${fmt.score(o.target)}`)),
+      h('div', { class: 'cash__masthead' }, h('span', { class: 'cash__kicker' }, `시즌 ${s.ante} · 계약 정산서`), h('span', { class: 'cash__stamp' }, '✓ 납품 완료')),
+      h('h2', { class: 'cash__title' }, `${fmt.josa(o.name, '을를')} 마쳤어요`),
+      h('div', { class: 'cash__client' }, characterPortrait(o.client, 64),
+        h('div', null, h('b', null, characterName(o.client) ?? o.client.split(' · ')[0]), h('p', null, '부탁드린 품종이 잘 도착했어요. 고마워요!'))),
+      h('div', { class: 'cash__score' }, h('span', null, '획득 점수'), h('strong', { class: 'num' }, fmt.score(s.roundScore)), h('span', { class: 'cash__of' }, `목표 ${fmt.score(o.target)}점`)),
     );
+    replaceChildren(this.delivery, ...(o.goals ?? []).map((goal) => h('div', { class: 'cash__goal' },
+      h('span', { class: 'cash__check', 'aria-hidden': 'true' }, '✓'), h('span', null, goal.label), h('b', null, `${s.delivery[goal.id] ?? 0} / ${goal.count}개체`))));
+    this.delivery.hidden = !o.goals?.length;
     replaceChildren(this.lines);
     setText(this.totalEl, '$0');
     void play(this.card, [{ opacity: 0, translate: '0 60px', scale: '0.95' }, { opacity: 1, translate: '0 0', scale: '1' }], { duration: 420 });
@@ -64,6 +76,7 @@ export class CashoutView {
       setText(this.totalEl, `$${total}`);
       await wait(180);
     }
+    setText(this.collectBtn, `보상 $${total} 받기`);
     this.collectBtn.disabled = false;
     this.running = false;
     if (!motion.fast) this.collectBtn.focus({ preventScroll: true });

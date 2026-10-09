@@ -59,13 +59,13 @@ export function openReagent(ctx: Ctx, index: number): void {
   else if (id === 'scissors' && s.policy === 'heritage') why = '교배·선발팀은 유전자 가위를 쓸 수 없어요.';
   else if (id === 'vector' && s.policy !== 'biotech') why = '이 브랜드 철학에서는 형질전환을 하지 않아요.';
   const how: Record<string, string> = {
-    genetest: '온실 포기나 손에 든 모종을 1~2개 골라 유전자형을 봐요.',
-    colchicine: '온실의 2배체 포기 하나를 골라요.',
+    genetest: '온실 개체나 손에 든 모종을 1~2개 골라 유전자형을 봐요.',
+    colchicine: '온실의 2배체 개체 하나를 골라요.',
     scissors: '편집 작업대를 열어 DNA 글자를 한 곳 고쳐요.',
-    vector: '온실 포기 하나를 골라 형광 유전자를 넣어요.',
-    tissue: '온실 포기 하나를 골라 복제해요. 빈 칸이 있어야 해요.',
+    vector: '온실 개체 하나를 골라 형광 유전자를 넣어요.',
+    tissue: '온실 개체 하나를 골라 복제해요. 빈 칸이 있어야 해요.',
     fertilizer: '손에 든 모종 1~2개를 골라요. 이번 주문에서만 효과가 있어요.',
-    brush: '지금 꼬투리를 버리고 교배를 다시 골라요.',
+    brush: '지금 자손 덱을 버리고 교배를 다시 골라요.',
   };
   const m = ctx.modals.open({
     title: def.name,
@@ -107,7 +107,7 @@ export async function useReagentFlow(ctx: Ctx, index: number): Promise<void> {
       const hand = s.phase === 'play' ? handPickItems(ctx, (uid) => (s.hand.find((c) => c.uid === uid)?.revealed ? '이미 공개됨' : undefined)) : [];
       const r = await pickTargets(ctx, {
         title: def.name,
-        hint: '유전자형을 볼 포기나 모종을 1~2개 골라요.',
+        hint: '유전자형을 볼 개체나 모종을 1~2개 골라요.',
         items: [...hand, ...plants],
         groups: [
           { label: '손에 든 모종', ids: hand.map((i) => i.id) },
@@ -138,9 +138,9 @@ export async function useReagentFlow(ctx: Ctx, index: number): Promise<void> {
     }
     default: {
       const hint: Record<string, string> = {
-        colchicine: '4배체로 만들 2배체 포기를 골라요.',
-        vector: '형광 해파리 유전자를 넣을 포기를 골라요.',
-        tissue: '복제할 포기를 골라요.',
+        colchicine: '4배체로 만들 2배체 개체를 골라요.',
+        vector: '형광 해파리 유전자를 넣을 개체를 골라요.',
+        tissue: '복제할 개체를 골라요.',
       };
       const plants = s.garden.map((p) =>
         plantPickItem(ctx, p, id === 'colchicine' && (p.genome.ploidy !== 2 || p.pheno.aneuploid) ? '2배체가 아니에요' : undefined),

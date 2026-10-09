@@ -85,7 +85,7 @@ const STEPS: Record<TutorialStep, Omit<TutorialStepInfo, 'total'>> = {
   },
   order: {
     number: 7, title: '루비 모종과 점수를 함께 채워요.', target: 'order', actionLabel: '부모를 고를게요',
-    body: '첫 주문은 쓴맛 없는 루비 과육 모종 3포기와 300점이에요. 모종 수만 채워도, 점수만 채워도 부족해요. 두 조건을 모두 채우면 보상을 받아요.',
+    body: '첫 주문은 쓴맛 없는 루비 과육 모종 3개체와 300점이에요. 모종 수만 채워도, 점수만 채워도 부족해요. 두 조건을 모두 채우면 보상을 받아요.',
   },
   'parent-first': {
     number: 8, title: '먼저 루비 부모를 눌러 주세요.', target: 'parent-first',
@@ -101,7 +101,7 @@ const STEPS: Record<TutorialStep, Omit<TutorialStepInfo, 'total'>> = {
   },
   cross: {
     number: 11, title: '이제 직접 교배해 볼까요?', target: 'cross',
-    body: '교배하기를 눌러 주세요. 자손 씨앗 52알을 만들고, 그중 8포기를 손패로 받아요. 우리가 한 예측이 맞는지 곧 확인할 수 있어요.',
+    body: '교배하기를 눌러 주세요. 자손 52개체를 얻고 그중 8개체를 손패로 받아요. 우리가 한 예측이 맞는지 곧 확인할 수 있어요.',
   },
   observe: {
     number: 12, title: '예측과 관찰을 비교해 봐요.', target: 'observation', actionLabel: '결과 확인했어요',
@@ -109,7 +109,7 @@ const STEPS: Record<TutorialStep, Omit<TutorialStepInfo, 'total'>> = {
   },
   pod: {
     number: 13, title: '남은 씨앗도 살펴볼 수 있어요.', target: 'pod', actionLabel: '다음',
-    body: '꼬투리에는 아직 손패로 받지 않은 씨앗이 들어 있어요. 이 버튼을 누르면 남은 모종의 빛깔과 무늬 분포를 볼 수 있죠. 출하하거나 솎아내면 여기서 새 모종을 받습니다.',
+    body: '자손 덱에는 아직 손패로 받지 않은 개체가 남아 있어요. 이 버튼을 누르면 남은 모종의 빛깔과 무늬 분포를 볼 수 있죠. 출하하거나 솎아내면 여기서 새 모종을 받습니다.',
   },
   sort: {
     number: 14, title: '카드를 보기 편한 순서로 놓아요.', target: 'sort', actionLabel: '다음',

@@ -1,4 +1,4 @@
-// 대상 고르기 모달 (온실 포기·손패 카드) — 시약·봉투·선발에서 같이 쓴다
+// 대상 고르기 모달 (온실 개체·손패 카드) — 시약·봉투·선발에서 같이 쓴다
 import { audio } from '../../audio';
 import { plantCard, seedCard } from '../../art';
 import type { Plant } from '../../contract/game';

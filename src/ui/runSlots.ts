@@ -173,6 +173,7 @@ export function removeRunSlot(id: string, kv: StorageLike | null = localStore())
   if (!slot) return;
   try { kv?.removeItem(slot.key); } catch { /* no storage */ }
   try { kv?.removeItem(`${slot.key}:reflection`); } catch { /* no storage */ }
+  try { kv?.removeItem(`${slot.key}:client-briefing:v1`); } catch { /* no storage */ }
   try { kv?.removeItem(practiceKey(slot.key)); } catch { /* no storage */ }
   index.slots = index.slots.filter((s) => s.id !== id);
   if (index.activeId === id) index.activeId = index.slots[0]?.id ?? null;
@@ -183,10 +184,12 @@ export function removeAllRunSlots(kv: StorageLike | null = localStore()): void {
   for (const slot of read(kv).slots) {
     try { kv?.removeItem(slot.key); } catch { /* continue */ }
     try { kv?.removeItem(`${slot.key}:reflection`); } catch { /* continue */ }
+    try { kv?.removeItem(`${slot.key}:client-briefing:v1`); } catch { /* continue */ }
     try { kv?.removeItem(practiceKey(slot.key)); } catch { /* continue */ }
   }
   try { kv?.removeItem(SAVE_KEY); } catch { /* continue */ }
   try { kv?.removeItem(`${SAVE_KEY}:reflection`); } catch { /* continue */ }
+  try { kv?.removeItem(`${SAVE_KEY}:client-briefing:v1`); } catch { /* continue */ }
   try { kv?.removeItem(SLOTS_KEY); } catch { /* continue */ }
 }
 

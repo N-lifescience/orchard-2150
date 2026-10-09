@@ -56,7 +56,7 @@ export function deliveryGoals(order: OrderInfo, delivery: Record<string, number>
       return h('div', { class: ['delivery-goal', done && 'is-done'], title: `${goal.detail} ${goalHint(goal)}` },
         h('span', { class: 'delivery-goal__mark', 'aria-hidden': 'true' }, done ? '✓' : '○'),
         h('span', { class: 'delivery-goal__label' }, goal.label),
-        h('span', { class: 'delivery-goal__count num', 'aria-label': `${sent} / ${goal.count}포기 출하` }, `${sent}/${goal.count}`),
+        h('span', { class: 'delivery-goal__count num', 'aria-label': `${sent} / ${goal.count}개체 출하` }, `${sent}/${goal.count}`),
       );
     }),
   );
@@ -92,7 +92,7 @@ export function contractExample(order: OrderInfo): { title: string; steps: strin
   if (traits.some((t) => t.marked !== undefined)) return { title: '과육색과 껍질 무늬를 함께 보기', steps: [
     '공개된 Rr Ss 부모와 rr ss 부모를 교배하는 예시입니다.',
     "R과 S는 서로 다른 염색체에 있어 네 빛깔 조합이 각각 25%로 기대돼요.",
-    "52알의 실제 수는 꼭 13개씩 나오지 않아요. 원하는 조합을 관찰하고 출하하세요.",
+    "52개체의 실제 수는 꼭 13개씩 나오지 않아요. 원하는 조합을 관찰하고 출하하세요.",
   ] };
   return null;
 }

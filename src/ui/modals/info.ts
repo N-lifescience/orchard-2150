@@ -1,4 +1,4 @@
-// 온실 보기 · 주문 정보 · 꼬투리 분포
+// 온실 보기 · 주문 정보 · 자손 덱 분포
 import { bossEmblem, karyotype, orderEmblem, plantCard, suitGlyph } from '../../art';
 import type { SuitKey } from '../../contract/genetics';
 import { describeGenotype } from '../../genetics';
@@ -16,7 +16,7 @@ export function openGreenhouse(ctx: Ctx): void {
   const glasses = hasGlasses(s);
   ctx.modals.open({
     title: `온실 ${s.garden.length}/${s.gardenCap}`,
-    kicker: '부모 포기들',
+    kicker: '부모 개체들',
     className: 'modal--greenhouse',
     wide: true,
     content: h(
@@ -82,8 +82,8 @@ export function openPod(ctx: Ctx): void {
   const hasMale = SUITS.some((su) => t.male[su] > 0);
   const suitTotals = SUITS.map((su) => Object.values(t.grid[su]).reduce((a, b) => a + b, 0) + t.male[su]);
   ctx.modals.open({
-    title: `씨앗 꼬투리 — 남은 ${s.pod.length}/${s.podTotal}알`,
-    kicker: s.cross ? (s.cross.selfing ? '자가수분 꼬투리' : '교배 꼬투리') : '꼬투리',
+    title: `자손 덱 — 남은 ${s.pod.length}/${s.podTotal}개체`,
+    kicker: s.cross ? (s.cross.selfing ? '자가수분 자손 덱' : '교배 자손 덱') : '자손 덱',
     className: 'modal--pod',
     wide: true,
     content: h(
@@ -101,7 +101,7 @@ export function openPod(ctx: Ctx): void {
             h('span', { class: 'podv__suit', role: 'rowheader' }, suitGlyph(su, species, 20), g.suitName(su)),
             ...cols.map((b) => {
               const n = t.grid[su][b] ?? 0;
-              return h('span', { class: ['podv__cell', n > 0 && 'is-on'], role: 'cell', style: { '--a': (n / peak).toFixed(2) }, 'aria-label': `당도 ${b}: ${n}알` }, n > 0 ? String(n) : '');
+              return h('span', { class: ['podv__cell', n > 0 && 'is-on'], role: 'cell', style: { '--a': (n / peak).toFixed(2) }, 'aria-label': `당도 ${b}: ${n}개체` }, n > 0 ? String(n) : '');
             }),
             hasMale ? h('span', { class: ['podv__cell', 'podv__cell--male', t.male[su] > 0 && 'is-on'], role: 'cell' }, t.male[su] ? String(t.male[su]) : '') : null,
             h('span', { class: 'podv__sum num', role: 'cell' }, String(suitTotals[si])),

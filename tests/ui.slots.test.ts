@@ -110,6 +110,8 @@ describe('여러 연대기 저장', () => {
     game.newRun({ mode: 'quick', policy: 'heritage', playStyle: 'challenge', seed: 2 });
     saveRunReflection(first.key, '루비 39알, 골드 13알을 관찰했다.', kv);
     saveRunReflection(second.key, '다음에는 골드 부모끼리 교배한다.', kv);
+    kv.setItem(`${first.key}:client-briefing:v1`, '1:1:0:1');
+    kv.setItem(`${second.key}:client-briefing:v1`, '2:1:0:1');
     expect(listRunSlots(kv).find((slot) => slot.id === first.id)?.playStyle).toBe('learning');
     expect(listRunSlots(kv).find((slot) => slot.id === second.id)?.playStyle).toBe('challenge');
     expect(loadRunReflection(first.key, kv)).toContain('39알');
@@ -117,8 +119,12 @@ describe('여러 연대기 저장', () => {
     removeRunSlot(first.id, kv);
     expect(loadRunReflection(first.key, kv)).toBe('');
     expect(loadRunReflection(second.key, kv)).toContain('골드 부모');
+    expect(kv.getItem(`${first.key}:client-briefing:v1`)).toBeNull();
+    expect(kv.getItem(`${second.key}:client-briefing:v1`)).toBe('2:1:0:1');
     wipeAll(kv);
     expect(loadRunReflection(second.key, kv)).toBe('');
+    expect(kv.getItem(`${first.key}:client-briefing:v1`)).toBeNull();
+    expect(kv.getItem(`${second.key}:client-briefing:v1`)).toBeNull();
   });
 
   it('기존 공유 성찰은 선택된 연대기로 한 번만 옮긴다', () => {

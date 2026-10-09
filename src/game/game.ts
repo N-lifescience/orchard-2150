@@ -458,7 +458,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
       for (const seed of materials) st.garden.push(makePlant(seed, 'starter', 1));
       if (materials.length) {
         st.gardenCap = Math.max(st.gardenCap, st.garden.length);
-        toast(`레아가 이번 단원의 연구용 포기 ${materials.length}개와 필요한 온실 칸을 준비했어요.`);
+        toast(`레아가 이번 단원의 연구용 개체 ${materials.length}개와 필요한 온실 칸을 준비했어요.`);
       }
       if (st.ante === 7 && st.policy !== 'heritage' && !st.reagents.includes('scissors')) {
         st.reagentCap = Math.max(st.reagentCap, st.reagents.length + 1);
@@ -527,13 +527,13 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
       const r = rng();
       if (st.garden.length >= st.gardenCap) {
         const out = st.garden.pop()!;
-        toast(`온실 칸을 마련했어요. 이웃 농장에 보낸 포기: ${out.name}`);
+        toast(`온실 칸을 마련했어요. 이웃 농장에 보낸 개체: ${out.name}`);
       }
       st.garden.push(makePlant(rescuePlant(r), 'market', 1));
-      toast('교배할 짝이 없어서 이웃 농장이 루미 한 포기를 보내 줬어요.');
+      toast('교배할 짝이 없어서 이웃 농장이 루미 한 개체를 보내 줬어요.');
     }
     const b = activeBoss();
-    if (b?.id === 'nobees' && !st.garden.some(selfable)) toast('벌이 없는 날이지만 자가수분할 포기가 없어 이웃 벌집을 빌렸어요. 오늘은 교배가 돼요.');
+    if (b?.id === 'nobees' && !st.garden.some(selfable)) toast('벌이 없는 날이지만 자가수분할 개체가 없어 이웃 벌집을 빌렸어요. 오늘은 교배가 돼요.');
     st.orderCheckpoint = JSON.stringify({ ...st, orderCheckpoint: null });
   }
 
@@ -551,7 +551,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
     return card;
   }
 
-  /** 같은 uid 의 카드(손패·이번 주문에 본 것·꼬투리)를 모두 고친다 */
+  /** 같은 uid 의 카드(손패·이번 주문에 본 것·자손 덱)를 모두 고친다 */
   function updateCard(uid: string, fn: (c: SeedCard) => void) {
     for (const list of [st.hand, st.seen, st.pod]) for (const c of list) if (c.uid === uid) fn(c);
   }
@@ -581,7 +581,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
       st.hand.push(c);
       st.seen.push({ ...c });
     }
-    if (inspected > 0) toast(`핵형 현미경: 이수성 모종 ${inspected}포기의 핵형을 공개했어요. 살펴본 뒤 솎아내면 포기당 $${karyo}을 받아요.`);
+    if (inspected > 0) toast(`핵형 현미경: 이수성 모종 ${inspected}개체의 핵형을 공개했어요. 살펴본 뒤 솎아내면 개체당 $${karyo}을 받아요.`);
     const brixes = new Set(st.seen.map((c) => c.pheno.brix).filter((b) => b !== null));
     if (brixes.size >= 6) discover('polygenic');
     if (st.crossInfo?.species === 'stella' && parents) {
@@ -750,13 +750,13 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
     st.jokers.push({ uid: nextId('j'), id, counter: 0 });
   }
 
-  /** 온실에 포기를 들인다. 가득 찼으면 replacePlantId 를 내보낸다. 실패하면 이유 문자열 */
+  /** 온실에 개체를 들인다. 가득 찼으면 replacePlantId 를 내보낸다. 실패하면 이유 문자열 */
   function admitPlant(p: Plant, replacePlantId?: string): string | null {
     if (st.garden.length >= st.gardenCap) {
       const out = replacePlantId ? plantById(replacePlantId) : undefined;
-      if (!out) return '온실이 가득 찼어요. 내보낼 포기를 골라 주세요.';
+      if (!out) return '온실이 가득 찼어요. 내보낼 개체를 골라 주세요.';
       st.garden = st.garden.filter((q) => q.id !== out.id);
-      toast(`온실에서 내보낸 포기: ${out.name}`);
+      toast(`온실에서 내보낸 개체: ${out.name}`);
     }
     st.garden.push(p);
     return null;
@@ -788,7 +788,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
     st.geneFlow = { donor: donor.name, recipient: recipient.name, offspring };
     st.stats.lmoEvents++;
     discover('geneFlow');
-    toast(`${recipient.name}에서 생긴 씨에 형광 유전자가 전달됐어요. 원래 포기의 유전자형은 바뀌지 않아요.`);
+    toast(`${recipient.name}에서 생긴 씨에 형광 유전자가 전달됐어요. 원래 개체의 유전자형은 바뀌지 않아요.`);
   }
 
   // ── 시약·편집 대상 찾기 ────────────────────────────────────
@@ -894,12 +894,12 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
     canCross(aId, bId) {
       const a = plantById(aId);
       const b = plantById(bId);
-      if (!a || !b) return { ok: false, reason: '온실에 없는 포기예요.' };
+      if (!a || !b) return { ok: false, reason: '온실에 없는 개체예요.' };
       const res = geneCanCross(a.genome, b.genome, aId === bId);
       if (!res.ok) return res;
       const boss = activeBoss();
       if (boss?.id === 'nobees' && aId !== bId && st.garden.some(selfable)) {
-        return { ok: false, reason: '벌이 없는 날이라 다른 포기와는 교배할 수 없어요. 같은 포기를 두 번 골라 자가수분해요.' };
+        return { ok: false, reason: '벌이 없는 날이라 다른 개체와는 교배할 수 없어요. 같은 개체를 두 번 골라 자가수분해요.' };
       }
       return { ok: true };
     },
@@ -928,7 +928,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
       try {
         genomes = makePod(a.genome, b.genome, r, POD_SIZE, nd > 0 ? { nondisjunction: nd } : undefined);
       } catch (e) {
-        toast(e instanceof Error ? e.message : '꼬투리를 만들 수 없어요.');
+        toast(e instanceof Error ? e.message : '자손 덱을 만들 수 없어요.');
         notify();
         return;
       }
@@ -977,7 +977,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
     play(uids) {
       if (st.phase !== 'play' || st.handsLeft <= 0) throw new Error('지금은 출하할 수 없어요.');
       const cards = handCards(uids);
-      if (!cards) throw new Error('손에 든 모종을 1~5포기 골라 주세요.');
+      if (!cards) throw new Error('손에 든 모종을 1~5개체 골라 주세요.');
       const res = scoreHand(cards, scoreCtx());
       for (const uid of res.counterBumps) {
         const j = st.jokers.find((x) => x.uid === uid);
@@ -1008,7 +1008,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
         gameOver(points ? `출하를 다 썼어요. 목표까지 ${points}점 모자라고, 납품은 ${deliveryProgressText(order(), st.delivery)}입니다.` : `목표 점수는 넘겼지만 필수 형질을 더 납품해야 해요: ${deliveryProgressText(order(), st.delivery)}.`);
       } else {
         drawToHand();
-        if (st.hand.length === 0) gameOver('꼬투리의 씨앗을 다 썼어요.');
+        if (st.hand.length === 0) gameOver('자손 덱에 남은 개체가 없어요.');
       }
       commit();
       return t;
@@ -1027,19 +1027,19 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
       const trader = countJoker('pollenTrader');
       if (males > 0 && trader > 0) {
         st.money += males * trader;
-        toast(`꽃가루 상인: 수그루 ${males}포기 (+$${males * trader})`);
+        toast(`꽃가루 상인: 수그루 ${males}개체 (+$${males * trader})`);
       }
       const inspected = cards.filter((c) => c.pheno.aneuploid && c.revealed).length;
       const karyo = countJoker('karyoScope');
       if (inspected > 0 && karyo > 0) {
         st.money += inspected * karyo;
-        toast(`핵형 현미경: 이수성 모종 ${inspected}포기를 살펴보고 솎아냈어요 (+$${inspected * karyo}).`);
+        toast(`핵형 현미경: 이수성 모종 ${inspected}개체를 살펴보고 솎아냈어요 (+$${inspected * karyo}).`);
       }
       const set = new Set(uids);
       st.hand = st.hand.filter((c) => !set.has(c.uid));
       st.discardsLeft--;
       drawToHand();
-      if (st.hand.length === 0) gameOver('꼬투리의 씨앗을 다 썼어요.');
+      if (st.hand.length === 0) gameOver('자손 덱에 남은 개체가 없어요.');
       commit();
     },
 
@@ -1111,7 +1111,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
         return;
       }
       if (st.garden.length >= st.gardenCap && !(replacePlantId && plantById(replacePlantId))) {
-        toast('온실이 가득 찼어요. 내보낼 포기를 골라 주세요.');
+        toast('온실이 가득 찼어요. 내보낼 개체를 골라 주세요.');
         notify();
         return;
       }
@@ -1208,7 +1208,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
         case 'plant': {
           const err = admitPlant(ch.plant, replacePlantId);
           if (err) return { ok: false, reason: err };
-          toast(`온실에 들인 포기: ${ch.plant.name}`);
+          toast(`온실에 들인 개체: ${ch.plant.name}`);
           break;
         }
         case 'reagent':
@@ -1260,7 +1260,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
       let message = '';
       switch (id) {
         case 'genetest': {
-          if (targets.length < 1 || targets.length > 2) return { ok: false, reason: '검사할 모종이나 포기를 1~2개 골라 주세요.' };
+          if (targets.length < 1 || targets.length > 2) return { ok: false, reason: '검사할 모종이나 개체를 1~2개 골라 주세요.' };
           const holders = targets.map((t) => findHolder(t));
           if (holders.some((h) => !h)) return { ok: false, reason: '손패나 온실에 없는 대상이에요.' };
           const parts: string[] = [];
@@ -1276,8 +1276,8 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
         }
         case 'colchicine': {
           const p = targets.length === 1 ? plantById(targets[0]) : undefined;
-          if (!p) return { ok: false, reason: '온실의 포기 하나를 골라 주세요.' };
-          if (p.genome.ploidy !== 2 || p.pheno.aneuploid) return { ok: false, reason: '2배체 포기에만 쓸 수 있어요.' };
+          if (!p) return { ok: false, reason: '온실의 개체 하나를 골라 주세요.' };
+          if (p.genome.ploidy !== 2 || p.pheno.aneuploid) return { ok: false, reason: '2배체 개체에만 쓸 수 있어요.' };
           p.genome = doubleGenome(p.genome);
           p.pheno = phenotype(p.genome);
           p.name = `${p.name} (4n)`;
@@ -1290,7 +1290,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
         case 'vector': {
           if (st.policy !== 'biotech') return { ok: false, reason: '형질전환 도구는 형질전환팀만 사용할 수 있어요.' };
           const p = targets.length === 1 ? plantById(targets[0]) : undefined;
-          if (!p) return { ok: false, reason: '온실의 포기 하나를 골라 주세요.' };
+          if (!p) return { ok: false, reason: '온실의 개체 하나를 골라 주세요.' };
           p.genome = addTransgene(p.genome, rng());
           p.pheno = phenotype(p.genome);
           if (!p.name.includes('LMO')) p.name = `${p.name} (LMO)`;
@@ -1300,7 +1300,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
         }
         case 'tissue': {
           const p = targets.length === 1 ? plantById(targets[0]) : undefined;
-          if (!p) return { ok: false, reason: '온실의 포기 하나를 골라 주세요.' };
+          if (!p) return { ok: false, reason: '온실의 개체 하나를 골라 주세요.' };
           if (st.garden.length >= st.gardenCap) return { ok: false, reason: '온실이 가득 찼어요.' };
           const clone = makePlant({ name: `${p.name} 클론`, genome: cloneGenome(p.genome), revealed: p.revealed }, 'clone', p.generation, [p.id, p.id]);
           st.garden.push(clone);
@@ -1368,7 +1368,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
       if (st.reagents[reagentIndex] !== 'scissors') return { ok: false, reason: '그 칸에 유전자 가위가 없어요.' };
       if (st.policy === 'heritage') return { ok: false, reason: '교배·선발팀은 유전자 가위를 쓰지 않아요.' };
       const h = findHolder(targetId);
-      if (!h) return { ok: false, reason: '온실 포기나 손에 든 모종만 편집할 수 있어요.' };
+      if (!h) return { ok: false, reason: '온실 개체나 손에 든 모종만 편집할 수 있어요.' };
       const g = h.kind === 'plant' ? h.plant.genome : h.card.genome;
       const cur = codingSeq(g, group as HomologGroup, copyIndex, locus as LocusId);
       if (cur === null) return { ok: false, reason: '편집할 수 없는 자리예요.' };

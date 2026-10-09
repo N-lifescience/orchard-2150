@@ -10,6 +10,7 @@ import './styles/effects.css';
 import './styles/practice.css';
 import './styles/responsive.css';
 import './styles/board.css';
+import './styles/refresh.css';
 import { App } from './ui/app';
 
 function boot(): void {

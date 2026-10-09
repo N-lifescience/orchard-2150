@@ -27,7 +27,7 @@ export function seasonGoals(ante: number, orderIdx: number, policy: PolicyId): D
     return orderIdx === 0 ? [sweet] : orderIdx === 1 ? [normal] : [sweet, normal];
   }
   if (ante === 7) {
-    if (orderIdx === 0 && policy !== 'heritage') return [goal('knockout', '기능을 없앤 유전자 관찰', 'B 자리의 기능을 없애 쓴맛이 사라진 과실 모종을 1포기 출하하세요. 단순히 글자만 바꾼 편집은 포함되지 않아요.', { knockout: true, bitter: false }, 1)];
+    if (orderIdx === 0 && policy !== 'heritage') return [goal('knockout', '기능을 없앤 유전자 관찰', 'B 자리의 기능을 없애 쓴맛이 사라진 과실 모종을 1개체 출하하세요. 단순히 글자만 바꾼 편집은 포함되지 않아요.', { knockout: true, bitter: false }, 1)];
     return orderIdx === 1 ? [gold] : [goal('no-bitter', '쓴맛 없는 모종', '쓴맛 B가 기능하지 않는 자손을 출하하세요. 교배·선발팀은 교배와 선발로 해결합니다.', { bitter: false }, 4)];
   }
   const sweetGold = goal('sweet-gold', '기본 당도 16 이상·골드', '앞에서 선발한 당도 형질과 열성 과육색을 한 자손에 모으세요.', { color: 'gold', minBrix: 16, bitter: false });

@@ -1,5 +1,5 @@
 // 자동 진행은 계약의 필수 형질과 점수를 함께 충족하는 검증 전략이다.
-// 부모의 자손 분포는 게임의 실제 꼬투리와 별개의 고정 표본으로 추정한다.
+// 부모의 자손 분포는 게임의 실제 자손 덱와 별개의 고정 표본으로 추정한다.
 import type { DeliveryGoal, Plant, SeedCard } from '../contract/game';
 import { codingSeq, editCoding, formatGenotype, makePod, makeRng, phenotype } from '../genetics';
 import { goalMatches, type GameImpl } from '../game';

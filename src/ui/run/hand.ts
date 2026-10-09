@@ -69,7 +69,7 @@ export class HandView {
   readonly selected = new Set<string>();
   interactive = true;
   onChange: () => void = () => {};
-  /** 딜 출발점 (꼬투리 버튼) */
+  /** 딜 출발점 (자손 덱 버튼) */
   dealFrom: () => DOMRect | null = () => null;
   private cards = new Map<string, SeedCard>();
 
@@ -100,7 +100,7 @@ export class HandView {
     } else {
       if (this.selected.size >= this.ctx.game.state.maxSelect) {
         audio.play('error');
-        this.ctx.toast.show(`한 번에 ${this.ctx.game.state.maxSelect}포기까지 고를 수 있어요.`, 'warn', 1600);
+        this.ctx.toast.show(`한 번에 ${this.ctx.game.state.maxSelect}개체까지 고를 수 있어요.`, 'warn', 1600);
         return;
       }
       this.selected.add(uid);
@@ -127,7 +127,7 @@ export class HandView {
     }
   }
 
-  /** 손패 상태 반영. 새 카드는 꼬투리에서 날아온다. 딜 연출이 끝나면 resolve */
+  /** 손패 상태 반영. 새 카드는 자손 덱에서 날아온다. 딜 연출이 끝나면 resolve */
   update(hand: SeedCard[], glasses: boolean): Promise<void> {
     const keep = new Set(hand.map((c) => c.uid));
     for (const uid of [...this.selected]) if (!keep.has(uid)) this.selected.delete(uid);

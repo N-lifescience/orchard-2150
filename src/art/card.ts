@@ -53,7 +53,7 @@ function genoBand(v: CardView): HTMLElement {
   } else {
     band.classList.add('is-hidden');
     band.appendChild(miniIcon('lock'));
-    band.appendChild(H('span', 'sa-geno__text', '? ? ?'));
+    band.appendChild(H('span', 'sa-geno__text', '유전자형 · 검사 전'));
   }
   return band;
 }
@@ -108,9 +108,8 @@ function buildCard(v: CardView, plant: boolean): HTMLElement {
   art.appendChild(illustration);
   face.appendChild(art);
 
-  const badges = badgesFor(v);
-  if (badges) face.appendChild(badges);
-
+  const copy = H('div', 'sa-card__copy');
+  const species = p.species === 'stella' ? `별다래 ${p.sex === 'M' ? '수그루' : '암그루'}` : '루미';
   if (plant) {
     if (v.title && characterName(v.title)) {
       const owner = characterPortrait(v.title, 32);
@@ -119,10 +118,17 @@ function buildCard(v: CardView, plant: boolean): HTMLElement {
     }
     const rib = H('div', 'sa-plant__ribbon');
     rib.appendChild(H('span', 'sa-plant__title', v.title ?? (p.species === 'stella' ? '별다래' : '루미')));
-    face.appendChild(rib);
-    if (v.subtitle) face.appendChild(H('div', 'sa-plant__subtitle', v.subtitle));
+    copy.appendChild(rib);
+    if (v.subtitle) copy.appendChild(H('div', 'sa-plant__subtitle', v.subtitle));
+  } else {
+    copy.appendChild(H('div', 'sa-card__species', species));
   }
-
+  const traits = [p.sex === 'M' ? `${p.color === 'ruby' ? '루비' : '골드'} 꽃잎` : `${p.color === 'ruby' ? '루비' : '골드'} 과육`,
+    p.species === 'stella' ? p.marked ? '은빛 잎' : '초록 잎' : p.marked ? '별무늬' : '매끈한 껍질'];
+  copy.appendChild(H('p', 'sa-card__traits', traits.join(' · ')));
+  const badges = badgesFor(v);
+  if (badges) copy.appendChild(badges);
+  face.appendChild(copy);
   face.appendChild(genoBand(v));
 
   if (v.debuffed) {

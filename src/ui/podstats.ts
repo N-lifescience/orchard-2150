@@ -1,4 +1,4 @@
-// 꼬투리 분포 계산 (DOM 없음 — tests/ui.logic.test.ts)
+// 자손 덱 분포 계산 (DOM 없음 — tests/ui.logic.test.ts)
 import type { SeedCard } from '../contract/game';
 import type { SuitKey } from '../contract/genetics';
 import { effBrix } from './cards';
