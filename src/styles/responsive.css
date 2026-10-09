@@ -1,11 +1,10 @@
-/* The touch workbench flows down the page instead of shrinking the desktop stage. */
+/* Every workbench flows down the page instead of shrinking a fixed stage. */
 .slot__readout { display: none; }
-.stage:not(.is-responsive) { overflow: clip; }
 
 html.is-responsive-ui { height: auto; min-height: 100%; overflow: auto; }
 html.is-responsive-ui body { height: auto; min-height: 100%; overflow: visible; }
-.app:has(.stage.is-responsive), .viewport:has(.stage.is-responsive) { position: relative; inset: auto; min-height: 100dvh; overflow: visible; }
-.viewport:has(.stage.is-responsive) { display: block; }
+html.is-responsive-ui :is(.app, .viewport) { position: relative; inset: auto; min-height: 100dvh; overflow: visible; }
+html.is-responsive-ui .viewport { display: block; }
 
 .stage.is-responsive {
   position: relative;
@@ -29,13 +28,14 @@ html.is-responsive-ui body { height: auto; min-height: 100%; overflow: visible; 
 
 /* A shelf of saves remains in the document; no nested tiny scroll boxes. */
 .stage.is-responsive .title-screen, .stage.is-responsive .title-screen.is-wiz {
-  position: relative; inset: auto; min-height: 100dvh; height: auto;
+  position: relative; inset: auto; min-height: 100dvh; height: auto; display: grid;
+  grid-template-columns: minmax(0, 1fr); justify-items: center; align-content: start;
   padding: 28px clamp(16px, 4vw, 40px) 24px; gap: 20px; overflow: visible;
 }
 .stage.is-responsive .title__logo .sa-logo { --logo-size: clamp(26px, 4vw, 43px); }
 .stage.is-responsive .title__tag { font-size: 16px; line-height: 1.8; }
 .stage.is-responsive .title__tag p + p { margin-top: 10px; }
-.stage.is-responsive .title__panel { flex: none; margin-top: 0; }
+.stage.is-responsive .title__panel { margin-top: 0; }
 .stage.is-responsive .title__home { grid-template-columns: minmax(240px, .8fr) minmax(0, 1.2fr); max-height: none; gap: 24px; }
 .stage.is-responsive .title__start { padding: 24px; }
 .stage.is-responsive .title__start > p { font-size: 16px; }
@@ -51,7 +51,7 @@ html.is-responsive-ui body { height: auto; min-height: 100%; overflow: visible; 
 .stage.is-responsive .save-slot__date { font-size: 13px; }
 .stage.is-responsive .save-slot__remove, .stage.is-responsive .save-slot__resume { min-height: 44px; font-size: 15px; }
 .stage.is-responsive .title__foot { position: static; margin-top: 14px; font-size: 13px; gap: 12px; flex-wrap: wrap; }
-.stage.is-responsive .wiz { width: 100%; max-width: 100%; gap: 20px; }
+.stage.is-responsive .wiz { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; width: 100%; max-width: 100%; gap: 20px; }
 .stage.is-responsive .wiz__steps { width: 100%; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: 14px; }
 .stage.is-responsive .wiz__step-num { width: 26px; height: 26px; font-size: 12px; }
 .stage.is-responsive .wiz__intro { font-size: 16px; }
@@ -308,7 +308,7 @@ html.is-responsive-ui body { height: auto; min-height: 100%; overflow: visible; 
 .stage.is-responsive .end__btns { flex-wrap: wrap; }
 
 @media (max-width: 760px) {
-  .stage.is-responsive .title-screen, .stage.is-responsive .title-screen.is-wiz { align-items: stretch; padding: 24px 16px; }
+  .stage.is-responsive .title-screen, .stage.is-responsive .title-screen.is-wiz { justify-items: stretch; padding: 24px 16px; }
   .stage.is-responsive .title__logo, .stage.is-responsive .title__tag { text-align: center; }
   .stage.is-responsive .title__home { grid-template-columns: minmax(0, 1fr); gap: 28px; }
   .stage.is-responsive .title__start { padding: 22px; }

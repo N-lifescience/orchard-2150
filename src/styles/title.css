@@ -3,13 +3,8 @@
 .title__logo .sa-logo { --logo-size: 43px; }
 .title__tag { padding: 0; background: none; border-radius: 0; font-size: 15px; line-height: 1.7; }
 .title__tag p + p { margin-top: 2px; color: #c2d2c8; }
-.title__panel { min-height: 0; flex: 1; margin-top: 6px; width: 100%; }
-.title__home { width: 100%; display: grid; grid-template-columns: 310px minmax(0, 1fr); gap: 40px; max-height: 450px; }
-/* A long chronicle shelf must remain reachable inside the fixed desktop stage. */
-.stage:not(.is-responsive) .title-screen:not(.is-wiz) { overflow-y: auto; }
-.stage:not(.is-responsive) .title-screen:not(.is-wiz) .title__panel { flex: none; }
-.stage:not(.is-responsive) .title-screen:not(.is-wiz) .title__home { max-height: none; align-items: start; }
-.stage:not(.is-responsive) .title-screen:not(.is-wiz) .title__foot { position: static; flex-shrink: 0; }
+.title__panel { margin-top: 6px; width: 100%; }
+.title__home { width: 100%; display: grid; grid-template-columns: 310px minmax(0, 1fr); gap: 40px; align-items: start; }
 .title__start { padding: 26px 25px; border: 1px solid #446a5c; border-radius: 8px; background: #102b23; display: flex; flex-direction: column; align-items: stretch; }
 .title__start h2, .save-library__head h2 { font-family: var(--serif); font-size: 24px; color: #eef1df; }
 .title__start > p { margin: 14px 0 22px; font-size: 15px; line-height: 1.75; color: #d2ddd3; }
@@ -47,10 +42,10 @@
 .save-slot__actions .save-slot__resume { color: #d8ebc8; border-color: #7f9f75; background: #243c2c; }
 .save-list__empty { display: grid; align-content: center; gap: 12px; min-height: 235px; max-width: none; padding: 35px; border: 1px dashed #53735e; border-radius: 6px; background: rgba(10, 32, 24, .8); text-align: left; font-size: 15px; line-height: 1.8; }
 .save-list__empty strong { font-family: var(--serif); font-size: 22px; }
-.title__foot { bottom: 15px; left: 58px; right: 58px; display: flex; justify-content: center; gap: 28px; font-size: 11.5px; color: #a9bdb0; }
+.title__foot { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 28px; font-size: 13px; color: #a9bdb0; }
 .title-screen.is-wiz { padding-top: 20px; gap: 10px; }
 .title-screen.is-wiz .title__logo .sa-logo { --logo-size: 26px; }
-.wiz { width: 100%; max-width: 1070px; min-height: 0; gap: 12px; }
+.wiz { width: 100%; max-width: 1070px; margin-inline: auto; gap: 12px; }
 .wiz__steps { display: flex; justify-content: center; gap: 30px; list-style: none; padding: 0; margin: 0 0 2px; font-size: 12px; color: #94ab9d; }
 .wiz__steps li { display: flex; align-items: center; gap: 7px; }
 .wiz__steps .is-current { color: #e4efce; }
@@ -93,10 +88,10 @@
 .modecard__tag { font-family: var(--sans); font-size: 12px; color: #d2dfb3; }
 .stylecard__detail { font-size: 13px; line-height: 1.7; color: #b9cfbf; padding-top: 14px; border-top: 1px solid #3f5d4d; font-weight: 400; }
 .wiz__policies { margin-top: 10px; }
-.policy { display: block; padding: 24px; min-height: 300px; border-radius: 8px; border: 1px solid #809c7d; background: #e4ecda; box-shadow: none; white-space: normal; }
+.policy { display: flex; align-items: stretch; padding: 24px; min-height: 300px; border-radius: 8px; border: 1px solid #809c7d; background: #e4ecda; box-shadow: none; white-space: normal; }
 .policy:hover { transform: translateY(-3px); box-shadow: none; }
 .policy:active { transform: translateY(1px); box-shadow: none; }
-.policy__body { display: flex; flex-direction: column; align-items: center; gap: 15px; height: 100%; }
+.policy__body { display: flex; flex: 1; flex-direction: column; align-items: center; gap: 15px; }
 .policy__name { font-size: 23px; color: #203c2c; }
 .policy__desc { font-size: 15px; font-weight: 400; line-height: 1.7; }
 .policy__trade { width: 100%; border-radius: 4px; border: 0; border-top: 1px solid #b5c4a7; padding: 12px 0 0; font-size: 13px; text-align: left; line-height: 1.75; font-weight: 400; background: none; }

@@ -4,6 +4,8 @@ body { overflow-wrap: anywhere; }
 :where(p, .hint, .sa-card__traits, .sa-joker__desc, .sa-reagent__desc) { text-wrap: pretty; }
 .stage.is-responsive { overflow: visible; }
 .stage.is-responsive .title-screen { max-width: 1560px; margin-inline: auto; padding-bottom: max(32px, env(safe-area-inset-bottom)); }
+.stage.is-responsive .title-screen.is-wiz .title__logo .sa-logo { --logo-size: 26px; }
+.stage.is-responsive .title-screen.is-wiz .sa-logo__crest { width: 48px !important; height: 48px !important; margin-bottom: 8px; }
 .stage.is-responsive .wiz { max-width: 1280px; }
 .stage.is-responsive .wiz__nav { padding-block: 20px 12px; }
 .stage.is-responsive .wiz__duration-hint { max-width: 76ch; }

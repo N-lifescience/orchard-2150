@@ -200,7 +200,7 @@ export class TitleScreen {
     update();
   }
   private pickPolicy(): void {
-    this.swap(h('div', { class: 'wiz' },
+    this.swap(h('div', { class: 'wiz wiz--policy' },
       this.steps('policy'), h('h2', { class: 'wiz__title' }, '어떤 도구로 품종을 만들까요?'), h('p', { class: 'wiz__intro' }, '모든 팀은 부모를 교배하고 모종을 선발합니다. 팀을 고르면 추가로 쓸 수 있는 도구와 계약 보상이 정해집니다.'),
       h('div', { class: 'wiz__policies' }, ...POLICIES.map((p, i) =>
         button(h('span', { class: 'policy__body' },
