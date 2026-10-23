@@ -1,0 +1,114 @@
+[
+  {
+    "file": "trait-flesh-ruby.webp",
+    "desc": "루미 루비 과육 단면",
+    "bytes": 34472,
+    "width": 512,
+    "height": 512
+  },
+  {
+    "file": "trait-flesh-gold.webp",
+    "desc": "루미 골드 과육 단면",
+    "bytes": 36140,
+    "width": 512,
+    "height": 512
+  },
+  {
+    "file": "trait-skin-star.webp",
+    "desc": "루미 별무늬 껍질",
+    "bytes": 23368,
+    "width": 512,
+    "height": 512
+  },
+  {
+    "file": "trait-skin-smooth.webp",
+    "desc": "루미 매끈한 껍질",
+    "bytes": 22006,
+    "width": 512,
+    "height": 512
+  },
+  {
+    "file": "trait-leaf-silver.webp",
+    "desc": "별다래 은빛 잎",
+    "bytes": 42574,
+    "width": 512,
+    "height": 512
+  },
+  {
+    "file": "trait-leaf-green.webp",
+    "desc": "별다래 초록 잎",
+    "bytes": 46088,
+    "width": 512,
+    "height": 512
+  },
+  {
+    "file": "trait-flower-female.webp",
+    "desc": "별다래 암꽃",
+    "bytes": 24926,
+    "width": 512,
+    "height": 512
+  },
+  {
+    "file": "trait-flower-male.webp",
+    "desc": "별다래 수꽃",
+    "bytes": 28324,
+    "width": 512,
+    "height": 512
+  },
+  {
+    "file": "trait-fruit-seeded.webp",
+    "desc": "씨가 있는 별다래 단면",
+    "bytes": 43782,
+    "width": 512,
+    "height": 512
+  },
+  {
+    "file": "trait-fruit-seedless.webp",
+    "desc": "씨가 없는 별다래 단면",
+    "bytes": 43298,
+    "width": 512,
+    "height": 512
+  },
+  {
+    "file": "trait-fruit-large.webp",
+    "desc": "동일 품종 열매 크기 비교",
+    "bytes": 15866,
+    "width": 512,
+    "height": 512
+  },
+  {
+    "file": "trait-glow.webp",
+    "desc": "자외선 아래 초록 형광",
+    "bytes": 34756,
+    "width": 512,
+    "height": 512
+  },
+  {
+    "file": "concept-cross.webp",
+    "desc": "붓으로 꽃가루 옮기기",
+    "bytes": 27612,
+    "width": 512,
+    "height": 512
+  },
+  {
+    "file": "concept-clone.webp",
+    "desc": "잎 조직배양",
+    "bytes": 25336,
+    "width": 512,
+    "height": 512
+  },
+  {
+    "file": "bg-bench.webp",
+    "desc": "어두운 원목 작업대",
+    "bytes": 173692,
+    "width": 1600,
+    "height": 1067
+  },
+  {
+    "file": "bg-greenhouse.webp",
+    "desc": "밤 온실 보케",
+    "bytes": 51158,
+    "width": 1600,
+    "height": 1067
+  }
+]
