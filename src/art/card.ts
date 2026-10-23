@@ -1,6 +1,8 @@
 // 모종 카드 · 온실 부모 카드. 상아 종이 + 금박 테두리 + 길로셰(인증서 문양) + 과일 그림.
 import type { CardView } from '../contract/art';
 import type { SuitKey } from '../contract/genetics';
+import { traitBadge, explainImage } from '../ui/traitBadge';
+import { h } from '../ui/h';
 import { H } from './dom';
 import { cardFrame } from './raster';
 import { characterName, characterPortrait } from './characters';
@@ -125,7 +127,10 @@ function buildCard(v: CardView, plant: boolean): HTMLElement {
   }
   const traits = [p.sex === 'M' ? `${p.color === 'ruby' ? '루비' : '골드'} 꽃잎` : `${p.color === 'ruby' ? '루비' : '골드'} 과육`,
     p.species === 'stella' ? p.marked ? '은빛 잎' : '초록 잎' : p.marked ? '별무늬' : '매끈한 껍질'];
-  copy.appendChild(H('p', 'sa-card__traits', traits.join(' · ')));
+  const line = h('div', { class: 'sa-card__traits' },
+    p.sex === 'M' ? h('span', { class: 'trait-badge' }, explainImage('trait-flower-male'), traits[0]) : traitBadge({ color: p.color }, traits[0], false),
+    traitBadge({ species: p.species, marked: p.marked }, traits[1], false));
+  copy.appendChild(line);
   const badges = badgesFor(v);
   if (badges) copy.appendChild(badges);
   face.appendChild(copy);

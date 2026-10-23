@@ -59,7 +59,8 @@ describe('실제 조작으로만 넘어가는 첫 계약 튜토리얼', () => {
   it('예측 단계는 교배 결과를 미리 말하지 않는다', () => {
     const text = tutorialStep('predict').lines.map((line) => line.text).join(' ');
     expect(text).not.toMatch(/모두 Rr|모두 루비|전부 루비|52개체 모두/);
-    expect(text).toContain('우성');
+    expect(text).not.toContain('우성');
+    expect(text).toContain('예측');
   });
 
   it('실제 선택 상태로 단계를 정하며, 선택을 바꾸면 필요한 단계로 돌아간다', () => {

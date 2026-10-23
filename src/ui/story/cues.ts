@@ -1,5 +1,5 @@
 // 소개 영상 HUD 신호표의 시간 계산 — DOM 없는 순수 함수 (테스트 대상)
-import { INTRO_BEAT, INTRO_CUES, INTRO_LENGTH, type IntroCue } from './script';
+import { INTRO_CUES, INTRO_LENGTH, type IntroCue } from './script';
 
 /** 실제 영상 길이에 맞춘 시간 배율. 길이를 모르거나 터무니없으면 1 */
 export function cueScale(duration: number): number {
@@ -23,11 +23,6 @@ export function counterValue(cue: IntroCue, t: number, scale = 1): number {
   const p = Math.min(1, Math.max(0, (t - start) / span));
   const eased = 1 - (1 - p) ** 3;
   return Math.round(from + (to - from) * eased);
-}
-
-/** 박자 번호 (전환 깜박임에 쓴다) */
-export function beatIndex(t: number, scale = 1): number {
-  return Math.max(0, Math.floor(t / (INTRO_BEAT * scale)));
 }
 
 /** 문자열에서 정해지는 장식용 바코드 막대 굵기(1~4). 무작위가 아니라 늘 같은 무늬다 */

@@ -6,6 +6,8 @@ import type { Ctx } from '../ctx';
 import { button, h, replaceChildren, setText } from '../h';
 import { motion, play } from '../motion';
 import { DIALOGUE_UI } from './script';
+import { seedTag } from '../dossier';
+import { pageDeck } from '../pages';
 import { addTalk, talksSeen } from './storage';
 
 export interface DialogueOptions {
@@ -31,18 +33,20 @@ export function openDialogue(ctx: Ctx, opts: DialogueOptions): Promise<DialogueR
 
     const art = opts.art ? h('img', { class: 'story__art-img', src: opts.art, alt: '', draggable: false }) : null;
     art?.addEventListener('error', () => art.remove());
+    const frame = h('div', { class: 'film__frame', 'aria-hidden': 'true' }, ...['tl', 'tr', 'bl', 'br'].map((corner) => h('span', { class: `film__corner film__corner--${corner}` })));
+    const frameGrain = h('div', { class: 'film__grain', 'aria-hidden': 'true' });
     const portraitBox = h('div', { class: 'story__portrait', 'aria-hidden': 'true' });
-    const speaker = h('p', { class: 'story__speaker' });
+    const speaker = h('div', { class: 'story__speaker' });
     const role = h('span', { class: 'story__role' });
     const text = h('p', { class: 'story__line', 'aria-live': 'polite' });
     const count = h('span', { class: 'story__count', 'aria-label': '' });
-    const log = h('ol', { class: 'story__log', hidden: true, 'aria-label': DIALOGUE_UI.logTitle });
+    const log = h('div', { class: 'story__log', hidden: true, 'aria-label': DIALOGUE_UI.logTitle });
     const next = button(DIALOGUE_UI.next, () => advance(), { class: 'btn--gold story__next', 'data-autofocus': '' });
     const skip = allowSkip ? button(DIALOGUE_UI.skip, () => { result = 'skipped'; modal.close(); }, { class: 'btn--ghost story__skip' }) : null;
     const logBtn = allowSkip ? button(DIALOGUE_UI.log, () => toggleLog(), { class: 'btn--ghost story__logbtn', 'aria-expanded': 'false' }) : null;
     const bubble = h('div', { class: 'story__bubble' }, h('div', { class: 'story__who' }, speaker, role), text);
     const content = h('div', { class: 'story' },
-      h('div', { class: 'story__scene' }, art, h('div', { class: 'story__chapter' }, h('span', null, opts.kicker), h('strong', null, opts.title))),
+      frame, frameGrain, h('div', { class: 'story__scene' }, art, h('div', { class: 'story__chapter' }, h('span', null, opts.kicker), h('strong', null, opts.title))),
       h('div', { class: 'story__stage' }, portraitBox, bubble),
       log,
       h('div', { class: 'story__controls' }, count, h('div', { class: 'story__buttons' }, logBtn, skip, next)));
@@ -59,7 +63,7 @@ export function openDialogue(ctx: Ctx, opts: DialogueOptions): Promise<DialogueR
     const portraitFor = (line: StoryLine): HTMLElement | null => {
       const who = SPEAKERS[line.who];
       if (!who.portrait) return null;
-      const el = characterPortrait(who.portrait, 280);
+      const el = characterPortrait(who.portrait, 120);
       el.classList.add('story__face');
       return el;
     };
@@ -74,9 +78,9 @@ export function openDialogue(ctx: Ctx, opts: DialogueOptions): Promise<DialogueR
         replaceChildren(portraitBox, portraitFor(line));
         portraitBox.hidden = !portraitBox.firstChild;
       }
-      setText(speaker, who.name || DIALOGUE_UI.narration);
+      replaceChildren(speaker, seedTag(who.name || DIALOGUE_UI.narration, who.role));
       setText(role, who.role);
-      role.hidden = !who.role;
+      role.hidden = true;
       setText(text, line.text);
       setText(count, `${page + 1} / ${lines.length}`);
       count.setAttribute('aria-label', `${lines.length}쪽 중 ${page + 1}쪽`);
@@ -85,8 +89,8 @@ export function openDialogue(ctx: Ctx, opts: DialogueOptions): Promise<DialogueR
       if (!motion.reduced) void play(bubble, [{ opacity: 0, translate: '0 8px' }, { opacity: 1, translate: '0 0' }], { duration: 240, decorative: true });
     };
     const fillLog = () => {
-      replaceChildren(log, ...lines.slice(0, page + 1).map((line) => h('li', null,
-        h('b', null, SPEAKERS[line.who].name || DIALOGUE_UI.narration), ' ', line.text)));
+      replaceChildren(log, pageDeck(lines.slice(0, page + 1).map((line) => h('div', null,
+        h('b', null, SPEAKERS[line.who].name || DIALOGUE_UI.narration), h('p', null, line.text))), DIALOGUE_UI.logTitle));
       log.scrollTop = log.scrollHeight;
     };
     const toggleLog = () => {

@@ -1,4 +1,5 @@
 // 출하 화면 (phase 'play') — 무대 + 손패 + 버튼 + 자손 덱. 점수 연출은 ScoreTrace.steps 를 그대로 재생한다.
+import { traitBadge } from '../traitBadge';
 import { audio } from '../../audio';
 import type { RunState, ScoreStep, ScoreTrace } from '../../contract/game';
 import { hasGlasses } from '../cards';
@@ -100,7 +101,7 @@ export class PlayView {
         h('div', { class: 'play__prediction-head' }, h('b', null, '교배 결과'), h('span', null, `내 예측: ${chosen}`)),
         h('div', { class: 'play__comparison' },
           h('span', null, expected ? colorExpectationText(expected) : cold ? '기대: 비분리 때문에 단순 비율 적용 어려움' : '기대: 공개된 정보로 계산하기 어려움'),
-          h('strong', null, `관찰 ${prediction.ruby + prediction.gold}개체: 루비 ${prediction.ruby} · 골드 ${prediction.gold}`),
+          h('div', { class: 'observation', 'aria-label': `관찰 ${prediction.ruby + prediction.gold}개체` }, ...(['ruby', 'gold'] as const).map((color) => h('div', { class: 'observation__row' }, traitBadge({ color }, `${color === 'ruby' ? '루비' : '골드'} ${prediction[color]}개체`), h('meter', { min: 0, max: prediction.ruby + prediction.gold, value: prediction[color], 'aria-label': `${color === 'ruby' ? '루비' : '골드'} 개체 수` })))),
         ),
         h('details', { class: 'play__evidence' },
           h('summary', null, '예측과 관찰값을 어떻게 읽나요?'),

@@ -12,11 +12,11 @@ describe('의뢰인의 계약 안내', () => {
     for (const goal of order.goals ?? []) {
       expect(text).toContain(goal.label);
       expect(text).toContain(`${goal.count}개체`);
-      expect(text).toContain(goal.detail);
+      expect(story.find((line) => line.heading === '이번에 필요한 품종')?.details).toContain(`${goal.label} ${goal.count}개체`);
     }
     expect(text).toContain(`${order.target.toLocaleString('ko-KR')}점`);
     expect(text).toContain(`$${order.reward}`);
-    expect(story.at(-1)?.text).toContain('점수와 필수 납품 조건을 모두');
+    expect(story.at(-1)?.text).toContain('필수 납품과');
     expect(clientLines({ ...order, name: '품종 박람회' })[0].text).toContain('품종 박람회를 부탁드리러');
   });
 

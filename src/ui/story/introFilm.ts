@@ -2,7 +2,7 @@
 // 영상에는 글자를 넣지 않는다. 바코드는 장식용 SVG다. 동작 줄이기는 포스터와 고정 HUD, 영상이 없으면 곧장 제목 화면.
 import { h, svg, setText } from '../h';
 import { play } from '../motion';
-import { activeCueIds, barcodeBars, beatIndex, counterValue, cueScale } from './cues';
+import { activeCueIds, barcodeBars, counterValue, cueScale } from './cues';
 import { FILM, makeVideo, probeImage, startVideo, waitForVideo } from './media';
 import { FILM_UI, INTRO_CUES, INTRO_STATIC_CUES, type IntroCue } from './script';
 
@@ -62,14 +62,13 @@ export function playIntroFilm(host: HTMLElement, opts: FilmOptions): Promise<Fil
       h('span', { class: 'film__corner film__corner--bl' }), h('span', { class: 'film__corner film__corner--br' }),
       h('span', { class: 'film__cross' }));
     const timecode = h('span', { class: 'film__timecode', 'aria-hidden': 'true' }, '00:00');
-    const cut = h('div', { class: 'film__cut', 'aria-hidden': 'true' });
     const grain = h('div', { class: 'film__grain', 'aria-hidden': 'true' });
     const media = h('div', { class: 'film__media' });
     const sound = h('button', { type: 'button', class: 'film__btn film__sound', 'aria-pressed': String(opts.soundOn) }, opts.soundOn ? FILM_UI.soundOff : FILM_UI.soundOn);
     const skip = h('button', { type: 'button', class: 'film__btn film__skip' }, FILM_UI.skip);
     const controls = h('div', { class: 'film__controls' }, sound, skip);
     const root = h('div', { class: 'film', role: 'dialog', 'aria-modal': 'true', 'aria-label': FILM_UI.introLabel, tabindex: '-1' },
-      media, grain, frame, hud, cut, timecode,
+      media, grain, frame, hud, timecode,
       h('p', { class: 'film__sr' }, FILM_UI.introSummary),
       controls);
     document.body.dataset.story = 'on';
@@ -78,7 +77,6 @@ export function playIntroFilm(host: HTMLElement, opts: FilmOptions): Promise<Fil
     let raf = 0;
     let poll: ReturnType<typeof setInterval> | undefined;
     let hold: ReturnType<typeof setTimeout> | undefined;
-    let lastBeat = -1;
     let video: HTMLVideoElement | null = null;
 
     const finish = (result: FilmResult) => {
@@ -157,11 +155,6 @@ export function playIntroFilm(host: HTMLElement, opts: FilmOptions): Promise<Fil
       const scale = cueScale(v.duration);
       const t = v.currentTime;
       show(activeCueIds(t, scale), t, scale);
-      const beat = beatIndex(t, scale);
-      if (beat !== lastBeat) {
-        if (lastBeat >= 0) { cut.classList.remove('is-cut'); void cut.offsetWidth; cut.classList.add('is-cut'); }
-        lastBeat = beat;
-      }
       const s = Math.floor(t);
       setText(timecode, `00:${String(s).padStart(2, '0')}`);
     };

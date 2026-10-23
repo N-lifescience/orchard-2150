@@ -1,0 +1,129 @@
+/* Every explanation image is a thumbnail unless its context explicitly enlarges it. */
+.explain-image { width: 1.6em; height: 1.6em; max-width: 100%; object-fit: cover; flex: none; vertical-align: middle; }
+.explain-image[hidden] { display: none; }
+/* Task B extends the existing HUD; its viewport grid and tokens remain the authority. */
+.stage :is(.difficulty-card__body, .difficulty-units, .thinking, .concept-plate, .observation) {
+  min-inline-size: 0; word-break: keep-all; overflow-wrap: anywhere;
+}
+.stage .difficulty-choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.stage .difficulty-card { height: auto; min-height: 44px; text-align: left; }
+.stage .difficulty-card__body { display: grid; gap: 8px; width: 100%; }
+.stage .difficulty-card__facts { display: grid; gap: 5px; font-size: 14px; line-height: 1.4; }
+.stage .difficulty-card__facts > span { display: flex; align-items: start; gap: 6px; }
+.stage .difficulty-card__icon { width: 18px; height: 18px; flex: none; color: var(--hud-amber); }
+.stage .difficulty-units { display: grid; gap: 5px; }
+.stage .difficulty-units h3 { margin: 0; font-size: 16px; text-wrap: balance; }
+.stage .difficulty-units > div { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.stage .difficulty-unit > span { display: grid; gap: 4px; }
+.stage .difficulty-unit :is(strong, span) { font-size: 14px; }
+.stage .difficulty-mark { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; font: 600 12px/1.5 var(--sans); color: var(--hud-amber); }
+.stage .difficulty-bars { display: inline-grid; grid-template-columns: repeat(3, 14px); gap: 3px; flex: none; }
+.stage .difficulty-bars__step { display: block; height: 8px; border: 1px solid var(--hud-line); border-radius: 2px; background: var(--hud-night); }
+.stage .difficulty-bars__step.is-active { border-color: var(--hud-accent); background: var(--hud-accent); }
+.stage .difficulty-card .difficulty-mark { font: inherit; color: var(--hud-text); }
+.stage .difficulty-card .difficulty-bars { grid-template-columns: repeat(3, 18px); gap: 4px; }
+.stage .difficulty-card .difficulty-bars__step { height: 12px; }
+.stage .side__header > div { min-inline-size: 0; }
+.stage .trait-badge { position: relative; vertical-align: middle; max-inline-size: 100%; flex-wrap: wrap; }
+.stage .trait-badge[role='button'] { min-block-size: 44px; min-inline-size: 44px; cursor: help; }
+.stage .trait-badge img { object-fit: contain; border-radius: 3px; }
+.stage .trait-badge img[hidden], .stage .trait-badge__meaning[hidden] { display: none; }
+.stage .trait-badge__meaning { position: absolute; z-index: 30; inset-block-start: 100%; inset-inline-start: 0; width: min(260px, 64vw); padding: 10px; border: 1px solid var(--hud-line); border-radius: 4px; background: var(--hud-depth); color: var(--hud-text); font: 500 14px/1.5 var(--sans); text-wrap: pretty; }
+.stage .trait-badge__science { font: 650 14px var(--mono); color: inherit; }
+.stage .sa-card__traits { display: grid; gap: 2px; }
+.stage .sa-card__traits .trait-badge { font: inherit; flex-wrap: nowrap; }
+.stage .sa-card__traits .trait-badge img { width: 24px; height: 24px; }
+.stage .sa-card__traits .trait-badge > span { min-inline-size: 0; }
+.stage .cross__prediction .trait-badge img { width: 26px; height: 26px; }
+.stage .cross__prediction-actions > .btn { min-inline-size: 0; flex: 1; padding: 6px; }
+.stage .cross__prediction-actions > .btn > .trait-badge { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
+.stage .prediction-choice__images { display: inline-flex; align-items: center; justify-content: center; gap: 3px; }
+.stage .cross__guidance > :is(span, small) { display: block; font-size: 14px; }
+.stage .cross__guidance > small { color: var(--hud-muted); }
+.stage .memory-link { font-size: 14px; text-align: left; padding: 4px 8px; min-height: 44px; }
+.stage .observation { display: grid; gap: 2px; }
+.stage .observation__row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(60px, 1fr); align-items: center; gap: 6px; }
+.stage .observation__row meter { width: 100%; height: 12px; accent-color: var(--hud-ruby); }
+.stage .observation__row:last-child meter { accent-color: var(--hud-gold); }
+
+.stage .quiz__pictures { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.stage .thinking { display: grid; gap: 12px; }
+.stage .thinking__pieces { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.stage .thinking__pieces h3 { margin: 0 0 8px; font-size: 16px; }
+.stage .thinking__slot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-block: 6px; font-size: 14px; }
+.stage .thinking__slot .btn { min-width: 44px; min-height: 44px; }
+.stage .thinking__grid { display: grid; grid-template-columns: minmax(24px, .3fr) repeat(2, minmax(0, 1fr)); gap: 6px; align-items: center; }
+.stage .thinking__grid > strong { text-align: center; font: 700 18px var(--mono); }
+.stage .thinking__cell { min-height: 68px; font-size: 14px; }
+.stage .thinking__cell > span { display: grid; gap: 4px; }
+.stage .thinking__cell .trait-badge { justify-content: center; }
+.stage .concept-plate { display: grid; grid-template-columns: minmax(56px, .35fr) minmax(0, 1fr); gap: 12px; align-items: center; }
+.stage .concept-plate > img.explain-image { width: 100%; height: auto; max-height: 100px; object-fit: contain; }
+.stage .concept-plate:not(:has(> img:not([hidden]))) { grid-template-columns: minmax(0, 1fr); }
+.stage .concept-diagram { width: 100%; border-collapse: collapse; font: 500 14px/1.4 var(--sans); }
+.stage .concept-diagram :is(td, th) { border: 1px solid currentColor; padding: 3px 5px; text-align: center; }
+.stage .concept-diagram caption { font-size: 12px; margin-bottom: 4px; }
+.stage .concept-diagram .trait-badge { font-size: 12px; justify-content: center; }
+.stage .concept-diagram .trait-badge img { width: 22px; height: 22px; }
+.stage .concept-diagram p { margin: 3px 0; }
+.stage .enote__opening { gap: 8px; }
+.stage .notes .trait-badge[data-color='ruby'] { color: #852b32; }
+.stage .notes .trait-badge[data-color='gold'] { color: #70531a; }
+.stage .notes .trait-badge__meaning { color: var(--hud-text); }
+@media (max-width: 767px) {
+  .stage .difficulty-choices, .stage .difficulty-units > div { grid-template-columns: minmax(0, 1fr); }
+  .stage .wiz--difficulty { height: auto; }
+  .stage .thinking__pieces { gap: 8px; }
+  .stage .concept-plate { grid-template-columns: minmax(48px, .25fr) minmax(0, 1fr); gap: 8px; }
+}
+.stage .memory-link__body { display: flex; align-items: center; gap: 6px; }
+.stage .memory-link__body img { width: 32px; height: 32px; object-fit: contain; flex: none; }
+.stage .prediction-record > .trait-badge { margin-inline-end: 8px; }
+.stage .wiz--difficulty { gap: 8px; padding: 12px 16px; }
+.stage .difficulty-card__body { gap: 6px; }
+.stage .difficulty-card__facts { gap: 4px; }
+
+/* Keep the choice strip and paid distribution together; only the garden flexes. */
+.stage .cross__right > :not(.garden) { flex-shrink: 0; min-inline-size: 0; }
+.stage .cross__guidance { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.stage .cross__guidance > * { min-inline-size: 0; max-inline-size: 100%; }
+.stage .cross__insights { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.stage .cross__insights:not(:has(> :not([hidden]))) { display: none; }
+.stage .cross__insights:has(> .punnett:not([hidden])) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.stage .cross__insights > * { min-inline-size: 0; margin: 0; }
+.stage .cross__prediction-actions { align-items: stretch; }
+.stage .cross__prediction-actions > .btn { flex: 1 1 0; align-self: stretch; }
+.stage .cross__insights .punnett { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+.stage .cross__insights .punnett__suits { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px 8px; }
+.stage .cross__insights .punnett__brix { height: 40px; min-width: 0; }
+.stage .cross__insights .bcol__k { font-size: 12px; }
+.stage .cross__insights .punnett__extra { flex-wrap: wrap; }
+.stage .cross__insights .punnett__extra:empty { display: none; }
+.stage .cross__bar { position: relative; z-index: 2; }
+
+/* Parent art fills the height left by the controls, with all live labels retained. */
+.stage .view--cross .garden { container-type: size; isolation: isolate; position: relative; z-index: 0; grid-auto-rows: minmax(0, 1fr); align-content: stretch; align-items: center; }
+.stage .view--cross .gslot { height: 100%; max-height: 420px; min-height: 0; }
+.stage .view--cross .gslot :is(.sa-card, .sa-body, .sa-face) { height: 100%; min-height: 0; }
+.stage .view--cross .gslot .sa-card__art { flex: 1 1 0; height: auto; min-height: 0; max-height: none; }
+.stage .view--cross .gslot .sa-card__art img { width: 100%; height: 100%; padding: 12px 8px 4px; object-fit: contain; pointer-events: none; }
+.stage .view--cross .gslot :is(.sa-card__copy, .sa-card__geno) { flex: none; }
+.stage .view--cross .gslot .sa-plant__owner { left: auto; right: 34px; top: 6px; width: 28px !important; height: 28px !important; pointer-events: none; }
+.stage .observation__row meter { min-inline-size: 0; max-inline-size: 100%; }
+
+@media (min-width: 768px) and (orientation: portrait) {
+  .stage .wiz--difficulty .difficulty-choices { flex: 1; min-height: 0; grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(3, minmax(0, 1fr)); }
+  .stage .wiz--difficulty .difficulty-card { padding: 12px 16px; justify-content: center; }
+  .stage .wiz--difficulty .difficulty-card__body { gap: 5px; }
+  .stage .wiz--difficulty .modecard__name { font-size: 24px; }
+  .stage .wiz--difficulty :is(.modecard__desc, .modecard__time, .difficulty-card__facts) { font-size: 16px; line-height: 1.4; }
+  .stage .wiz--difficulty .difficulty-card__facts { gap: 3px; }
+}
+@media (max-width: 767px) {
+  .stage .cross__insights:has(> .punnett:not([hidden])) { grid-template-columns: minmax(0, 1fr); }
+  .stage .view--cross .garden { container-type: normal; grid-auto-rows: auto; }
+  .stage .view--cross .gslot { height: auto; max-height: none; }
+  .stage .view--cross .gslot :is(.sa-card, .sa-body, .sa-face) { height: auto; }
+  .stage .view--cross .gslot .sa-card__art { flex: none; height: clamp(120px, 32vw, 180px); }
+}

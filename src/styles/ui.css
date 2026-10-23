@@ -1,0 +1,16 @@
+/* Legacy component structure stays available for secondary tools. All visual and
+   viewport decisions belong to hud.css; layer order prevents old specificity
+   (for example .side.has-delivery) from restoring scroll rails or tiny type. */
+@layer legacy;
+@import './main.css' layer(legacy);
+@import './learning.css' layer(legacy);
+@import './feedback.css' layer(legacy);
+@import './readability.css' layer(legacy);
+@import './title.css' layer(legacy);
+@import './notebook.css' layer(legacy);
+@import './effects.css' layer(legacy);
+@import './practice.css' layer(legacy);
+@import './story.css' layer(legacy);
+@import './hud.css';
+
+@import "./learning-flow.css";

@@ -1,5 +1,6 @@
 // Multiple independent chronicles stored only in this browser.
-import type { PlayStyle, PolicyId, RunMode } from '../contract/game';
+import { inferDifficulty } from '../game/difficulty';
+import type { Difficulty, PlayStyle, PolicyId, RunMode } from '../contract/game';
 import { SAVE_KEY, type StorageLike } from '../game/game';
 import { sanitizeBrand, sanitizeLine } from './fmt';
 import { practiceKey } from './practiceStorage';
@@ -16,6 +17,7 @@ export interface RunSlot {
   mode: RunMode;
   policy: PolicyId;
   playStyle: PlayStyle;
+  difficulty?: Difficulty;
   updatedAt: number;
 }
 
@@ -47,7 +49,7 @@ function read(kv: StorageLike | null): SlotIndex {
           (slot.key === SAVE_KEY && slot.id === 'legacy' || slot.key === `${SAVE_KEY}:slot:${slot.id}`) &&
           typeof slot.brand === 'string' && modes.includes(slot.mode) && policies.includes(slot.policy) &&
           typeof slot.updatedAt === 'number' && Number.isFinite(slot.updatedAt),
-        ).map((slot) => ({ ...slot, playStyle: slot.playStyle === 'learning' ? 'learning' as const : 'challenge' as const }));
+        ).map((slot) => ({ ...slot, difficulty: inferDifficulty(slot.mode, slot.playStyle ?? 'challenge', slot.difficulty), playStyle: slot.playStyle === 'learning' ? 'learning' as const : 'challenge' as const }));
         const nextId = Math.max(1, Number.isSafeInteger(data.nextId) ? data.nextId : 1, ...slots.map((s) => Number(s.id) + 1).filter(Number.isFinite));
         return { v: 1, nextId, activeId: typeof data.activeId === 'string' ? data.activeId : null, slots };
       }
@@ -75,10 +77,10 @@ export function migrateLegacySave(brand = '', kv: StorageLike | null = localStor
     if (!raw) return;
     const index = read(kv);
     if (index.slots.some((slot) => slot.key === SAVE_KEY)) return;
-    const state = JSON.parse(raw) as { mode?: RunMode; policy?: PolicyId; playStyle?: PlayStyle };
+    const state = JSON.parse(raw) as { mode?: RunMode; policy?: PolicyId; playStyle?: PlayStyle; difficulty?: Difficulty };
     index.slots.push({
       id: 'legacy', key: SAVE_KEY, brand: sanitizeBrand(brand),
-      mode: state.mode ?? 'full', policy: state.policy ?? 'heritage', playStyle: state.playStyle ?? 'challenge', updatedAt: Date.now(),
+      mode: state.mode ?? 'full', policy: state.policy ?? 'heritage', playStyle: state.playStyle ?? 'challenge', difficulty: inferDifficulty(state.mode ?? 'full', state.playStyle, state.difficulty), updatedAt: Date.now(),
     });
     index.activeId ??= 'legacy';
     write(kv, index);
@@ -144,10 +146,10 @@ export function activeRunSlot(kv: StorageLike | null = localStore()): RunSlot | 
   return slots.find((s) => s.id === activeId) ?? slots[0] ?? null;
 }
 
-export function createRunSlot(brand: string, mode: RunMode, policy: PolicyId, kv: StorageLike | null = localStore(), playStyle: PlayStyle = 'learning'): RunSlot | null {
+export function createRunSlot(brand: string, mode: RunMode, policy: PolicyId, kv: StorageLike | null = localStore(), playStyle: PlayStyle = 'learning', difficulty?: Difficulty): RunSlot | null {
   const index = read(kv);
   const id = String(index.nextId++);
-  const slot: RunSlot = { id, key: `${SAVE_KEY}:slot:${id}`, brand: sanitizeBrand(brand), mode, policy, playStyle, updatedAt: Date.now() };
+  const slot: RunSlot = { id, key: `${SAVE_KEY}:slot:${id}`, brand: sanitizeBrand(brand), mode, policy, playStyle, difficulty: inferDifficulty(mode, playStyle, difficulty), updatedAt: Date.now() };
   index.slots.push(slot);
   index.activeId = id;
   return write(kv, index) ? slot : null;

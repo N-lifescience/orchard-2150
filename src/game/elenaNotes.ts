@@ -17,6 +17,7 @@ export interface ElenaNote {
   blank: string;
   /** 할머니의 손글씨 한 줄 */
   memo: string;
+  opening: string;
   core: string;
   why: string;
   terms: [string, string][];
@@ -29,6 +30,7 @@ export const ELENA_NOTES: Record<ConceptId, ElenaNote> = {
   segregation: {
     blank: '두 루비 부모에게서 골드가 나온다면, 그 골드는 어디에 숨어 있었을까?',
     memo: '숨은 r은 사라진 게 아니라 기다리고 있었다.',
+    opening: '대립유전자 한 쌍은 생식세포가 만들어질 때 나뉘어 하나씩 들어가요.',
     core: '대립유전자 한 쌍은 생식세포가 만들어질 때 나뉘어 하나씩 들어가요. Rr끼리 교배하면 자손의 약 1/4이 rr이 되어 열성 형질이 나타나요.',
     why: '겉으로 보이지 않던 열성 형질이 다음 세대에 다시 나타날 수 있어요. 그래서 부모의 표현형만 보고 자손을 확정할 수 없어요.',
     terms: [
@@ -51,6 +53,7 @@ export const ELENA_NOTES: Record<ConceptId, ElenaNote> = {
   purebred: {
     blank: '겉모습이 같은 열매는 속까지 같을까?',
     memo: '고른 빛깔은 시작일 뿐, 몇 대를 이어 봐야 순계다.',
+    opening: '순계는 자가수분을 거듭해도 관심 형질이 같은 자손을 내는 계통이에요.',
     core: '순계는 자가수분을 거듭해도 관심 형질이 같은 자손을 내는 계통이에요. 표현형이 같아도 유전자형은 RR일 수도, Rr일 수도 있어요.',
     why: '품종 등록이나 박람회에서 「고르다」는 말은 겉모습이 같다는 뜻이에요. 다음 세대까지 고르게 이어지는지는 유전자형이 정해요.',
     terms: [
@@ -73,6 +76,7 @@ export const ELENA_NOTES: Record<ConceptId, ElenaNote> = {
   selfing: {
     blank: '한 그루만으로도 씨를 맺을 수 있을까?',
     memo: '한 꽃의 꽃가루로 같은 꽃을 — 이형접합은 대마다 반씩 준다.',
+    opening: '자가수분은 한 개체의 꽃가루가 같은 개체의 암술머리에 붙는 것이에요.',
     core: '자가수분은 한 개체의 꽃가루가 같은 개체의 암술머리에 붙는 것이에요. 이형접합(Aa)을 자가수분하면 자손의 절반만 이형접합이에요.',
     why: '자가수분을 여러 세대 거듭하면 동형접합 개체의 비율이 늘어나요. 순계를 만드는 기본 방법이에요.',
     terms: [
@@ -95,6 +99,7 @@ export const ELENA_NOTES: Record<ConceptId, ElenaNote> = {
   polygenic: {
     blank: '같은 부모의 열매가 왜 저마다 다르게 달까?',
     memo: '당도는 유전자 하나의 일이 아니다, 여럿이 조금씩 보탠다.',
+    opening: '여러 유전자가 함께 정하는 형질은 값이 연속적으로 퍼져요.',
     core: '여러 유전자가 함께 정하는 형질은 값이 연속적으로 퍼져요. 이를 다유전자유전이라고 해요.',
     why: '당도처럼 여러 유전자와 환경이 정하는 형질은 한 번의 교배로 원하는 값을 얻기 어려워요. 여러 세대에 걸쳐 값이 높은 개체를 골라 남겨야 해요.',
     terms: [
@@ -116,6 +121,7 @@ export const ELENA_NOTES: Record<ConceptId, ElenaNote> = {
   environment: {
     blank: '비료로 올린 단맛은 씨앗에도 남을까?',
     memo: '흙이 바꾼 것은 열매까지, 씨앗은 그것을 기억하지 않는다.',
+    opening: '표현형은 유전자형과 환경이 함께 만들어요.',
     core: '표현형은 유전자형과 환경이 함께 만들어요. 비료나 가뭄이 바꾼 당도는 유전자를 바꾸지 않으므로 자손에게 전해지지 않아요.',
     why: '환경 효과를 유전 형질로 착각하면 잘못된 부모를 고르게 돼요. 그래서 품종을 비교할 때는 같은 환경에서 길러요.',
     terms: [
@@ -137,6 +143,7 @@ export const ELENA_NOTES: Record<ConceptId, ElenaNote> = {
   heterozygote: {
     blank: '루비 열매 속에 골드가 숨어 있을 수 있을까?',
     memo: 'RR인지 Rr인지는 rr과 맺어 보면 안다.',
+    opening: '우성 표현형만 보고 RR과 Rr을 구별할 수는 없어요.',
     core: '우성 표현형만 보고 RR과 Rr을 구별할 수는 없어요. 열성 동형접합(rr)과 교배해 자손을 살피는 검정교배로 확인할 수 있어요.',
     why: '숨은 열성 대립유전자를 모르고 부모를 고르면 원하지 않는 자손이 섞여 나와요.',
     terms: [
@@ -158,6 +165,7 @@ export const ELENA_NOTES: Record<ConceptId, ElenaNote> = {
   dioecy: {
     blank: '덩굴은 왜 열매를 맺지 않을까?',
     memo: '수그루가 없었다, 꽃가루가 없으면 열매도 없다.',
+    opening: '암수딴그루 식물은 암그루와 수그루가 따로 있어요.',
     core: '암수딴그루 식물은 암그루와 수그루가 따로 있어요. 열매는 암그루에 열리고, 수그루는 꽃가루를 내요.',
     why: '열매를 얻으려면 암그루 가까이에 꽃가루를 낼 수그루가 있어야 해요. 키위가 실제 예예요.',
     terms: [
@@ -180,6 +188,7 @@ export const ELENA_NOTES: Record<ConceptId, ElenaNote> = {
   xlinked: {
     blank: '아비의 은빛 잎은 자손 가운데 누구에게 갈까?',
     memo: '아비의 X는 딸에게, Y는 아들에게 — 하나도 빠짐없이.',
+    opening: 'XY 방식에서 아버지의 X 염색체는 모든 딸에게, Y 염색체는 모든 아들에게 전해져요.',
     core: 'XY 방식에서 아버지의 X 염색체는 모든 딸에게, Y 염색체는 모든 아들에게 전해져요. 그래서 X 염색체에 있는 유전자의 형질은 성별에 따라 다르게 나타날 수 있어요.',
     why: 'X 염색체에 있는 유전자의 유전 방식을 알면 딸과 아들의 표현형을 따로 예측할 수 있어요. 사람의 적록 색각 이상과 혈우병이 그 예예요.',
     terms: [
@@ -201,6 +210,7 @@ export const ELENA_NOTES: Record<ConceptId, ElenaNote> = {
   polyploid: {
     blank: '염색체 조가 늘면 식물은 무엇이 달라질까?',
     memo: '방추사를 멈추면 염색체 조가 두 배가 된다.',
+    opening: '콜히친은 방추사가 만들어지지 않게 막아 복제된 염색체가 나뉘지 못하게 해요.',
     core: '콜히친은 방추사가 만들어지지 않게 막아 복제된 염색체가 나뉘지 못하게 해요. 그 결과 염색체 조가 두 배인 배수체가 생길 수 있어요.',
     why: '배수체 식물은 세포나 기관이 커지는 경우가 많아 품종 개량에 쓰여요.',
     terms: [
@@ -223,6 +233,7 @@ export const ELENA_NOTES: Record<ConceptId, ElenaNote> = {
   triploid: {
     blank: '4배체와 2배체가 만나면 무엇이 태어날까?',
     memo: '4n과 2n이 만나 3n, 짝이 맞지 않아 씨를 맺기 어렵다.',
+    opening: '4배체의 생식세포(2n)와 2배체의 생식세포(n)가 수정하면 3배체(3n)가 돼요.',
     core: '4배체의 생식세포(2n)와 2배체의 생식세포(n)가 수정하면 3배체(3n)가 돼요. 3배체는 감수분열 때 상동염색체가 고르게 짝짓고 나뉘기 힘들어 정상적인 씨를 만들기 어려워요.',
     why: '씨 없는 수박이 이 원리로 만들어졌어요. 다만 3배체는 다음 세대의 부모로 쓰기 어려워요.',
     terms: [
@@ -244,6 +255,7 @@ export const ELENA_NOTES: Record<ConceptId, ElenaNote> = {
   nondisjunction: {
     blank: '추운 해의 씨앗은 왜 염색체 수가 다를까?',
     memo: '나뉘어야 할 염색체가 함께 갔다 — 하나 많거나 하나 적다.',
+    opening: '감수분열에서 상동염색체나 염색분체가 나뉘지 않는 것을 비분리라고 해요.',
     core: '감수분열에서 상동염색체나 염색분체가 나뉘지 않는 것을 비분리라고 해요. 그 생식세포가 수정되면 염색체 수가 2n+1이나 2n−1인 이수성 개체가 생길 수 있어요.',
     why: '염색체 수의 이상은 형질에 큰 영향을 줄 수 있어요. 사람의 다운 증후군은 21번 염색체가 3개인 경우예요.',
     terms: [
@@ -266,6 +278,7 @@ export const ELENA_NOTES: Record<ConceptId, ElenaNote> = {
   transcription: {
     blank: 'DNA 글자 하나를 바꾸면 단백질도 바뀔까?',
     memo: 'DNA → mRNA → 단백질, 세 글자씩 읽는다.',
+    opening: 'DNA의 유전 정보는 mRNA로 전사되고, mRNA는 코돈 단위로 번역되어 단백질이 돼요.',
     core: 'DNA의 유전 정보는 mRNA로 전사되고, mRNA는 코돈 단위로 번역되어 단백질이 돼요.',
     why: 'DNA 염기가 바뀌면 mRNA와 아미노산 배열이 달라질 수 있어요. 하지만 단백질이 실제로 바뀌었는지는 결과를 확인해야 해요.',
     terms: [
@@ -288,6 +301,7 @@ export const ELENA_NOTES: Record<ConceptId, ElenaNote> = {
   stopCodon: {
     blank: '번역은 어디에서 멈출까?',
     memo: 'UAA, UAG, UGA — 여기서 멈춘다.',
+    opening: 'mRNA의 UAA, UAG, UGA는 아미노산을 지정하지 않고 번역을 끝내요.',
     core: 'mRNA의 UAA, UAG, UGA는 아미노산을 지정하지 않고 번역을 끝내요. 유전자 중간에 종결 코돈이 생기면 단백질이 짧아져 기능을 잃을 수 있어요.',
     why: '기능을 잃은 대립유전자는 열성 형질로 나타나는 경우가 많아요. 쓴맛 유전자 B의 기능을 없애는 편집도 이 원리를 써요.',
     terms: [
@@ -309,6 +323,7 @@ export const ELENA_NOTES: Record<ConceptId, ElenaNote> = {
   synonymous: {
     blank: '글자가 바뀌어도 그대로인 단백질이 있을까?',
     memo: '코돈은 64개, 아미노산은 20가지 — 남는 자리는 겹친다.',
+    opening: '코돈 64개가 아미노산 20종을 지정하므로 여러 코돈이 같은 아미노산을 지정하기도 해요.',
     core: '코돈 64개가 아미노산 20종을 지정하므로 여러 코돈이 같은 아미노산을 지정하기도 해요. 그래서 염기가 바뀌어도 아미노산 배열이 그대로일 수 있어요.',
     why: 'DNA 염기 서열의 변화가 모두 형질의 변화로 이어지지는 않아요.',
     terms: [
@@ -330,6 +345,7 @@ export const ELENA_NOTES: Record<ConceptId, ElenaNote> = {
   frameshift: {
     blank: '글자 하나를 지우면 그 뒤는 어떻게 될까?',
     memo: '한 글자를 빼면 뒤의 묶음이 모두 밀린다.',
+    opening: 'mRNA는 염기를 세 개씩 묶어 읽어요.',
     core: 'mRNA는 염기를 세 개씩 묶어 읽어요. 염기 하나가 빠지거나 끼어들면 그 뒤의 읽기 틀이 밀려 아미노산 배열이 크게 바뀔 수 있어요.',
     why: '틀 이동은 단백질의 기능을 잃게 하는 경우가 많아요. 밀린 틀에서 종결 코돈이 일찍 나타나기도 해요.',
     terms: [
@@ -352,6 +368,7 @@ export const ELENA_NOTES: Record<ConceptId, ElenaNote> = {
   dominanceMolecular: {
     blank: '사본 하나가 망가져도 형질은 그대로일까?',
     memo: '일하는 사본 하나면 충분할 때가 있다, 그게 우성이다.',
+    opening: '열성 대립유전자는 기능하는 단백질을 만들지 못하는 경우가 많아요.',
     core: '열성 대립유전자는 기능하는 단백질을 만들지 못하는 경우가 많아요. 기능하는 사본 하나로 충분한 단백질이 만들어지면 이형접합도 우성 형질을 나타내요.',
     why: '우성과 열성을 단백질의 기능으로 설명할 수 있어요. 쓴맛을 없애려면 기능하는 B 사본이 하나도 남지 않아야 해요.',
     terms: [
@@ -373,6 +390,7 @@ export const ELENA_NOTES: Record<ConceptId, ElenaNote> = {
   lmo: {
     blank: '바다의 빛을 과일에 옮겨도 될까?',
     memo: '옮긴 유전자는 일한다, 그러니 관리도 해야 한다.',
+    opening: '다른 생물의 유전자를 넣어 새로운 형질을 갖게 한 살아 있는 생물을 유전자 변형 생물체(LMO)라고 해요.',
     core: '다른 생물의 유전자를 넣어 새로운 형질을 갖게 한 살아 있는 생물을 유전자 변형 생물체(LMO)라고 해요. 해파리의 녹색 형광 단백질(GFP) 유전자는 연구에서 표지로 쓰여요.',
     why: 'LMO는 쓰임새가 크지만, 환경과 다른 생물에 미칠 영향을 살펴 관리해야 해요.',
     terms: [
@@ -395,6 +413,7 @@ export const ELENA_NOTES: Record<ConceptId, ElenaNote> = {
   geneFlow: {
     blank: '형광 유전자는 담장을 넘을까?',
     memo: '꽃가루는 바람을 탄다, 확인은 다음 세대의 씨앗에서.',
+    opening: '꽃가루가 다른 식물을 수분시키면 그 자손에게 유전자가 전해질 수 있어요.',
     core: '꽃가루가 다른 식물을 수분시키면 그 자손에게 유전자가 전해질 수 있어요. 이미 자란 어미 식물의 유전자형은 바뀌지 않아요.',
     why: 'LMO를 재배할 때는 주변 작물과 생태계로 유전자가 퍼지지 않도록 거리를 두는 등 관리해요.',
     terms: [
@@ -416,6 +435,7 @@ export const ELENA_NOTES: Record<ConceptId, ElenaNote> = {
   clone: {
     blank: '잎 한 조각으로 나무 한 그루를 키울 수 있을까?',
     memo: '한 조각에서 한 그루 — 같은 유전자형, 같은 강점, 같은 약점.',
+    opening: '식물은 분화한 조직 한 조각에서도 온전한 개체로 자랄 수 있어요.',
     core: '식물은 분화한 조직 한 조각에서도 온전한 개체로 자랄 수 있어요. 이를 분화 전능성이라고 해요. 조직배양으로 얻은 개체는 원래 개체와 유전자형이 같은 클론이에요.',
     why: '좋은 개체를 그대로 늘리는 강력한 도구예요. 다만 모두 유전자형이 같아 한 가지 병에 함께 약할 수 있어요.',
     terms: [

@@ -4,6 +4,7 @@ import type { RunState } from '../../contract/game';
 import { CHALLENGE_FAILURE, ENDING, SCENES, sawOffer } from '../../game/story';
 import type { Ctx } from '../ctx';
 import { button, h } from '../h';
+import { pageDeck } from '../pages';
 import { play } from '../motion';
 import { openDialogue } from './dialogue';
 import { filmOptions, withFilm } from './host';
@@ -17,8 +18,8 @@ export function openLetter(ctx: Ctx): Promise<void> {
     art.addEventListener('error', () => art.remove());
     const paper = h('article', { class: 'letter__paper' },
       h('h2', { class: 'letter__title' }, ENDING.letterTitle),
-      ...ENDING.letter.map((line) => h('p', null, line)),
-      h('p', { class: 'letter__sign' }, ENDING.signature));
+      pageDeck(ENDING.letter.map((line, i) => h('div', null, h('p', null, line),
+        i === ENDING.letter.length - 1 ? h('p', { class: 'letter__sign' }, ENDING.signature) : null)), ENDING.letterTitle));
     const m = ctx.modals.open({
       className: 'modal--letter', wide: true, dismissable: false,
       content: h('div', { class: 'letter' }, art, paper),

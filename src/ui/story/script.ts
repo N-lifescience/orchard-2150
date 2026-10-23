@@ -3,10 +3,9 @@
 
 // ─────────────────────────────────────── 소개 영상 (public/film/intro.mp4, 약 30초 · 5구간)
 
-/** 신호표가 가정하는 영상 길이(초). 실제 영상 길이가 다르면 비율로 늘이거나 줄인다. */
+/** 신호표가 가정하는 영상 길이(초). 실제 영상 길이가 다르면 비율로 늘이거나 줄인다.
+ *  실제 영상은 6초 장면 다섯 개를 0.5초 디졸브로 잇는다(24fps, 장면 안에서는 끊지 않는다). */
 export const INTRO_LENGTH = 30;
-/** 장면 전환 간격(초). 실제 영상은 6초 구간마다 2초짜리 컷 세 개로 끊긴다(128 BPM). */
-export const INTRO_BEAT = 2;
 
 export type CueKind = 'stamp' | 'tag' | 'counter' | 'receipt' | 'slogan' | 'line' | 'logo';
 export type CueLane = 'top' | 'top-right' | 'left' | 'right' | 'center' | 'lower' | 'bottom';
@@ -112,20 +111,18 @@ export const TUTORIAL_SCRIPT = {
   'parent-first': {
     label: '첫 부모 고르기', target: 'parent-first',
     lines: [
-      { text: '첫 주문은 루비 과육 3개체와 300점을 함께 채우는 일이에요.', target: 'goal' },
-      { text: '과육색 유전자형이 RR인 할머니의 루비 별을 눌러 주세요.' },
+      { text: '루비 과육 3개체와 300점을 채워요.', target: 'goal' },
+      { text: 'RR인 할머니의 루비 별을 눌러 주세요.' },
     ],
   },
   'parent-second': {
     label: '두 번째 부모', target: 'parent-second',
-    lines: [{ text: '이번에는 유전자형이 rr인 할머니의 골드를 눌러 주세요.' }],
+    lines: [{ text: 'rr인 할머니의 골드를 눌러 주세요.' }],
   },
   predict: {
     label: '예측', target: 'prediction',
     lines: [
-      { text: '자손은 두 부모에게서 과육색 대립유전자를 하나씩 받아요.' },
-      { text: 'R은 r에 대해 우성이라, R이 하나라도 있으면 루비 과육이 돼요.' },
-      { text: '자손 52개체에 어느 과육색이 더 많을지 골라 주세요.' },
+      { text: '자손의 과육색을 그림으로 예측해 보세요.' },
     ],
   },
   cross: {
@@ -135,63 +132,58 @@ export const TUTORIAL_SCRIPT = {
   observe: {
     label: '관찰', target: 'pod',
     lines: [
-      { text: '예측과 실제 자손 52개체의 과육색을 비교해 보세요.', target: 'observation' },
-      { text: '자손 덱을 눌러 아직 받지 않은 씨앗의 분포도 살펴봐요.' },
+      { text: '내 예측과 자손 52개체를 비교해요.', target: 'observation' },
+      { text: '자손 덱에서 남은 씨앗도 살펴봐요.' },
     ],
   },
   sort: {
     label: '정렬', target: 'sort',
     lines: [
-      { text: '정렬은 출하 횟수를 쓰지 않고 카드 순서만 바꿔요.' },
-      { text: '당도나 빛깔 단추를 눌러 손패를 정리해 보세요.' },
+      { text: '당도나 빛깔 정렬은 횟수를 쓰지 않아요.' },
     ],
   },
   'select-cards': {
     label: '모종 고르기', target: 'hand',
     lines: [
-      { text: '필요 없는 모종은 솎아내기로 바꿀 수 있지만, 이번 손패는 그대로 써요.', target: 'discard' },
-      { text: '빛나는 모종 카드를 한 장씩 눌러 다섯 장을 골라 주세요.' },
+      { text: '솎아내기는 이번엔 쓰지 않아요.', target: 'discard' },
+      { text: '빛나는 다섯 장을 골라 주세요.' },
     ],
   },
   ship: {
     label: '출하', target: 'shipment',
     lines: [
-      { text: '출하는 계약마다 정해진 횟수만 할 수 있어요.', target: 'limits' },
-      { text: '출하를 눌러 점수와 납품 수를 확인해요.' },
+      { text: '계약마다 출하 횟수가 정해져 있어요.', target: 'limits' },
+      { text: '출하를 눌러 점수와 납품 수를 봐요.' },
     ],
   },
   collect: {
     label: '보상', target: 'cashout',
     lines: [
-      { text: '점수와 루비 납품을 모두 채웠어요!' },
       { text: '보상 받기를 눌러 주세요.' },
     ],
   },
   keep: {
     label: '선발', target: 'selection',
-    lines: [{ text: '다음 교배에 쓸 모종을 하나 골라 온실에 들여요.' }],
+    lines: [{ text: '다음 부모로 쓸 모종 하나를 들여요.' }],
   },
   shop: {
     label: '상점', target: 'shop',
     lines: [
-      { text: '여기는 번 돈으로 도구를 사는 상점이에요.', target: 'shop-cards' },
-      { text: '위쪽에 나타난 비법은 출하할 때 왼쪽부터 점수를 보태요.', target: 'jokers' },
-      { text: '그 옆 시약 칸은 필요할 때 직접 쓰는 일회용 도구 자리예요.', target: 'reagents' },
-      { text: '오늘은 돈을 아껴 두고 다음 주문을 눌러 볼게요.' },
+      { text: '비법은 출하할 때 왼쪽부터 점수를 보태요.', target: 'jokers' },
+      { text: '시약은 직접 쓰는 일회용 도구예요.', target: 'reagents' },
+      { text: '돈을 아껴 두고 다음 주문을 눌러요.' },
     ],
   },
   retry: {
     label: '다시 준비', target: 'review',
     lines: [
-      { text: '점수와 납품 형질 중 무엇이 모자랐는지 확인해요.' },
-      { text: '이 계약 다시 준비를 눌러 다른 조합으로 해 봐요.' },
+      { text: '미달 조건을 보고 이 계약 다시 준비를 눌러요.' },
     ],
   },
   complete: {
     label: '마무리', target: 'none',
     lines: [
-      { text: '교배하고, 납품하고, 좋은 모종을 남기는 흐름을 모두 해 봤어요.' },
-      { text: '진행은 저장되니 쉬고 싶을 때는 홈을 누르세요.', target: 'home' },
+      { text: '저장하고 쉬려면 홈을 누르세요.', target: 'home' },
       { text: '이제 이 과수원을 이어 가거나 새로 시작해요.' },
     ],
   },

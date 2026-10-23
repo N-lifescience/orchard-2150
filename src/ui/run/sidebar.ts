@@ -1,4 +1,5 @@
 // 왼쪽 패널 — 주문 휘장·목표·이번 주문 점수·족보·칩×배수·출하/솎아내기·돈·시즌 진행·메뉴
+import { difficultyBadge } from '../difficultyBadge';
 import { audio } from '../../audio';
 import { bossEmblem, orderEmblem } from '../../art';
 import type { RunState } from '../../contract/game';
@@ -8,12 +9,14 @@ import * as fmt from '../fmt';
 import { play, roll } from '../motion';
 import { fx, between } from '../rng';
 import { deliveryComplete } from '../../game';
+import { dossier } from '../dossier';
 import { deliveryGoals } from '../learning';
 
 export class Sidebar {
   readonly el: HTMLElement;
   private brandEl: HTMLElement;
   private managerEl: HTMLElement;
+  private difficultyEl: HTMLElement;
   private orderBox: HTMLElement;
   private emblemBox: HTMLElement;
   private orderName: HTMLElement;
@@ -51,6 +54,7 @@ export class Sidebar {
       h('button', { type: 'button', class: 'btn btn--ghost side__menu', 'aria-label': label, 'aria-keyshortcuts': key || undefined, 'data-tutorial': tutorial, onclick: () => !ctx.isBusy() && fn() }, label);
 
     this.brandEl = h('div', { class: 'side__brand' });
+    this.difficultyEl = h('div', { class: 'side__difficulty' });
     this.managerEl = h('p', { class: 'side__manager' });
     this.emblemBox = h('div', { class: 'side__emblem', 'aria-hidden': 'true' });
     this.orderName = h('div', { class: 'side__ordername' });
@@ -88,7 +92,7 @@ export class Sidebar {
       'aside',
       { class: 'side panel', 'aria-label': '주문 정보' },
       h('div', { class: 'side__header' },
-        this.brandEl,
+        h('div', null, this.brandEl, this.difficultyEl),
         button('홈', () => {
           if (!ctx.isBusy()) ctx.goTitle();
         }, { class: 'btn--ghost side__home', 'aria-label': '홈으로 돌아가기', title: '진행을 저장하고 홈으로 돌아가기' }),
@@ -138,6 +142,7 @@ export class Sidebar {
       review: '레아 · 남은 조건을 확인하고 다시 교배하세요.',
       gameover: '', victory: '',
     };
+    replaceChildren(this.difficultyEl, difficultyBadge(s.difficulty));
     setText(this.managerEl, briefing[s.phase]);
     const o = s.orders[s.orderIdx];
     this.el.classList.toggle('has-delivery', !!o.goals?.length);
@@ -148,7 +153,7 @@ export class Sidebar {
       this.orderKey = key;
       replaceChildren(this.emblemBox, o.kind === 'boss' && o.boss ? bossEmblem(o.boss, 58) : orderEmblem(o.kind === 'big' ? 'big' : 'small', 58, o.client));
       setText(this.orderName, o.name);
-      setText(this.orderClient, o.client);
+      replaceChildren(this.orderClient, dossier(o.client, 40));
       setText(this.bossRule, o.boss ? o.boss.desc : '');
       this.orderBox.dataset.kind = o.kind;
     }
@@ -156,7 +161,7 @@ export class Sidebar {
     setText(this.rewardEl, `보상 $${o.reward}`);
     setText(this.handsEl, s.handsLeft);
     setText(this.discardsEl, s.discardsLeft);
-    setText(this.seasonEl, `${s.ante}/${s.maxAnte}`);
+    setText(this.seasonEl, `${String(s.ante).padStart(2, '0')}/${String(s.maxAnte).padStart(2, '0')}  ${s.orderIdx + 1}/3`);
     replaceChildren(
       this.dots,
       ...s.orders.map((ord, i) =>

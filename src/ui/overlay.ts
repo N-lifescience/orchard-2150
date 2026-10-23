@@ -282,19 +282,35 @@ export class Tips {
 // ───────────────────────────────────────── 토스트
 export class Toaster {
   private box: HTMLElement;
+  private queue: { msg: string; kind: 'info' | 'warn' | 'good'; ms: number }[] = [];
+  private showing = false;
+
   constructor(root: HTMLElement) {
-    this.box = h('div', { class: 'toasts', role: 'status', 'aria-live': 'polite' });
+    this.box = h('div', { class: 'toasts', role: 'status', 'aria-live': 'polite', 'aria-atomic': 'true' });
     root.appendChild(this.box);
   }
 
   show(msg: string, kind: 'info' | 'warn' | 'good' = 'info', ms = 3400): void {
-    const t = h('div', { class: ['toast', `toast--${kind}`] }, msg);
-    this.box.appendChild(t);
-    while (this.box.children.length > 4) this.box.firstElementChild?.remove();
-    void play(t, [{ opacity: 0, transform: 'translateY(-12px) scale(0.96)' }, { opacity: 1, transform: 'none' }], { duration: 240 });
-    const life = motion.fast ? 1200 : ms + Math.min(2400, msg.length * 30);
+    if (this.queue.some((notice) => notice.msg === msg)) return;
+    this.queue.push({ msg, kind, ms });
+    this.drain();
+  }
+
+  private drain(): void {
+    if (this.showing) return;
+    const notice = this.queue.shift();
+    if (!notice) return;
+    this.showing = true;
+    const t = h('div', { class: ['toast', `toast--${notice.kind}`] }, notice.msg);
+    this.box.replaceChildren(t);
+    void play(t, [{ opacity: 0 }, { opacity: 1 }], { duration: 240 });
+    const life = motion.fast ? 1200 : notice.ms + Math.min(2400, notice.msg.length * 30);
     window.setTimeout(() => {
-      void play(t, [{ opacity: 1 }, { opacity: 0, transform: 'translateY(-8px)' }], { duration: 260 }).then(() => t.remove());
+      void play(t, [{ opacity: 1 }, { opacity: 0 }], { duration: 260 }).then(() => {
+        t.remove();
+        this.showing = false;
+        this.drain();
+      });
     }, life);
   }
 

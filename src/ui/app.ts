@@ -2,7 +2,7 @@
 import { audio } from '../audio';
 import { createBackground } from '../art';
 import type { BackgroundHandle } from '../contract/art';
-import type { PlayStyle, PolicyId, RunMode, RunState } from '../contract/game';
+import type { Difficulty, PlayStyle, PolicyId, RunMode, RunState } from '../contract/game';
 import { createGame, SAVE_KEY, type GameImpl } from '../game';
 import { decide, applyDirect, type BotAction } from './bot';
 import type { Ctx } from './ctx';
@@ -127,13 +127,13 @@ export class App implements Ctx {
     };
 
     this.title = new TitleScreen(this);
-    this.title.onStart = (mode, policy, playStyle) => this.newRun(mode, policy, playStyle);
+    this.title.onStart = (mode, policy, playStyle, difficulty) => this.newRun(mode, policy, playStyle, undefined, false, difficulty);
     this.title.onResume = (id) => this.resumeRun(id);
     this.title.onRemove = (id) => this.removeRun(id);
     this.end = new EndScreen(this);
     this.end.onAgain = () => {
       const s = this.game.state;
-      this.newRun(s.mode, s.policy, s.playStyle);
+      this.newRun(s.mode, s.policy, s.playStyle, undefined, false, s.difficulty);
     };
 
     this.sysReduced = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
@@ -179,7 +179,11 @@ export class App implements Ctx {
     this.introPlaying = true;
     this.titleLoop.set(false, motion.reduced);
     try {
-      const result = await withFilm(this, () => playIntroFilm(document.body, filmOptions(this)));
+      const result = await withFilm(this, async () => {
+        const result = await playIntroFilm(document.body, filmOptions(this));
+        if (result === 'ended') audio.continueFrom?.(30);
+        return result;
+      });
       // A missing film does not count as seen, so it plays once the file is in place.
       if (result !== 'failed') markIntroSeen();
       return result;
@@ -464,8 +468,8 @@ export class App implements Ctx {
     this.end.show(s);
   }
 
-  private newRun(mode: RunMode, policy: PolicyId, playStyle: PlayStyle = 'learning', seed?: number, practice = false): void {
-    const slot = createRunSlot(this.brand, mode, policy, undefined, playStyle);
+  private newRun(mode: RunMode, policy: PolicyId, playStyle: PlayStyle = 'learning', seed?: number, practice = false, difficulty?: Difficulty): void {
+    const slot = createRunSlot(this.brand, mode, policy, undefined, playStyle, difficulty);
     if (!slot) {
       const warning = this.modals.open({
         title: '진행을 저장할 수 없어요',
@@ -476,7 +480,7 @@ export class App implements Ctx {
             warning.close();
             this.activeSlot = null;
             this.game.setSaveKey(`${SAVE_KEY}:slot:session-${++this.sessionRuns}`);
-            this.game.newRun({ mode, policy, playStyle, seed });
+            this.game.newRun({ mode, policy, playStyle, seed, difficulty });
             this.practice = practice ? initialPractice() : null;
             this.startRun();
           }, { class: 'btn--play' }),
@@ -486,7 +490,7 @@ export class App implements Ctx {
     }
     this.activeSlot = slot;
     this.game.setSaveKey(slot.key);
-    this.game.newRun({ mode, policy, playStyle, seed });
+    this.game.newRun({ mode, policy, playStyle, seed, difficulty });
     this.practice = practice ? initialPractice() : null;
     this.persistPractice();
     this.startRun();
@@ -586,8 +590,8 @@ export class App implements Ctx {
   }
 
   private fit(): void {
-    // Every screen uses document flow. A fixed, scaled 720px stage clipped
-    // taller content and made text shrink on short desktop windows.
+    // CSS owns the viewport grid on tablets/desktops and document flow on phones.
+    // Coordinates remain unscaled for keyboard, gamepad and FLIP animations.
     document.documentElement.classList.add('is-responsive-ui');
     this.stage.classList.add('is-responsive');
     stage.scale = 1;

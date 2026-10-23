@@ -1,4 +1,5 @@
 // 개념 카드(발견) · 엘레나의 노트(도감) · 선생님 안내
+import { traitBadge } from '../traitBadge';
 import { audio } from '../../audio';
 import type { ConceptId } from '../../contract/game';
 import { CONCEPTS, ELENA_NOTES } from '../../game';
@@ -8,6 +9,7 @@ import type { Ctx } from '../ctx';
 import { h, button, replaceChildren } from '../h';
 import { play, motion } from '../motion';
 import { wipeAll } from '../prefs';
+import { pageDeck } from '../pages';
 import { activeRunSlot, removeRunSlot } from '../runSlots';
 
 const ORDER = Object.keys(CONCEPTS) as ConceptId[];
@@ -96,8 +98,8 @@ export function openNotes(ctx: Ctx, by: 'all' | 'standard' = 'all'): void {
         observed.parentGenotypes ? h('dl', { class: 'notes__data' },
           h('dt', null, '부모 유전자형'), h('dd', null, observed.parentGenotypes.join(' × '))) : null,
         observed.prediction ? h('dl', { class: 'notes__data' },
-          h('dt', null, '자손 덱 52개체'), h('dd', null, `루비 ${observed.prediction.ruby}개체 / 골드 ${observed.prediction.gold}개체`)) : null,
-        ...observed.goals.map((goal) => h('dl', { class: 'notes__data' }, h('dt', null, goal.label), h('dd', null, `${observed.delivery[goal.id] ?? 0} / ${goal.count}개체 출하`))),
+          h('dt', null, '자손 덱 52개체'), h('dd', null, traitBadge({ color: 'ruby' }, `루비 ${observed.prediction.ruby}개체`), traitBadge({ color: 'gold' }, `골드 ${observed.prediction.gold}개체`))) : null,
+        ...observed.goals.map((goal) => h('dl', { class: 'notes__data' }, h('dt', null, traitBadge(goal.trait, goal.label)), h('dd', null, `${observed.delivery[goal.id] ?? 0} / ${goal.count}개체 출하`))),
       ) : null,
       c.id === 'geneFlow' && ctx.game.state.geneFlow ? h('section', { class: 'notes__observations' },
         h('h4', null, '이 연대기의 최근 꽃가루 이동'),
@@ -106,6 +108,9 @@ export function openNotes(ctx: Ctx, by: 'all' | 'standard' = 'all'): void {
       ) : null,
       h('footer', { class: 'notes__page-end' }, '엘레나 로시의 노트 · 오차드가 채운 기록', h('span', null, no)),
     );
+    const items = Array.from(detail.children) as HTMLElement[];
+    const [head, title, , ...extraPages] = items;
+    replaceChildren(detail, head, title, noteCard(c, { compact: false, extraPages }));
     detail.scrollTop = 0;
     void play(detail, [{ opacity: .55 }, { opacity: 1 }], { duration: 180, decorative: true });
   };
@@ -142,10 +147,10 @@ export function openNotes(ctx: Ctx, by: 'all' | 'standard' = 'all'): void {
       for (const id of ORDER) { const key = CONCEPTS[id].standard ?? '기타'; standards.set(key, [...(standards.get(key) ?? []), id]); }
       groups = [...standards.entries()].sort();
     }
-    replaceChildren(grid, ...groups.map(([title, ids]) => h('section', { class: 'notes__group' },
+    replaceChildren(grid, pageDeck(groups.map(([title, ids]) => h('section', { class: 'notes__group' },
       h('div', { class: 'notes__chapter' }, h('h4', null, title), h('span', null, `${ids.filter((id) => found.has(id)).length} / ${ids.length}`)),
       h('div', { class: 'notes__row' }, ...ids.map(cardFor)),
-    )));
+    )), '목차'));
     tabA.setAttribute('aria-pressed', String(mode === 'all'));
     tabB.setAttribute('aria-pressed', String(mode === 'standard'));
   };
@@ -242,6 +247,7 @@ export function openTeacher(ctx: Ctx): void {
         'section',
         null,
         h('h3', null, '수업 시간과 진행 방식'),
+        h('p', null, '수업 연결 예: 새싹은 중학교 3학년 과학 「생식과 유전」, 열매는 고등학교 「생명과학」 유전 단원, 명인은 진로 선택 「생물의 유전」과 연결할 수 있어요.'),
         h(
           'ul',
           { class: 'teacher__list' },

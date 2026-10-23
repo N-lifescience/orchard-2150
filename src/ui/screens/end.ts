@@ -1,4 +1,5 @@
 // 계약 재검토와 연대기 종료 — 관찰 근거, 실제 유전자형, 성찰, 로컬 보고서.
+import { traitBadge } from '../traitBadge';
 import { audio } from '../../audio';
 import { fruitArt, karyotype } from '../../art';
 import type { HandTypeId, OrderRecord, PredictionRecord, RunState } from '../../contract/game';
@@ -16,6 +17,11 @@ import { openLetter } from '../story/ending';
 function predictionText(p: PredictionRecord): string {
   const choice = p.choice === 'ruby' ? '루비가 더 많다' : p.choice === 'gold' ? '골드가 더 많다' : '두 빛깔이 비슷하다';
   return `예측: ${choice}. 관찰: 루비 ${p.ruby}개체, 골드 ${p.gold}개체.`;
+}
+
+function predictionPanel(p: PredictionRecord): HTMLElement {
+  return h('div', { class: 'prediction-record' }, h('p', null, predictionText(p)),
+    traitBadge({ color: 'ruby' }, `루비 ${p.ruby}개체`), traitBadge({ color: 'gold' }, `골드 ${p.gold}개체`));
 }
 
 function predictionContrastsObservation(p: PredictionRecord): boolean {
@@ -98,7 +104,7 @@ export class EndScreen {
         h('section', { class: 'end__reveal panel' }, h('h2', { class: 'h2' }, '추론과 실제 유전자형 비교'), reveal),
         h('section', { class: 'end__reflect panel panel--gold' },
           h('h2', { class: 'h2' }, '기록을 근거로 돌아보기'),
-          record ? h('div', { class: 'reflect__evidence' }, h('b', null, `시즌 ${record.ante} · ${record.name}`), h('p', null, record.prediction ? predictionText(record.prediction) : `획득 ${fmt.score(record.score)}점 / 목표 ${fmt.score(record.target)}점.`), h('p', null, record.goals.map((goal) => `${goal.label} ${record.delivery[goal.id] ?? 0}/${goal.count}`).join(' · '))) : null,
+          record ? h('div', { class: 'reflect__evidence' }, h('b', null, `시즌 ${record.ante} · ${record.name}`), record.prediction ? predictionPanel(record.prediction) : h('p', null, `획득 ${fmt.score(record.score)}점 / 목표 ${fmt.score(record.target)}점.`), h('div', null, ...record.goals.map((goal) => traitBadge(goal.trait, `${goal.label} ${record.delivery[goal.id] ?? 0}/${goal.count}`)))) : null,
           earlier && record ? h('p', { class: 'hint' }, `첫 시도 ${fmt.score(earlier.score)}점 → ${record.attempt}차 시도 ${fmt.score(record.score)}점. 기록에서 바꾼 선택을 찾아보세요.`) : null,
           h('ol', { class: 'debrief-prompts' },
             h('li', null, '부모의 유전자형으로 관찰한 비율을 어떻게 설명할 수 있나요?'),
@@ -139,13 +145,13 @@ export class EndScreen {
           h('dl', { class: 'stats' }, h('dt', null, '획득 / 목표 점수'), h('dd', { class: 'num' }, `${fmt.score(review?.score ?? s.roundScore)} / ${fmt.score(review?.target ?? order.target)}`)),
           h('ul', { class: 'review-goals' }, ...(order.goals ?? []).map((goal) => {
             const count = review?.delivery[goal.id] ?? s.delivery[goal.id] ?? 0;
-            return h('li', { class: count >= goal.count ? 'is-met' : 'is-unmet' }, h('span', null, goal.label), h('b', { class: 'num' }, `${count} / ${goal.count}`), h('p', null, goal.detail));
+            return h('li', { class: count >= goal.count ? 'is-met' : 'is-unmet' }, traitBadge(goal.trait, goal.label), h('b', { class: 'num' }, `${count} / ${goal.count}`), h('p', null, goal.detail));
           })),
         ),
         h('section', { class: 'review-guidance panel panel--gold' },
           h('h2', { class: 'h2' }, '다음 시도에서 바꿀 것'),
           h('p', { class: 'review-hint' }, review?.hint ?? '계약에서 요구한 형질을 만드는 부모부터 다시 살펴보세요.'),
-          s.prediction ? h('p', { class: 'reflect__evidence' }, predictionText(s.prediction)) : null,
+          s.prediction ? predictionPanel(s.prediction) : null,
           h('p', { class: 'hint' }, '같은 계약을 처음 상태에서 다시 시작해요. 이번에 관찰한 결과와 발견한 개념은 기록에 남아요.'),
           button('엘레나의 노트 보기', () => this.ctx.open.notes(), { class: 'btn--ghost' }),
         ),

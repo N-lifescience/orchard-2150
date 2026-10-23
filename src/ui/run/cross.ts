@@ -10,7 +10,13 @@ import * as fmt from '../fmt';
 import { play, wait, all, rectIn, motion } from '../motion';
 import { fx } from '../rng';
 import { attachTilt } from './hand';
-import { colorExpectationText, contractExample, deliveryGoals, goalRetryHint, knownColorExpectation, parentReason } from '../learning';
+import { canUseThinking, colorExpectationText, contractExample, deliveryGoals, goalRetryHint, knownColorExpectation, parentReason } from '../learning';
+import { exampleSelection, learningTools, memoryFor } from '../learningFlow';
+import { openThinkingHelper } from '../thinkingHelper';
+import { openNoteSheet } from '../story/noteView';
+import { CONCEPT_PICTURES } from '../conceptPlate';
+import { explainImage, traitBadge } from '../traitBadge';
+import { colorPredictionChoices } from '../predictionChoices';
 import { locusLetters } from '../cards';
 
 const SUITS: SuitKey[] = ['ruby-m', 'ruby-p', 'gold-m', 'gold-p'];
@@ -32,6 +38,11 @@ export class CrossView {
   readonly el: HTMLElement;
   private orderCard: HTMLElement;
   private garden: HTMLElement;
+  private gardenPage = 0;
+  private gardenCount = h('span', { 'aria-live': 'polite' });
+  private gardenPrev = button('이전', () => this.showGardenPage(this.gardenPage - 1), { class: 'btn--ghost', 'aria-label': '온실 이전 쪽' });
+  private gardenNext = button('다음', () => this.showGardenPage(this.gardenPage + 1), { class: 'btn--ghost', 'aria-label': '온실 다음 쪽' });
+  private gardenNav = h('nav', { class: 'garden-pages', 'aria-label': '온실 쪽 넘기기' }, this.gardenPrev, this.gardenCount, this.gardenNext);
   private pickA: HTMLElement;
   private pickB: HTMLElement;
   private reason: HTMLElement;
@@ -42,6 +53,8 @@ export class CrossView {
   private guidanceBox: HTMLElement;
   private exampleBtn: HTMLButtonElement;
   private helpBtn: HTMLButtonElement;
+  private memoryBtn: HTMLButtonElement;
+  private autoHelpKey = '';
   private prediction: ColorPrediction | null = null;
   private selfingSelected = false;
   private predictionButtons: HTMLButtonElement[] = [];
@@ -67,20 +80,18 @@ export class CrossView {
     this.previewBox = h('div', { class: 'punnett' });
     this.guidanceBox = h('div', { class: 'cross__guidance', 'aria-live': 'polite' });
     this.exampleBtn = button('첫 교배 시범', () => this.chooseExample(), { class: 'btn--gold cross__example' });
-    this.helpBtn = button('교배 도움', () => this.openHelp(), { class: 'btn--ghost cross__help' });
+    this.memoryBtn = button('지난 기록', () => this.openMemory(), { class: 'btn--ghost cross__memory' });
+    this.helpBtn = button('생각 도우미', () => this.openHelp(), { class: 'btn--ghost cross__help' });
     this.predictionBox = h('div', { class: 'cross__prediction', role: 'group', 'aria-label': '교배 결과 예측' });
-    for (const [value, label] of [['ruby', '루비가 많아요'], ['gold', '골드가 많아요'], ['even', '비슷해요']] as [ColorPrediction, string][]) {
-      const b = button(label, () => {
-        this.prediction = value;
-        this.refresh();
-      }, { class: 'btn--seg', 'aria-pressed': 'false' });
-      this.predictionButtons.push(b);
-    }
+    this.predictionButtons = colorPredictionChoices((value) => {
+      this.prediction = value;
+      this.refresh();
+    });
     replaceChildren(
       this.predictionBox,
-      h('div', { class: 'cross__prediction-title' }, '예측해 봐요: 자손 52개체에는 어느 과육색이 더 많을까요?'),
+      h('div', { class: 'cross__prediction-title' }, '자손 52개체, 어느 과육색이 많을까요?'),
       h('div', { class: 'cross__prediction-actions' }, ...this.predictionButtons),
-      h('p', { class: 'hint' }, '예측을 고른 뒤 교배할 수 있어요. 결과는 자손 덱이 만들어진 뒤 비교해요.'),
+      h('p', { class: 'hint' }, '먼저 고르고, 교배 뒤에 비교해요.'),
     );
     this.el = h(
       'div',
@@ -90,21 +101,21 @@ export class CrossView {
         'div',
         { class: 'cross__right' },
         h('div', { class: 'cross__head' },
-          h('div', { class: 'cross__headrow' }, h('h2', { class: 'h2' }, '교배할 부모를 고르세요'), h('div', { class: 'cross__tools' }, this.exampleBtn, this.helpBtn)),
+          h('div', { class: 'cross__headrow' }, h('h2', { class: 'h2' }, '교배할 부모 선택'), h('div', { class: 'cross__tools' }, this.exampleBtn, this.helpBtn, this.memoryBtn)),
           h('p', { class: 'hint' }, '같은 종 두 개체를 고르거나 한 개체를 골라 자가수분하세요.'),
         ),
         this.guidanceBox,
-        this.garden,
+        this.garden, this.gardenNav,
         h('div', { class: 'cross__bar' }, this.pickA, h('span', { class: 'cross__x', 'aria-hidden': 'true' }, '×'), this.pickB, this.selfBtn, this.crossBtn),
         this.reason,
-        this.predictionBox,
-        this.previewBox,
+        h('div', { class: 'cross__insights' }, this.predictionBox, this.previewBox),
       ),
     );
   }
 
   reset(): void {
     this.sel = [];
+    this.gardenPage = 0;
     this.prediction = null;
     this.selfingSelected = false;
   }
@@ -165,8 +176,24 @@ export class CrossView {
     });
     const same = kids.length === this.garden.children.length && kids.every((k, i) => this.garden.children[i] === k);
     if (!same) this.garden.replaceChildren(...kids);
+    this.showGardenPage(this.gardenPage);
     this.garden.style.removeProperty('--card-w');
     this.refresh();
+  }
+
+  private showGardenPage(page: number): void {
+    const items = Array.from(this.garden.children) as HTMLElement[];
+    const pages = Math.max(1, Math.ceil(items.length / 4));
+    const focus = this.gardenNav.contains(document.activeElement);
+    this.gardenPage = Math.max(0, Math.min(pages - 1, page));
+    items.forEach((item, i) => { item.hidden = Math.floor(i / 4) !== this.gardenPage; });
+    this.gardenNav.hidden = pages === 1;
+    this.gardenPrev.disabled = this.gardenPage === 0;
+    this.gardenNext.disabled = this.gardenPage === pages - 1;
+    setText(this.gardenCount, `${this.gardenPage + 1} / ${pages}`);
+    if (focus && (document.activeElement as HTMLButtonElement)?.disabled) {
+      (this.gardenPrev.disabled ? this.gardenNext : this.gardenPrev).focus({ preventScroll: true });
+    }
   }
 
   private renderOrder(s: RunState): void {
@@ -182,7 +209,7 @@ export class CrossView {
       h('div', { class: 'ordercard__emblem', 'aria-hidden': 'true' }, o.kind === 'boss' && o.boss ? bossEmblem(o.boss, 132) : orderEmblem(o.kind === 'big' ? 'big' : 'small', 120, o.client)),
       h('h2', { class: 'ordercard__name' }, o.name),
       h('p', { class: 'ordercard__client' }, o.client),
-      o.goals?.length ? deliveryGoals(o, s.delivery) : o.requestedColor ? h('div', { class: 'ordercard__request' }, `추가 보상: ${o.requestedColor === 'ruby' ? '루비' : '골드'} 과육 출하 +$2`) : null,
+      o.goals?.length ? deliveryGoals(o, s.delivery) : o.requestedColor ? traitBadge({ color: o.requestedColor }, `${o.requestedColor === 'ruby' ? '루비' : '골드'} 과육 출하 +$2`) : null,
       h('div', { class: 'ordercard__target' }, h('span', { class: 'side__label' }, '목표 점수'), h('span', { class: 'num' }, fmt.score(o.target))),
       h('div', { class: 'ordercard__reward' }, `보상 $${o.reward}`),
       o.boss ? h('div', { class: 'ordercard__rule' }, h('b', null, '특별 규칙 '), o.boss.desc) : null,
@@ -214,7 +241,7 @@ export class CrossView {
   /** 키보드 숫자로 고르기 */
   toggleByKey(n: number): void {
     const p = this.ctx.game.state.garden[n - 1];
-    if (p) this.toggle(p.id);
+    if (p) { this.showGardenPage(Math.floor((n - 1) / 4)); this.toggle(p.id); }
   }
 
   private refresh(): void {
@@ -262,7 +289,7 @@ export class CrossView {
     const parentB = pb ? g.plantById(pb) : undefined;
     const knownParents = !!parentA?.revealed && !!parentB?.revealed;
     const dist = pa && pb && knownParents ? g.preview(pa, pb) : null;
-    this.renderPreview(dist, g.state.jokers.some((j) => j.id === 'punnettNote'), !!pa && !!pb && !knownParents);
+    this.renderPreview(dist, !!this.prediction && g.state.jokers.some((j) => j.id === 'punnettNote'), !!pa && !!pb && !knownParents);
     this.renderGuidance(parentA, parentB);
   }
 
@@ -278,71 +305,75 @@ export class CrossView {
     if (this.ctx.isBusy()) return;
     const pair = this.examplePair();
     if (!pair) return;
-    this.sel = pair.map((p) => p.id);
+    const selection = exampleSelection(pair[0].id, pair[1].id);
+    this.sel = selection.parents;
     this.selfingSelected = false;
-    this.prediction = 'ruby';
+    this.prediction = selection.prediction;
     audio.play('select');
     this.refresh();
   }
 
+  private canThink(a: Plant | undefined, b: Plant | undefined): boolean {
+    return canUseThinking(this.ctx.game.state, a, b);
+  }
+
   private renderGuidance(a: Plant | undefined, b: Plant | undefined): void {
     const s = this.ctx.game.state;
-    const firstCross = s.playStyle === 'learning' && s.stats.crosses === 0;
-    const lesson = s.playStyle === 'learning' && s.orderIdx === 0 ? contractExample(s.orders[s.orderIdx]) : null;
-    this.exampleBtn.hidden = !firstCross || !!lesson || !this.examplePair();
+    const tools = learningTools(s);
+    const expectation = knownColorExpectation(a, b);
+    const memory = memoryFor(s.orders[s.orderIdx], s.records, s.discoveries);
+    this.exampleBtn.hidden = !tools.example || !this.examplePair();
+    setText(this.helpBtn, this.prediction ? '교배 도움' : '생각 도우미');
+    this.helpBtn.hidden = !tools.helper || !this.canThink(a, b);
+    this.memoryBtn.hidden = !tools.memory || !memory;
     this.exampleBtn.disabled = this.ctx.isBusy();
     this.helpBtn.disabled = this.ctx.isBusy();
-    const early = s.playStyle === 'learning' && s.ante === 1;
-    this.guidanceBox.hidden = !firstCross && !early && !lesson && (!a || !b);
-    this.guidanceBox.classList.toggle('is-brief', !firstCross);
-    const expectation = knownColorExpectation(a, b);
-    const example = firstCross && !lesson && this.examplePair();
-    const cold = s.orders[s.orderIdx].boss?.id === 'coldsnap' && !s.jokers.some((j) => j.id === 'climateHouse');
+    this.guidanceBox.hidden = !tools.helper || (!tools.coach && !a && !b);
+    this.guidanceBox.classList.add('is-brief');
     replaceChildren(this.guidanceBox,
-      h('b', null, lesson ? `레아의 예시 · ${lesson.title}` : firstCross ? example ? '레아의 첫 교배 시범' : '레아의 첫 교배 안내' : '선택한 부모의 과육색'),
-      h('span', null, lesson ? lesson.steps.join(' ') : a && b ? parentReason(a, b) : example ? 'RR 부모는 R만, rr 부모는 r만 전달해요. 자손은 모두 Rr이므로 루비 과육이에요.' : '공개된 유전자형을 확인하고, 의뢰 형질이 나올 부모를 고르세요.'),
-      firstCross ? h('small', null, lesson ? '이번 단원의 예시예요. [교배 도움]에서 과정을 다시 볼 수 있어요.' : a && b && expectation ? `${colorExpectationText(expectation)}. 예측을 확인하고 직접 교배해 보세요.` : example ? '시범 버튼은 부모와 예측을 채워 줘요. [교배하기]는 직접 누르세요.' : '부모를 고르면 공개된 정보로 추론을 도와드려요. 예측하고 직접 교배해 보세요.') : null,
-      cold && expectation ? h('small', null, '위 비율은 정상 감수분열 기준이에요. 냉해 계약에서는 비분리로 달라질 수 있어요.') : null,
-    );
+      h('span', null, a && b ? parentReason(a, b, !!this.prediction) : '부모 둘을 골라 주세요.'),
+      this.prediction && expectation ? h('small', null, colorExpectationText(expectation)) : null,
+      tools.autoMemory && memory ? this.memoryLink(memory) : null);
+    const key = `${this.ctx.game.getSaveKey()}:${s.seed}:${s.ante}:${s.orderIdx}:${s.orderAttempt}`;
+    if (tools.autoHelper && this.canThink(a, b) && !this.prediction && this.autoHelpKey !== key) {
+      queueMicrotask(() => {
+        if (this.ctx.modals.count || this.ctx.isBusy() || this.prediction || this.ctx.game.state.phase !== 'cross') return;
+        this.autoHelpKey = key;
+        this.openHelp();
+      });
+    }
+  }
+
+  private memoryLink(memory: NonNullable<ReturnType<typeof memoryFor>>): HTMLElement {
+    const r = memory.record;
+    const label = `기억나요? 시즌 ${r.ante} · ${r.name}${r.prediction ? ` → 골드 ${r.prediction.gold}개` : ''}`;
+    return button(h('span', { class: 'memory-link__body' }, explainImage(CONCEPT_PICTURES[memory.note]), label), () => openNoteSheet(this.ctx, memory.note), { class: 'btn--ghost memory-link' });
+  }
+
+  private openMemory(): void {
+    const s = this.ctx.game.state;
+    if (!learningTools(s).memory) return;
+    const memory = memoryFor(s.orders[s.orderIdx], s.records, s.discoveries);
+    if (memory) this.ctx.modals.open({ title: '지난 관찰 기록', content: this.memoryLink(memory) });
   }
 
   private openHelp(): void {
     if (this.ctx.isBusy()) return;
     const s = this.ctx.game.state;
+    if (!learningTools(s).helper) return;
     const a = this.ctx.game.plantById(this.sel[0] ?? '');
     const b = this.ctx.game.plantById(this.sel[1] ?? (this.selfingSelected ? this.sel[0] : '') ?? '');
     const expectation = knownColorExpectation(a, b);
-    const order = s.orders[s.orderIdx];
-    const lesson = contractExample(order);
-    this.ctx.modals.open({
-      title: '교배 도움', kicker: '레아 모레노 · 부모 선택과 예측', wide: true,
-      content: h('div', { class: 'learning-help' },
-        h('section', null,
-          h('h3', null, '이번 주문에서 필요한 것'),
-          order.goals?.length ? deliveryGoals(order, s.delivery) : h('p', null, '목표 점수에 맞는 빛깔, 무늬, 당도 조합을 준비하세요.'),
-          h('p', null, goalRetryHint(order.goals)),
-          order.goals?.some((goal) => goal.trait.minBrix !== undefined) ? h('p', { class: 'hint' }, '당도 납품 조건은 모종의 원래 당도로 세어요. 비료나 가뭄으로 바뀐 출하 당도는 유전되지 않아요.') : null,
-        ),
-        lesson ? h('section', null, h('h3', null, `이번 단원 예시 · ${lesson.title}`), h('ol', null, ...lesson.steps.map((step) => h('li', null, step)))) : null,
-        h('section', null,
-          h('h3', null, a && b ? '지금 고른 부모로 생각해 보기' : 'R 자리로 과육색 예상하기'),
-          h('p', null, parentReason(a, b)),
-          expectation ? h('p', null, expectation.reasoning) : null,
-          expectation ? h('p', { class: 'learning-help__result' }, colorExpectationText(expectation)) : null,
-          expectation && order.boss?.id === 'coldsnap' && !s.jokers.some((j) => j.id === 'climateHouse') ? h('p', { class: 'hint' }, '이 비율은 정상 감수분열 기준이에요. 이번 냉해 규칙은 비분리를 늘려 염색체 수와 과육색 분포를 바꿀 수 있어요.') : null,
-        ),
-        h('section', null,
-          h('h3', null, '예시 · RR × rr'),
-          h('ol', null,
-            h('li', null, 'RR 부모의 생식세포는 R, rr 부모의 생식세포는 r만 가져요.'),
-            h('li', null, '두 생식세포가 만나면 자손은 모두 Rr이에요.'),
-            h('li', null, 'R이 하나라도 기능하면 루비예요. 이 교배의 과육색 예측은 루비 100%예요.'),
-          ),
-          h('p', { class: 'hint' }, '예시를 다른 부모에게 그대로 적용하지 마세요. Rr × rr에서는 루비와 골드가 각각 50%, Rr × Rr에서는 75%와 25%로 기대돼요.'),
-        ),
-        h('p', { class: 'learning-help__note' }, '예측은 교배 전에 세운 생각이에요. 교배 뒤 52개체의 관찰값과 비교하고 다음 부모 선택에 써 보세요.'),
-      ),
-    });
+    if (!this.prediction) {
+      if (expectation && this.canThink(a, b)) openThinkingHelper(this.ctx, [expectation.a, expectation.b]);
+      return;
+    }
+    const lesson = contractExample(s.orders[s.orderIdx], true);
+    this.ctx.modals.open({ title: '교배 도움', content: h('div', { class: 'learning-help' },
+      h('p', null, parentReason(a, b, true)),
+      expectation ? h('p', null, colorExpectationText(expectation)) : null,
+      lesson ? h('ol', null, ...lesson.steps.map((step) => h('li', null, step))) : null,
+      h('p', { class: 'hint' }, '교배 뒤 실제 자손 수와 비교해 보세요.')) });
   }
 
   private renderPreview(d: Distribution | null, has: boolean, unknownParents = false): void {

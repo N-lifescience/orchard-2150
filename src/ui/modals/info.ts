@@ -1,10 +1,14 @@
 // 온실 보기 · 주문 정보 · 자손 덱 분포
+import { traitBadge } from '../traitBadge';
 import { bossEmblem, karyotype, orderEmblem, plantCard, suitGlyph } from '../../art';
 import type { SuitKey } from '../../contract/genetics';
 import { describeGenotype } from '../../genetics';
 import { hasGlasses, lineageText, phenoSentence, plantView, speciesLabel } from '../cards';
 import { podTable } from '../podstats';
 import type { Ctx } from '../ctx';
+import { dossier } from '../dossier';
+import { deliveryGoals } from '../learning';
+import { pageDeck } from '../pages';
 import { h } from '../h';
 import * as fmt from '../fmt';
 
@@ -19,10 +23,7 @@ export function openGreenhouse(ctx: Ctx): void {
     kicker: '부모 개체',
     className: 'modal--greenhouse',
     wide: true,
-    content: h(
-      'div',
-      { class: 'gh' },
-      ...s.garden.map((p) =>
+    content: pageDeck(s.garden.map((p) =>
         h(
           'article',
           { class: 'gh__item' },
@@ -39,7 +40,7 @@ export function openGreenhouse(ctx: Ctx): void {
           ),
         ),
       ),
-    ),
+    '온실'),
   });
 }
 
@@ -59,8 +60,9 @@ export function openOrders(ctx: Ctx): void {
           { class: ['orderbox', `orderbox--${o.kind}`, i === s.orderIdx && 'is-now', i < s.orderIdx && 'is-done'] },
           h('div', { class: 'orderbox__emblem', 'aria-hidden': 'true' }, o.kind === 'boss' && o.boss ? bossEmblem(o.boss, 88) : orderEmblem(o.kind === 'big' ? 'big' : 'small', 80, o.client)),
           h('h3', { class: 'orderbox__name' }, o.name),
-          h('p', { class: 'orderbox__client' }, o.client),
-          o.requestedColor ? h('p', { class: 'orderbox__request' }, `요청 과육: ${o.requestedColor === 'ruby' ? '루비빛' : '골드빛'} · 출하 시 +$2`) : null,
+          h('div', { class: 'orderbox__client' }, dossier(o.client, 48)),
+          o.goals?.length ? deliveryGoals(o, i === s.orderIdx ? s.delivery : {}, true) : null,
+          o.requestedColor ? traitBadge({ color: o.requestedColor }, `${o.requestedColor === 'ruby' ? '루비' : '골드'} 과육 출하 시 +$2`) : null,
           h('div', { class: 'orderbox__target' }, h('span', { class: 'side__label' }, '목표'), h('b', { class: 'num' }, fmt.score(o.target))),
           h('div', { class: 'orderbox__reward' }, `보상 $${o.reward}`),
           o.boss ? h('p', { class: 'orderbox__rule' }, o.boss.desc) : null,

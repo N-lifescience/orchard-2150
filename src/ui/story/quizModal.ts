@@ -7,6 +7,7 @@ import { audio } from '../../audio';
 import type { Ctx } from '../ctx';
 import { button, h, replaceChildren, setText } from '../h';
 import { openNoteSheet } from './noteView';
+import { traitBadge } from '../traitBadge';
 import { QUIZ_UI } from './script';
 
 export function openSeasonQuiz(ctx: Ctx, season: number, final: boolean): Promise<boolean> {
@@ -27,6 +28,7 @@ export function openSeasonQuiz(ctx: Ctx, season: number, final: boolean): Promis
     const count = h('span', { class: 'quiz__count' });
     const progress = h('div', { class: 'quiz__dots', 'aria-hidden': 'true' }, ...questions.map(() => h('span')));
     const prompt = h('p', { class: 'quiz__prompt', id: `quiz-prompt-${season}` });
+    const pictures = h('div', { class: 'quiz__pictures' });
     const choices = h('div', { class: 'quiz__choices', role: 'radiogroup', 'aria-labelledby': `quiz-prompt-${season}` });
     const feedback = h('div', { class: 'quiz__feedback', 'aria-live': 'polite', hidden: true });
     const actions = h('div', { class: 'quiz__actions' });
@@ -36,7 +38,7 @@ export function openSeasonQuiz(ctx: Ctx, season: number, final: boolean): Promis
         h('p', null, final ? FINAL_QUIZ_INTRO_LINE : QUIZ_INTRO_LINE))),
       h('p', { class: 'quiz__rule' }, QUIZ_UI.rule),
       h('div', { class: 'quiz__head' }, count, progress),
-      prompt, choices, feedback, actions);
+      prompt, pictures, choices, feedback, actions);
 
     const modal = ctx.modals.open({
       title: QUIZ_UI.title(season), kicker: QUIZ_UI.kicker, className: 'modal--quiz', content: body,
@@ -52,6 +54,8 @@ export function openSeasonQuiz(ctx: Ctx, season: number, final: boolean): Promis
         dot.classList.toggle('is-now', i === index);
       });
       setText(prompt, q.prompt);
+      replaceChildren(pictures, ...(q.id === 's2-two-traits' ? [traitBadge({ color: 'gold', marked: false }, '골드, 매끈한 껍질 (rrss)')] : q.id.includes('gold') || q.id === 's8-combine' ? [traitBadge({ color: 'gold' }, '골드 과육')] : q.note === 'triploid' ? [traitBadge({ seedless: true }, '씨 없는 열매')] : ['purebred', 'segregation', 'heterozygote'].includes(q.note) ? [traitBadge({ color: 'ruby' }, '루비 과육'), traitBadge({ color: 'gold' }, '골드 과육')] : q.note === 'xlinked' ? [traitBadge({ species: 'stella', marked: true }, '은빛 잎'), traitBadge({ species: 'stella', marked: false }, '초록 잎')] : []));
+      pictures.hidden = !pictures.childElementCount;
       const tried = attempt.tries[index];
       replaceChildren(choices, ...q.choices.map((text, i) => {
         const b = h('button', {

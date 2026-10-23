@@ -2,6 +2,8 @@ import type { DeliveryGoal, OrderInfo, Plant, SeedCard } from '../contract/game'
 import { deliveryComplete, goalHint, goalMatches } from '../game';
 import { locusLetters } from './cards';
 import { h } from './h';
+import { crossGuidance } from './learningFlow';
+import { traitBadge } from './traitBadge';
 
 /** 공개된 두 부모의 2배체 R 자리만으로 계산한 과육색 확률. */
 export interface ColorExpectation {
@@ -16,6 +18,7 @@ export interface ColorExpectation {
 export function knownColorExpectation(a: Plant | undefined, b: Plant | undefined): ColorExpectation | null {
   if (!a?.revealed || !b?.revealed || a.genome.species !== b.genome.species) return null;
   if (a.genome.ploidy !== 2 || b.genome.ploidy !== 2 || a.pheno.aneuploid || b.pheno.aneuploid) return null;
+  if ([a, b].some((p) => Object.values(p.genome.chromosomes).some((copies) => copies.some((copy) => Object.keys(copy.seqs ?? {}).length)))) return null;
   const aa = locusLetters(a.genome, 'R');
   const bb = locusLetters(b.genome, 'R');
   if (!/^[Rr]{2}$/.test(aa) || !/^[Rr]{2}$/.test(bb)) return null;
@@ -37,10 +40,10 @@ export function colorExpectationText(expectation: ColorExpectation): string {
   return `기대: 루비 ${Math.round(expectation.ruby * 100)}% · 골드 ${Math.round(expectation.gold * 100)}%`;
 }
 
-export function parentReason(a: Plant | undefined, b: Plant | undefined): string {
+export function parentReason(a: Plant | undefined, b: Plant | undefined, predicted = false): string {
   if (!a || !b) return '부모를 고른 뒤 공개된 유전자형으로 자손의 과육색을 예상해 보세요.';
   const expectation = knownColorExpectation(a, b);
-  if (expectation) return `${expectation.a} × ${expectation.b} → ${expectation.offspring}`;
+  if (expectation) return crossGuidance(predicted, [expectation.a, expectation.b], `${expectation.a} × ${expectation.b} → ${expectation.offspring}`);
   if (!a.revealed || !b.revealed) return "유전자형을 모르는 부모가 있어요. 루비 겉모습만으로 RR인지 Rr인지 구별할 수 없어요. 검사하거나 자손을 관찰해 좁혀 보세요.";
   return "공개된 부모의 배수성과 편집 상태를 확인하세요. 이 교배에는 2배체 RR, Rr, rr 예시를 그대로 적용할 수 없어요.";
 }
@@ -55,7 +58,7 @@ export function deliveryGoals(order: OrderInfo, delivery: Record<string, number>
       const done = sent >= goal.count;
       return h('div', { class: ['delivery-goal', done && 'is-done'], title: `${goal.detail} ${goalHint(goal)}` },
         h('span', { class: 'delivery-goal__mark', 'aria-hidden': 'true' }, done ? '✓' : '○'),
-        h('span', { class: 'delivery-goal__label' }, goal.label),
+        h('span', { class: 'delivery-goal__label' }, traitBadge(goal.trait, goal.label, true, goal.detail)),
         h('span', { class: 'delivery-goal__count num', 'aria-label': `${sent} / ${goal.count}개체 출하` }, `${sent}/${goal.count}`),
       );
     }),
@@ -67,7 +70,8 @@ export function goalRetryHint(goals: DeliveryGoal[] | undefined): string {
 }
 
 /** 풀이 예시는 공개 규칙을 설명한다. 비공개 부모의 실제 유전자형은 알려 주지 않는다. */
-export function contractExample(order: OrderInfo): { title: string; steps: string[] } | null {
+export function contractExample(order: OrderInfo, predicted = false): { title: string; steps: string[] } | null {
+  if (!predicted) return null;
   const traits = (order.goals ?? []).map((goal) => goal.trait);
   if (traits.some((t) => t.knockout)) return { title: 'B 기능을 없애는 편집', steps: [
     "B와 b를 하나씩 가진 모종을 예로 들어요. 기능 있는 B 때문에 쓴맛이 나요.",
@@ -111,4 +115,10 @@ export function selectedGoalText(order: OrderInfo, delivery: Record<string, numb
     const added = (projected[goal.id] ?? 0) - (delivery[goal.id] ?? 0);
     return `${goal.label} ${Math.min(goal.count, projected[goal.id] ?? 0)}/${goal.count}${added ? ` (+${added})` : ''}`;
   }).join(' · ');
+}
+
+/** Eligibility stays separate from rendering so unsupported contracts never show a helper. */
+export function canUseThinking(s: Pick<import('../contract/game').RunState, 'mode' | 'orders' | 'orderIdx'>, a: Plant | undefined, b: Plant | undefined): boolean {
+  return !!knownColorExpectation(a, b) && a?.genome.species === 'lumi' &&
+    !s.mode.startsWith('unit-') && !(s.orders[s.orderIdx].goals ?? []).some((g) => g.trait.seedless !== undefined || g.trait.euploid !== undefined || g.trait.knockout || g.trait.sex || g.trait.species === 'stella');
 }

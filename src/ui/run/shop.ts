@@ -1,4 +1,5 @@
 // 상점 (phase 'shop') — 비법·시약 2칸, 봉투 2개, 증축 1개, 새로고침, 다음 주문 미리보기
+import { shopSummary } from '../shopSummary';
 import { audio } from '../../audio';
 import { bossEmblem, jokerCard, medalArt, orderEmblem, packArt, plantCard, reagentCard } from '../../art';
 import type { PackChoice, RunState, ShopItem } from '../../contract/game';
@@ -11,6 +12,8 @@ import { play, wait, motion } from '../motion';
 import { fx, between } from '../rng';
 import type { ModalHandle } from '../overlay';
 import { pickPlant } from '../modals/picker';
+import { dossier } from '../dossier';
+import { deliveryGoals } from '../learning';
 import { attachTilt } from './hand';
 
 export class ShopView {
@@ -28,7 +31,7 @@ export class ShopView {
     this.cardsRow = h('div', { class: 'shop__cards', role: 'list', 'aria-label': '비법·시약 진열대' });
     this.packsRow = h('div', { class: 'shop__packs', role: 'list', 'aria-label': '봉투·증축 진열대' });
     this.rerollBtn = button('새로고침', () => this.reroll(), { class: 'btn--gold' });
-    this.nextBtn = button(h('span', null, '다음 주문 ▶'), () => this.leave(), { class: 'btn--play btn--big' });
+    this.nextBtn = button(h('span', null, '다음 주문'), () => this.leave(), { class: 'btn--play btn--big' });
     this.nextBox = h('div', { class: 'next' });
     this.el = h(
       'div',
@@ -111,15 +114,19 @@ export class ShopView {
     buyBtn.disabled = it.sold || !!why;
     const wrap = h('div', { class: ['shopitem', `shopitem--${it.kind}`, it.sold && 'is-sold'], role: 'listitem' },
       h('div', { class: 'shopitem__art' }, art),
-      h('div', { class: 'shopitem__copy' }, h('h3', null, name), h('p', null, desc)),
+      button(name, () => {
+        const detail = this.ctx.modals.open({ title: name, className: 'modal--item-receipt',
+          content: h('div', { class: 'item-receipt' }, h('p', null, desc), why ? h('p', null, why) : null),
+          actions: button('닫기', () => detail.close(), { class: 'btn--ghost' }) });
+      }, { class: 'btn--ghost shopitem__copy', 'aria-label': `${name} 설명`, 'aria-haspopup': 'dialog' }),
+      h('p', { class: 'shopitem__effect' }, shopSummary('id' in it ? it.id : it.pack, desc)),
       buyBtn,
       why && !it.sold ? h('p', { class: 'shopitem__why' }, why) : null);
     if (it.kind === 'pack' && it.choices && !it.sold) {
-      wrap.appendChild(button('구입 전 살펴보기', () => this.previewOffer(it), { class: 'btn--ghost shopitem__preview', 'aria-label': `${name} 내용 살펴보기` }));
+      wrap.appendChild(button('구입 전 보기', () => this.previewOffer(it), { class: 'btn--ghost shopitem__preview', 'aria-label': `${name} 내용 살펴보기` }));
     }
     if (!it.sold) {
       attachTilt(wrap, () => art);
-      this.ctx.tips.attach(wrap, () => h('div', null, h('b', null, name), h('div', null, desc), why ? h('div', { class: 'tip__rule' }, why) : null));
       wrap.addEventListener('pointerenter', () => audio.play('hover'));
     }
     return wrap;
@@ -189,6 +196,8 @@ export class ShopView {
       h('div', { class: 'next__kicker' }, '다음 주문'),
       h('div', { class: 'next__emblem', 'aria-hidden': 'true' }, o.boss ? bossEmblem(o.boss, 72) : orderEmblem(o.kind === 'big' ? 'big' : 'small', 64, o.client)),
       h('div', { class: 'next__name' }, o.name),
+      dossier(o.client, 48),
+      o.goals?.length ? deliveryGoals(o, {}, true) : null,
       h('div', { class: 'next__target' }, `목표 ${fmt.score(o.target)} · 보상 $${o.reward}`),
       o.requestedColor ? h('div', { class: 'next__request' }, `요청 과육: ${o.requestedColor === 'ruby' ? '루비빛' : '골드빛'} · 출하 시 +$2`) : null,
       o.boss ? h('div', { class: 'next__rule' }, o.boss.desc) : null,

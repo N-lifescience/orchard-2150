@@ -1,4 +1,5 @@
 // 정산 (phase 'cashout') — 줄마다 동전이 튀며 합산, [받기]
+import { traitBadge } from '../traitBadge';
 import { audio } from '../../audio';
 import { characterName, characterPortrait } from '../../art';
 import type { RunState } from '../../contract/game';
@@ -53,7 +54,7 @@ export class CashoutView {
       h('div', { class: 'cash__score' }, h('span', null, '획득 점수'), h('strong', { class: 'num' }, fmt.score(s.roundScore)), h('span', { class: 'cash__of' }, `목표 ${fmt.score(o.target)}점`)),
     );
     replaceChildren(this.delivery, ...(o.goals ?? []).map((goal) => h('div', { class: 'cash__goal' },
-      h('span', { class: 'cash__check', 'aria-hidden': 'true' }, '✓'), h('span', null, goal.label), h('b', null, `${s.delivery[goal.id] ?? 0} / ${goal.count}개체`))));
+      h('span', { class: 'cash__check', 'aria-hidden': 'true' }, '✓'), traitBadge(goal.trait, goal.label), h('b', null, `${s.delivery[goal.id] ?? 0} / ${goal.count}개체`))));
     this.delivery.hidden = !o.goals?.length;
     replaceChildren(this.lines);
     setText(this.totalEl, '$0');

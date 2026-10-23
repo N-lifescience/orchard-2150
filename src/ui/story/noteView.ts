@@ -5,6 +5,8 @@ import { CONCEPTS } from '../../game';
 import { ELENA_NOTES, NOTE_LAYER_LABELS as L } from '../../game/elenaNotes';
 import type { Ctx } from '../ctx';
 import { button, h, replaceChildren, setText } from '../h';
+import { conceptPicture } from '../conceptPlate';
+import { pageDeck } from '../pages';
 import { NOTES_UI } from './script';
 
 function paragraphs(text: string): HTMLElement[] {
@@ -34,28 +36,27 @@ function checkQuestion(id: ConceptId): HTMLElement {
   return section(L.check, h('p', { class: 'enote__question' }, q.question), h('div', { class: 'enote__choices', role: 'group', 'aria-label': L.check }, ...buttons), feedback);
 }
 
-export function noteCard(c: ConceptDef, opts: { compact: boolean }): HTMLElement {
+export function noteCard(c: ConceptDef, opts: { compact: boolean; extraPages?: HTMLElement[] }): HTMLElement {
   const n = ELENA_NOTES[c.id];
   const details: HTMLElement[] = [
+    section(L.happened, ...paragraphs(c.body)),
+    section(L.core, h('p', null, n.core)),
     section(L.why, h('p', null, n.why)),
     section(L.terms, h('dl', { class: 'enote__terms' }, ...n.terms.flatMap(([term, meaning]) => [h('dt', null, term), h('dd', null, meaning)]))),
     section(L.mnemonic, h('p', { class: 'enote__mnemonic' }, n.mnemonic)),
     section(L.misconception, h('div', { class: 'enote__myth' },
       h('p', { class: 'enote__wrong' }, h('b', null, `${L.wrong} `), n.misconception.wrong),
       h('p', { class: 'enote__right' }, h('b', null, `${L.right} `), n.misconception.right))),
-    h('section', { class: 'concept__box concept__box--real' }, h('h4', { class: 'concept__tag' }, L.real), ...paragraphs(c.real)),
-    ...(c.fiction ? [h('section', { class: 'concept__box concept__box--fiction' }, h('h4', { class: 'concept__tag' }, L.fiction), ...paragraphs(c.fiction))] : []),
+    ...paragraphs(c.real).map((p) => h('section', { class: 'concept__box concept__box--real' }, h('h4', { class: 'concept__tag' }, L.real), p)),
+    ...(c.fiction ? paragraphs(c.fiction).map((p) => h('section', { class: 'concept__box concept__box--fiction' }, h('h4', { class: 'concept__tag' }, L.fiction), p)) : []),
   ];
-  return h('div', { class: ['enote', 'concept', opts.compact && 'enote--compact'] },
+  const opening = h('div', { class: 'enote__opening' },
     h('blockquote', { class: 'enote__memo' }, h('span', { class: 'enote__memo-label' }, L.memo), h('p', null, n.memo)),
-    h('div', { class: 'enote__happened' }, h('span', { class: 'enote__label' }, L.happened), ...paragraphs(c.body)),
-    section(L.core, h('p', { class: 'enote__core' }, n.core)),
-    opts.compact
-      ? h('details', { class: 'enote__more' }, h('summary', null, L.more), ...details)
-      : h('div', { class: 'enote__more is-open' }, ...details),
-    checkQuestion(c.id),
-    c.standard ? h('div', { class: 'concept__std' }, `성취기준 ${c.standard}`) : null,
-  );
+    conceptPicture(c.id),
+    section(L.core, h('p', { class: 'enote__core' }, n.opening)));
+  return h('div', { class: ['enote', 'concept', opts.compact && 'enote--compact'] },
+    pageDeck([opening, ...details, checkQuestion(c.id),
+      ...(c.standard ? [h('div', { class: 'concept__std' }, `성취기준 ${c.standard}`)] : []), ...(opts.extraPages ?? [])], c.title));
 }
 
 /** 아직 열리지 않은 쪽: 엘레나가 남긴 질문만 (답은 쓰지 않는다) */

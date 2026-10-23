@@ -4,6 +4,8 @@ import type { RunState } from '../../contract/game';
 import { briefingKey, clientLines } from '../clientBriefing';
 import type { Ctx } from '../ctx';
 import { button, h, replaceChildren } from '../h';
+import { seedTag } from '../dossier';
+import { traitBadge } from '../traitBadge';
 import { motion, play } from '../motion';
 
 export class ClientVisit {
@@ -40,10 +42,10 @@ export class ClientVisit {
     const completeText = () => {
       stopTyping();
       text.textContent = lines[page].text;
-      next.textContent = page === lines.length - 1 ? '의뢰 맡기 · 주문서 펼치기' : '다음 대사 →';
+      next.textContent = page === lines.length - 1 ? '의뢰 맡기, 주문서 펼치기' : '다음 대사';
     };
-    const back = button('← 이전 대사', () => { if (page > 0) { page--; showPage(); } }, { class: 'btn--ghost' });
-    const next = button('다음 대사 →', () => {
+    const back = button('이전 대사', () => { if (page > 0) { page--; showPage(); } }, { class: 'btn--ghost' });
+    const next = button('다음 대사', () => {
       if (typing) { completeText(); return; }
       audio.play('select');
       if (page < lines.length - 1) { page++; showPage(); return; }
@@ -51,8 +53,7 @@ export class ClientVisit {
       try { localStorage.setItem(storageKey, key); } catch { /* Continue without persistent acknowledgement. */ }
       modal.close();
       this.ctx.render();
-      const target = this.workbench.querySelector<HTMLElement>('.cross__head');
-      target?.scrollIntoView({ block: 'start', behavior: 'instant' });
+      if (window.innerWidth < 768) this.workbench.querySelector<HTMLElement>('.cross__head')?.scrollIntoView({ block: 'start', behavior: 'instant' });
       this.workbench.querySelector<HTMLElement>('.cross__tools button')?.focus({ preventScroll: true });
       void play(this.workbench.querySelector('.side__order'), [{ opacity: 0, translate: '0 -12px' }, { opacity: 1, translate: '0 0' }], { duration: 420 });
     }, { class: 'btn--gold client__next', 'data-autofocus': '' });
@@ -61,7 +62,7 @@ export class ClientVisit {
         h('div', { class: 'client__window' }), portrait,
         h('span', { class: 'client__arrival' }, `시즌 ${s.ante} · ${order.name}`)),
       h('div', { class: 'client__dialogue' },
-        h('div', { class: 'client__speaker' }, h('h2', null, name), h('span', null, order.client.split(' · ')[1] ?? '온실의 손님')),
+        h('div', { class: 'client__speaker' }, seedTag(name, order.client.split(' · ').slice(1).join(' / '))),
         heading, text, details,
         h('div', { class: 'client__controls' }, progress, h('div', { class: 'client__buttons' }, back, next))),
     );
@@ -80,7 +81,7 @@ export class ClientVisit {
       heading.textContent = line.heading;
       progress.textContent = `${page + 1} / ${lines.length}`;
       back.disabled = page === 0;
-      replaceChildren(details, ...(line.details ?? []).map((detail) => h('li', null, detail)));
+      replaceChildren(details, ...(line.details ?? []).map((detail, i) => h('li', null, order.goals?.[i] ? traitBadge(order.goals[i].trait, detail, true, order.goals[i].detail) : detail)));
       details.hidden = !line.details?.length;
       modal.body.scrollTop = 0;
       if (motion.reduced || motion.fast) { completeText(); return; }

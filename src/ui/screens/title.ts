@@ -1,14 +1,17 @@
 // Home, saved chronicles, and the choices that start a new chronicle.
 import { audio } from '../../audio';
-import { jokerIcon, logo, reagentIcon } from '../../art';
-import type { PlayStyle, PolicyId, RunMode } from '../../contract/game';
+import { jokerIcon, reagentIcon } from '../../art';
+import type { Difficulty, PlayStyle, PolicyId, RunMode } from '../../contract/game';
+import { inferDifficulty } from '../../game/difficulty';
+import { difficultyBadge } from '../difficultyBadge';
 import { POLICIES } from '../../game';
 import type { Ctx } from '../ctx';
-import { h, button, replaceChildren } from '../h';
+import { h, svg, button, replaceChildren } from '../h';
 import { play } from '../motion';
 import { saveBrand } from '../prefs';
 import { listRunSlots, runSlotDetails, type RunSlot } from '../runSlots';
 import { playDuration, PRACTICE_DURATION } from '../playDuration';
+import { pageDeck } from '../pages';
 import { TITLE_COPY } from '../story/script';
 
 interface ModeChoice {
@@ -37,23 +40,24 @@ function savedAt(timestamp: number): string {
 export class TitleScreen {
   readonly el: HTMLElement;
   private panel: HTMLElement;
-  private mode: RunMode = 'full';
+  private mode: RunMode = 'quick';
+  private difficulty: Difficulty = 'sprout';
   private playStyle: PlayStyle = 'learning';
   private policy: PolicyId = 'heritage';
-  onStart: (mode: RunMode, policy: PolicyId, playStyle: PlayStyle) => void = () => {};
+  onStart: (mode: RunMode, policy: PolicyId, playStyle: PlayStyle, difficulty: Difficulty) => void = () => {};
   onResume: (id: string) => void = () => {};
   onRemove: (id: string) => void = () => {};
 
   constructor(private ctx: Ctx) {
     this.panel = h('div', { class: 'title__panel' });
     this.el = h('div', { class: 'title-screen' },
-      h('div', { class: 'title__logo' }, logo()),
+      h('div', { class: 'title__logo', 'aria-label': '오차드 2150' }, h('span', { class: 'hud-wordmark' }, 'ORCHARD'), h('span', { class: 'hud-year' }, '2150')),
       h('div', { class: 'title__tag' }, ...TITLE_COPY.tag.map((line) => h('p', null, line))), this.panel,
       h('footer', { class: 'title__foot' }, ...TITLE_COPY.foot.map((line) => h('span', null, line))),
     );
   }
   show(): void { this.menu(); }
-  prepareNew(): void { this.pickStyle(); }
+  prepareNew(): void { this.pickDifficulty(); }
 
   private savedCard(slot: RunSlot): HTMLElement {
     const details = runSlotDetails(slot);
@@ -66,6 +70,7 @@ export class TitleScreen {
         h('span', { class: ['save-slot__status', `is-${details.status}`] }, details.label),
       ),
       h('div', { class: 'save-slot__meta' },
+        difficultyBadge(inferDifficulty(slot.mode, slot.playStyle, slot.difficulty)),
         h('span', null, modeLabel(slot.mode)),
         h('span', null, slot.playStyle === 'learning' ? '재도전 허용' : '실패 시 종료'),
         h('span', null, POLICIES.find((p) => p.id === slot.policy)?.name ?? ''),
@@ -92,7 +97,7 @@ export class TitleScreen {
       h('div', { class: 'title__start' },
         h('h2', null, TITLE_COPY.startTitle),
         h('p', null, TITLE_COPY.startBody),
-        button('새 연대기 시작', () => this.pickStyle(), { class: 'btn--play btn--big', 'data-autofocus': '' }),
+        button('새 연대기 시작', () => this.pickDifficulty(), { class: 'btn--play btn--big', 'data-autofocus': '' }),
         h('p', { class: 'title__save-hint' }, '새로 시작해도 기존 연대기는 남아요.'),
         button('튜토리얼', () => this.ctx.startPractice(), { class: 'btn--gold title__practice' }),
         h('p', { class: 'title__practice-hint' }, `${PRACTICE_DURATION} · ${TITLE_COPY.practiceHint}`),
@@ -107,7 +112,7 @@ export class TitleScreen {
       h('section', { class: 'save-library', 'aria-label': '저장된 연대기' },
         h('div', { class: 'save-library__head' }, h('h2', null, '내 연대기'), h('span', null, `${slots.length}개 저장됨`)),
         h('p', { class: 'save-library__hint' }, '최근에 플레이한 순서예요. 완료한 연대기는 기록을 다시 볼 수 있어요.'),
-        slots.length ? h('div', { class: 'save-list' }, ...slots.map((slot) => this.savedCard(slot))) :
+        slots.length ? pageDeck(slots.map((slot) => h('div', { class: 'save-list' }, this.savedCard(slot))), '내 연대기') :
           h('div', { class: 'save-list__empty' }, h('strong', null, '첫 연대기를 시작해 보세요.'), h('p', null, '여러 과수원을 따로 저장하고 이어서 플레이할 수 있어요.')),
       ),
     ));
@@ -130,97 +135,73 @@ export class TitleScreen {
       (node.querySelector('[data-autofocus]') as HTMLElement | null)?.focus({ preventScroll: true });
     });
   }
-  private steps(current: 'style' | 'mode' | 'policy' | 'name'): HTMLElement {
-    const steps = [ ['style', '진행 방식'], ['mode', '플레이 범위'], ...(this.mode === 'unit-edit' && current === 'name' ? [] : [['policy', '운영 팀']]), ['name', '과수원 이름'] ];
+  private steps(current: 'difficulty' | 'policy' | 'name'): HTMLElement {
+    const steps = [['difficulty', '난이도'], ['policy', '운영 팀'], ['name', '시작']];
     const index = steps.findIndex(([key]) => key === current);
     return h('ol', { class: 'wiz__steps', 'aria-label': '새 연대기 준비' }, ...steps.map(([key, label], i) =>
-      h('li', { class: [key === current && 'is-current', i < index && 'is-done'], 'aria-current': key === current ? 'step' : undefined }, h('span', { class: 'wiz__step-num', 'aria-hidden': 'true' }, i < index ? '✓' : i + 1), label),
-    ));
+      h('li', { class: [key === current && 'is-current', i < index && 'is-done'], 'aria-current': key === current ? 'step' : undefined }, h('span', { class: 'wiz__step-num', 'aria-hidden': 'true' }, i < index ? '✓' : i + 1), label)));
   }
-  private pickStyle(): void {
-    audio.play('select');
-    this.swap(h('div', { class: 'wiz wiz--style' },
-      this.steps('style'), h('h2', { class: 'wiz__title' }, '계약에 실패하면 어떻게 할까요?'),
-      h('p', { class: 'wiz__intro' }, '출하 횟수나 씨앗을 다 쓰기 전에 목표 점수와 납품 수량을 채우는 게임이에요. 아래 선택은 실패한 뒤의 진행만 바꿔요.'),
-      h('div', { class: 'wiz__styles' },
-        button(h('span', { class: 'stylecard__body' },
-          h('span', { class: 'modecard__tag' }, '처음이라면 추천'), h('strong', { class: 'modecard__name' }, '재도전 허용'),
-          h('span', { class: 'modecard__desc' }, '실패한 계약만 처음부터 다시 할 수 있어요.'),
-          h('span', { class: 'stylecard__detail' }, '이전 계약의 보상과 온실은 유지돼요. 실패 이유를 보고, 이번 계약의 부모와 출하 조합을 바꿔 보세요.'),
-        ), () => { this.playStyle = 'learning'; this.pickMode(); }, { class: 'stylecard', 'data-autofocus': '' }),
-        button(h('span', { class: 'stylecard__body' },
-          h('span', { class: 'modecard__tag' }, '실패한 계약 재도전 없음'), h('strong', { class: 'modecard__name' }, '실패 시 종료'),
-          h('span', { class: 'modecard__desc' }, '계약에 한 번이라도 실패하면 그 연대기가 끝나요.'),
-          h('span', { class: 'stylecard__detail' }, '종료 기록은 남고, 다시 도전하려면 새 연대기를 시작해요. 두 방식 모두 중간에 저장하고 이어서 할 수 있어요.'),
-        ), () => { this.playStyle = 'challenge'; this.pickMode(); }, { class: 'stylecard' }),
-      ), h('div', { class: 'wiz__nav' }, button('← 홈으로', () => this.menu(), { class: 'btn--ghost' })),
-    ));
-  }
-  private pickMode(): void {
-    const cards: HTMLButtonElement[] = [];
-    const selection = h('p', { class: 'wiz__selection', 'aria-live': 'polite' });
+  private pickDifficulty(): void {
+    const choices: { id: Difficulty; mode: RunMode; recommendation: string; facts: string[] }[] = [
+      { id: 'sprout', mode: 'quick', recommendation: '유전을 처음 배우는 사람에게 추천해요.', facts: ['4시즌, 12계약', '실패하면 재도전해요.', '자동 도움, 출하와 솎아내기 +1'] },
+      { id: 'fruit', mode: 'full', recommendation: '교배와 우성, 열성을 배워 본 사람에게 추천해요.', facts: ['8시즌, 24계약', '실패하면 재도전해요.', '도움은 단추로 열어요.'] },
+      { id: 'master', mode: 'full', recommendation: '유전 단원을 마쳤거나 열매를 끝낸 사람에게 추천해요.', facts: ['8시즌, 24계약', '실패하면 종료해요.', '노트만 볼 수 있어요.'] },
+    ];
+    const cards: HTMLElement[] = [];
+    const selected = h('span', { class: 'wiz__selection', 'aria-live': 'polite' });
     const update = () => {
-      cards.forEach((card) => card.setAttribute('aria-pressed', String(card.dataset.mode === this.mode)));
-      const chosen = MODES.find((m) => m.id === this.mode)!;
-      selection.textContent = `${modeLabel(this.mode)} · ${chosen.end - chosen.start + 1}시즌 · ${playDuration(this.mode, this.playStyle)}`;
+      cards.forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.difficulty === this.difficulty && (!c.dataset.mode || c.dataset.mode === this.mode))));
+      replaceChildren(selected, difficultyBadge(this.difficulty));
     };
-    const card = (m: ModeChoice) => {
-      const b = h('button', {
-        type: 'button', class: ['modecard', m.start > 1 && 'modecard--unit'], dataset: { mode: m.id },
-        'aria-pressed': String(this.mode === m.id), 'aria-label': `${m.name}, ${m.end - m.start + 1}시즌, 계약 ${(m.end - m.start + 1) * 3}건, 예상 ${playDuration(m.id, this.playStyle)}`,
-        'data-autofocus': this.mode === m.id ? '' : undefined,
-        onclick: () => { this.mode = m.id; audio.play('select'); update(); },
-      },
-        h('span', { class: 'modecard__head' }, h('strong', { class: 'modecard__name' }, m.name), h('span', { class: 'modecard__check', 'aria-hidden': 'true' }, '✓')),
-        h('span', { class: 'modecard__stats' }, `${m.end - m.start + 1}시즌`, h('span', null, `계약 ${(m.end - m.start + 1) * 3}건`), h('span', { class: 'modecard__time' }, playDuration(m.id, this.playStyle))),
-        h('span', { class: 'modecard__desc' }, m.desc), h('span', { class: 'modecard__task' }, m.task),
-        h('span', { class: 'season-strip', 'aria-label': `시즌 ${m.start}부터 ${m.end}까지` }, ...Array.from({ length: 8 }, (_, i) => h('span', { class: i + 1 >= m.start && i + 1 <= m.end ? 'is-active' : '', 'aria-hidden': 'true' }, i + 1))),
-      );
-      cards.push(b); return b;
-    };
-    this.swap(h('div', { class: 'wiz wiz--mode' },
-      this.steps('mode'), h('h2', { class: 'wiz__title' }, '얼마나 플레이할까요?'),
-      h('div', { class: 'wiz__mode-groups' },
-        h('section', { class: 'mode-group' }, h('h3', { class: 'mode-group__title' }, '처음부터 차례로'), h('div', { class: 'mode-group__cards mode-group__cards--journey' }, ...MODES.slice(0, 2).map(card))),
-        h('section', { class: 'mode-group' },
-          h('div', { class: 'mode-group__heading' }, h('h3', { class: 'mode-group__title' }, '한 단원만 집중해서'), h('p', null, '필요한 부모와 도구를 갖춘 온실에서 시작해요.')),
-          h('div', { class: 'mode-group__cards mode-group__cards--units' }, ...MODES.slice(2).map(card)),
-        ),
-      ),
-      h('p', { class: 'wiz__duration-hint' }, `${this.playStyle === 'learning' ? '설명을 읽으며 재도전하는 시간까지 포함한 예상입니다.' : '규칙을 익힌 뒤 진행할 때의 예상입니다.'} 선택에 걸리는 시간에 따라 달라져요. 중간에 저장하고 쉬어도 돼요.`),
-      h('div', { class: 'wiz__nav wiz__nav--spread' },
-        button('← 진행 방식', () => this.pickStyle(), { class: 'btn--ghost' }), selection,
-        button('다음 →', () => { audio.play('select'); if (this.mode === 'unit-edit') { this.policy = 'precision'; this.pickName(); } else this.pickPolicy(); }, { class: 'btn--play' }),
-      ),
-    ));
+    const choose = (id: Difficulty, mode: RunMode) => { this.difficulty = id; this.mode = mode; this.playStyle = id === 'master' ? 'challenge' : 'learning'; audio.play('select'); update(); };
+    const journey = choices.map((c) => {
+      const card = button(h('span', { class: 'difficulty-card__body' },
+        h('strong', { class: 'modecard__name' }, difficultyBadge(c.id)),
+        h('span', { class: 'modecard__desc' }, c.recommendation),
+        h('span', { class: 'difficulty-card__facts' }, ...c.facts.map((fact, i) => h('span', null, svg('svg', { class: 'difficulty-card__icon', viewBox: '0 0 20 20', 'aria-hidden': 'true', fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5 }, svg('path', { d: ['M4 3h12v14H4z M7 7h6 M7 10h6 M7 13h4', 'M16 8a6 6 0 1 0 0 5 M16 3v5h-5', 'M7 7a3 3 0 1 1 5 2c-2 1-2 2-2 3 M10 15v1'][i] })), ' ', fact))),
+        h('span', { class: 'modecard__time' }, playDuration(c.mode, c.id === 'master' ? 'challenge' : 'learning'))),
+      () => choose(c.id, c.mode), { class: 'modecard difficulty-card', dataset: { difficulty: c.id }, 'data-autofocus': c.id === this.difficulty ? '' : undefined });
+      cards.push(card); return card;
+    });
+    const units = MODES.slice(2).map((m) => {
+      const card = button(h('span', null, h('strong', null, m.name), h('span', null, `2시즌, 6계약 / ${playDuration(m.id, 'learning')}`)),
+        () => choose('unit', m.id), { class: 'btn--seg difficulty-unit', dataset: { difficulty: 'unit', mode: m.id } });
+      cards.push(card); return card;
+    });
+    this.swap(h('div', { class: 'wiz wiz--difficulty' }, this.steps('difficulty'), h('h2', { class: 'wiz__title' }, '난이도를 골라 주세요'),
+      h('p', { class: 'wiz__intro' }, '유전 원리를 외우지 않아도 돼요. 해 보면서 알게 돼요.'),
+      h('div', { class: 'difficulty-choices' }, ...journey),
+      h('section', { class: 'difficulty-units' }, h('h3', null, '단원 연습'), h('p', { class: 'hint' }, '수업에서 한 단원만 다뤄요. 재도전과 도움은 열매와 같아요.'), h('div', null, ...units)),
+      h('div', { class: 'wiz__nav wiz__nav--spread' }, button('← 홈으로', () => this.menu(), { class: 'btn--ghost' }), selected,
+        button('다음 →', () => this.pickPolicy(), { class: 'btn--play' }))));
     update();
   }
   private pickPolicy(): void {
     this.swap(h('div', { class: 'wiz wiz--policy' },
       this.steps('policy'), h('h2', { class: 'wiz__title' }, '어떤 도구로 품종을 만들까요?'), h('p', { class: 'wiz__intro' }, '모든 팀은 부모를 교배하고 모종을 선발해요. 팀을 고르면 추가로 쓸 수 있는 도구와 계약 보상이 정해져요.'),
-      h('div', { class: 'wiz__policies' }, ...POLICIES.map((p, i) =>
+      h('div', { class: 'wiz__policies' }, ...POLICIES.filter((p) => this.mode !== 'unit-edit' || p.id === 'precision').map((p, i) =>
         button(h('span', { class: 'policy__body' },
           h('span', { class: 'policy__crest', 'aria-hidden': 'true' }, p.id === 'heritage' ? jokerIcon('selfingMaster', 64) : p.id === 'precision' ? reagentIcon('scissors', 64) : jokerIcon('jellyfishGene', 64)),
           h('strong', { class: 'policy__name' }, p.name), h('span', { class: 'policy__desc' }, p.desc), h('span', { class: 'policy__trade' }, p.tradeoff),
         ), () => { this.policy = p.id; audio.play('select'); this.pickName(); }, { class: ['policy', `policy--${p.id}`], 'data-autofocus': i === 0 ? '' : undefined }),
-      )), h('div', { class: 'wiz__nav' }, button('← 플레이 범위', () => this.pickMode(), { class: 'btn--ghost' })),
+      )), h('div', { class: 'wiz__nav' }, button('← 난이도', () => this.pickDifficulty(), { class: 'btn--ghost' })),
     ));
   }
   private pickName(): void {
     const input = h('input', { type: 'text', class: 'input', maxlength: '12', autocomplete: 'off', spellcheck: 'false', placeholder: TITLE_COPY.namePlaceholder, value: this.ctx.brand, 'aria-describedby': 'brand-hint', 'aria-label': '과수원 이름 (선택)', 'data-autofocus': '' });
-    const start = () => { this.ctx.brand = saveBrand(input.value); audio.play('play'); this.onStart(this.mode, this.policy, this.playStyle); };
+    const start = () => { this.ctx.brand = saveBrand(input.value); audio.play('play'); this.onStart(this.mode, this.policy, this.playStyle, this.difficulty); };
     input.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') start(); });
     const choice = MODES.find((m) => m.id === this.mode)!;
     this.swap(h('div', { class: 'wiz wiz--name' },
-      this.steps('name'), h('h2', { class: 'wiz__title' }, TITLE_COPY.nameTitle),
+      this.steps('name'), h('h2', { class: 'wiz__title' }, '연대기를 시작해요'),
       h('div', { class: 'prose hint', id: 'brand-hint' }, ...TITLE_COPY.nameHint.map((line) => h('p', null, line))),
       input,
       h('dl', { class: 'wiz__recap' },
-        h('div', null, h('dt', null, '진행 방식'), h('dd', null, this.playStyle === 'learning' ? '재도전 허용' : '실패 시 종료')),
+        h('div', null, h('dt', null, '난이도'), h('dd', null, difficultyBadge(this.difficulty))),
         h('div', null, h('dt', null, '플레이 범위'), h('dd', null, `${modeLabel(this.mode)} · 계약 ${(choice.end - choice.start + 1) * 3}건`)),
         h('div', null, h('dt', null, '운영 팀'), h('dd', null, POLICIES.find((p) => p.id === this.policy)?.name ?? '')),
         h('div', null, h('dt', null, '예상 시간'), h('dd', null, `${playDuration(this.mode, this.playStyle)} · 쉬는 시간 제외`)),
-      ), h('div', { class: 'wiz__nav' }, button('← 뒤로', () => this.mode === 'unit-edit' ? this.pickMode() : this.pickPolicy(), { class: 'btn--ghost' }), button('플레이 시작', start, { class: 'btn--play btn--big' })),
+      ), h('div', { class: 'wiz__nav' }, button('← 뒤로', () => this.pickPolicy(), { class: 'btn--ghost' }), button('플레이 시작', start, { class: 'btn--play btn--big' })),
     ));
   }
 }
