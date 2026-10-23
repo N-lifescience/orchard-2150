@@ -70,6 +70,7 @@ export type PolicyId = 'heritage' | 'precision' | 'biotech';
 export interface PolicyDef { id: PolicyId; name: string; desc: string; tradeoff: string }
 
 export type RunMode = 'full' | 'quick' | 'unit-sex' | 'unit-chromo' | 'unit-edit';
+export type Difficulty = 'sprout' | 'fruit' | 'master' | 'unit';
 export type PlayStyle = 'learning' | 'challenge';
 
 export interface Plant {
@@ -194,6 +195,7 @@ export interface RunState {
   seed: number;
   mode: RunMode;
   playStyle: PlayStyle;
+  difficulty: Difficulty;
   policy: PolicyId;
   ante: number;
   maxAnte: number; // full 8, quick 4, unit-* 는 시작 앤티+1
@@ -269,7 +271,7 @@ export interface SelectOptions {
   extraPicks: number; // 조직배양 랩이면 1
 }
 
-export interface NewRunOptions { seed?: number; mode: RunMode; policy: PolicyId; playStyle?: PlayStyle }
+export interface NewRunOptions { seed?: number; mode: RunMode; policy: PolicyId; playStyle?: PlayStyle; difficulty?: Difficulty }
 
 export interface Game {
   readonly state: RunState;

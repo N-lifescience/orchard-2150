@@ -59,6 +59,7 @@ import { marketPlant, rarePlant, rescuePlant, seasonMaterials, starterGarden, ty
 import { seasonGoals } from './contracts';
 import { countDelivery, deliveryComplete, deliveryProgressText, goalHint } from './learning';
 import { cardSuit, classify, effBrix, handBase, isSurprise, scoreHand, type ScoreCtx } from './rules';
+import { difficultyBonus, inferDifficulty } from './difficulty';
 import { legacyQuizPassed, quizDueFor } from './quiz';
 
 export const SAVE_KEY = 'seed-atelier-2150:save:v1';
@@ -207,6 +208,7 @@ function emptyState(): InternalState {
     seed: 0,
     mode: 'full',
     playStyle: 'learning',
+    difficulty: 'fruit',
     policy: 'heritage',
     ante: 1,
     maxAnte: 8,
@@ -515,8 +517,8 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
 
   function startOrder() {
     st.phase = 'cross';
-    st.handsLeft = st.baseHands + countJoker('beeSwarm');
-    st.discardsLeft = st.baseDiscards;
+    st.handsLeft = st.baseHands + countJoker('beeSwarm') + difficultyBonus(st.difficulty);
+    st.discardsLeft = st.baseDiscards + difficultyBonus(st.difficulty);
     st.roundScore = 0;
     st.pod = [];
     st.podTotal = POD_SIZE;
@@ -861,7 +863,8 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
       st = emptyState();
       st.seed = seed;
       st.mode = mode;
-      st.playStyle = o.playStyle ?? 'learning';
+      st.difficulty = inferDifficulty(mode, o.playStyle ?? 'learning', o.difficulty);
+      st.playStyle = st.difficulty === 'master' ? 'challenge' : 'learning';
       st.policy = policy;
       st.startAnte = START_ANTE[mode];
       st.ante = st.startAnte;
@@ -1439,6 +1442,12 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
         st.prediction ??= null;
         st.requestFulfilled ??= false;
         st.playStyle ??= 'challenge';
+        st.difficulty = inferDifficulty(st.mode, st.playStyle, st.difficulty);
+        if (st.orderCheckpoint) {
+          const checkpoint = JSON.parse(st.orderCheckpoint) as InternalState;
+          checkpoint.difficulty = inferDifficulty(checkpoint.mode, checkpoint.playStyle, checkpoint.difficulty);
+          st.orderCheckpoint = JSON.stringify(checkpoint);
+        }
         st.delivery ??= {};
         st.orderAttempt ??= 1;
         st.review ??= null;
