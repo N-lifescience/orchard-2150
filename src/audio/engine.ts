@@ -102,7 +102,8 @@ export function onVisibilityChange(fn: (hidden: boolean) => void): void {
 
 function onVisibility(): void {
   hidden = document.visibilityState === 'hidden';
-  if (!hidden) resumeContext(); // iOS 'interrupted' 복구
+  if (hidden) void eng?.ctx.suspend().catch(() => { /* 지원하지 않는 환경 */ });
+  else resumeContext(); // iOS 'interrupted' 복구
   applyGains(false);
   for (const fn of visibilityListeners) fn(hidden);
 }
@@ -294,7 +295,7 @@ interface Voice {
   closed: boolean;
 }
 
-const MAX_VOICES = 28;
+const MAX_VOICES = 16;
 const voices: Voice[] = [];
 
 export function activeVoices(): number {

@@ -1,7 +1,9 @@
 // 소리 시험대: 모든 효과음, 칩 쌓임, 배경음 장면·계절·보스 전환, 볼륨.
-// 요소는 createElement 로만 만든다(innerHTML 없음).
+// 요소는 공용 h()로 만든다.
 import { audio, audioDebug } from './audio';
 import type { Sfx } from './contract/audio';
+import { h } from './ui/h';
+import { TRACKS, loopPoints } from './audio/tracks';
 
 type Scene = 'title' | 'run' | 'shop' | 'end';
 
@@ -39,7 +41,7 @@ function el<K extends keyof HTMLElementTagNameMap>(
   props: Partial<Record<'className' | 'textContent' | 'title', string>> = {},
   children: (Node | string)[] = [],
 ): HTMLElementTagNameMap[K] {
-  const n = document.createElement(tag);
+  const n = h(tag);
   if (props.className) n.className = props.className;
   if (props.textContent) n.textContent = props.textContent;
   if (props.title) n.title = props.title;
@@ -143,7 +145,7 @@ app.append(
   el('h1', { textContent: '소리 시험대' }),
   el('p', {
     className: 'lead',
-    textContent: '오차드 2150 — 화면을 한 번 누르면 소리가 켜져요. 모든 소리는 브라우저에서 만듭니다.',
+    textContent: '화면을 한 번 누르면 소리가 켜져요. 배경음은 소개 영상과 같은 곡이고 효과음은 브라우저에서 만들어요.',
   }),
 );
 
@@ -175,7 +177,7 @@ mute.addEventListener('change', () =>
 );
 const volSec = el('section');
 volSec.append(
-  el('h2', { textContent: '볼륨 (localStorage 에 저장돼요)' }),
+  el('h2', { textContent: '볼륨 (이 브라우저에 저장돼요)' }),
   el('div', { className: 'row' }, [
     slider('전체', cur.master, (v) => {
       cur.master = v;
@@ -267,7 +269,7 @@ stackSec.append(
         }
       })();
     }),
-    button('점수 연출 한 판', '칩·배수·합산·불꽃', () => void scoringDemo(), 'big'),
+    button('점수 연출 한 판', '칩, 배수, 합산, 목표 돌파', () => void scoringDemo(), 'big'),
     slider('간격', chipGap / 400, (v) => {
       chipGap = Math.round(60 + v * 340);
     }),
@@ -318,14 +320,24 @@ anteRow.append(bossBtn);
 anteRow.style.marginTop = '8px';
 const musicSec = el('section');
 musicSec.append(
-  el('h2', { textContent: '배경음 (장면 전환은 2초 크로스페이드)' }),
+  el('h2', { textContent: '배경음 (장면 전환은 1.8초 크로스페이드)' }),
   sceneRow,
   anteRow,
+  el('p', { textContent: '계약과 상점은 같은 곡이 이어져요. 특별 계약에서는 낮은 심장 박동이 더해져요.' }),
+  button('영상 30초부터 잇기', '제목 곡', () => {
+    audio.continueFrom?.(30);
+    music.scene = 'title';
+    applyMusic();
+  }),
 );
 app.append(musicSec);
 refreshMusicButtons();
 
 // 6) 전체 점검: 효과음 전부 + 배경음 조합 전부를 차례로 불러 예외를 센다
+const assetOut = el('pre');
+const assetSec = el('section', {}, [el('h2', { textContent: '배경음 파일 확인' }), assetOut]);
+app.append(assetSec);
+
 const checkOut = el('span', { className: 'status' });
 async function fullCheck(): Promise<void> {
   const before = errors;
@@ -354,7 +366,7 @@ async function fullCheck(): Promise<void> {
   applyMusic();
   await wait(2600);
   const n = errors - before;
-  checkOut.textContent = n === 0 ? `예외 0 · 호출 ${calls}회` : `예외 ${n}건`;
+  checkOut.textContent = n === 0 ? `예외 0, 호출 ${calls}회` : `예외 ${n}건`;
   checkOut.className = `status ${n === 0 ? 'ok' : 'bad'}`;
   log(`전체 점검 끝 — 예외 ${n}건`);
 }
@@ -372,9 +384,16 @@ app.append(logSec);
 
 function refreshStatus(): void {
   const s = audioDebug.stats();
+  assetOut.textContent = Object.values(TRACKS).map(track => {
+    const loop = loopPoints(track);
+    const asset = s.assets[track.id];
+    return `${track.id}: ${asset?.status ?? '아직 불러오지 않았어요'}\n` +
+      `  ${track.bpm} BPM, 반복 ${loop.start.toFixed(6)}–${loop.end.toFixed(6)}초 (16마디)\n` +
+      (asset?.duration ? `  길이 ${asset.duration.toFixed(3)}초, ${asset.sampleRate} Hz, ${asset.channels}채널` : '');
+  }).join('\n');
   status.textContent =
-    `상태 ${s.state} · 효과음 보이스 ${s.voices} · 음악 레이어 ${s.layers} (소스 ${s.musicSources})` +
-    ` · ${s.musicKey ?? '배경음 없음'} · 음소거 ${audio.muted ? '켬' : '끔'} · 예외 ${errors}`;
+    `상태 ${s.state}, 효과음 ${s.voices}개, 배경음 ${s.layers}개` +
+    `, ${s.backend}, ${s.position.toFixed(2)}초, 음소거 ${audio.muted ? '켬' : '끔'}, 예외 ${errors}`;
 }
 setInterval(refreshStatus, 400);
 refreshStatus();

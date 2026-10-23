@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────
 // 계약서: 소리 (src/audio/** 가 구현한다) — 협의 대상 아님
 // 구현은 src/audio/index.ts 에서 `export const audio: AudioApi` 하나.
-// 외부 음원 파일 없이 WebAudio 합성만. 첫 사용자 입력 전에는 소리 안 남(unlock 필요).
+// 배경음은 같은 출처 public/audio/*.m4a, 효과음은 WebAudio 합성. 첫 사용자 입력 전에는 소리 안 남(unlock 필요).
 // ─────────────────────────────────────────────────────────────
 
 export type Sfx =
@@ -34,8 +34,10 @@ export interface AudioApi {
   /** 첫 클릭/키 입력 때 호출 (AudioContext 시작) */
   unlock(): void;
   play(s: Sfx, opts?: { step?: number; intensity?: number }): void;
-  /** 배경음: 계절(앤티)마다 다른 앰비언트 패드. boss=true 면 긴장감. null 이면 끔 */
+  /** 배경음: title/end는 영상 곡, run/shop은 형제 곡. 계절은 음색만 변경. null이면 일시 정지 */
   music(state: { ante: number; boss: boolean; scene: 'title' | 'run' | 'shop' | 'end' } | null): void;
+  /** 소개 영상 종료 시 원본 곡의 재생 위치를 전달. music(title) 호출 전에 사용한다. */
+  continueFrom?(seconds: number): void;
   setVolume(master: number, music: number, sfx: number): void; // 0..1
   setMuted(m: boolean): void;
   readonly muted: boolean;

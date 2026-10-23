@@ -1,12 +1,12 @@
 // ─────────────────────────────────────────────────────────────
-// 소리 — 계약(src/contract/audio.ts)의 구현. WebAudio 합성만 쓴다(외부 음원·네트워크 없음).
+// 소리 — 계약(src/contract/audio.ts)의 구현. 같은 출처 AAC 배경음과 WebAudio 합성 효과음을 쓴다.
 //  - unlock() 전: play() 는 조용히 무시. music() 은 원하는 상태만 기억했다가 unlock 때 시작.
 //  - 볼륨·음소거는 localStorage 'seed-atelier-2150:audio' 에 저장·복원.
-//  - 탭이 숨으면 배경음을 0으로 내리고 예약도 멈춘다(돌아오면 새 코드부터).
+//  - 탭이 숨으면 멈추고 돌아오면 같은 재생 위치에서 이어 간다.
 // ─────────────────────────────────────────────────────────────
 import type { AudioApi, Sfx } from '../contract/audio';
 import { activeVoices, applyGains, engine, ensureEngine, resumeContext, settings } from './engine';
-import { applyDesiredMusic, musicStats, setMusic } from './music';
+import { applyDesiredMusic, continueFrom, musicStats, setMusic } from './music';
 import { clampUnit, saveSettings } from './settings';
 import { SFX_NAMES, playSfx } from './sfx';
 
@@ -51,6 +51,10 @@ export const audio: AudioApi = {
     }
   },
 
+  continueFrom(seconds): void {
+    try { continueFrom(seconds); } catch (err) { report(err); }
+  },
+
   setVolume(master: number, music: number, sfx: number): void {
     settings.master = clampUnit(master, settings.master);
     settings.music = clampUnit(music, settings.music);
@@ -86,7 +90,7 @@ export const audioDebug = {
   volumes(): { master: number; music: number; sfx: number } {
     return { master: settings.master, music: settings.music, sfx: settings.sfx };
   },
-  stats(): { state: string; voices: number; layers: number; musicKey: string | null; musicSources: number } {
+  stats() {
     const e = engine();
     return { state: e ? e.ctx.state : 'locked', voices: activeVoices(), ...musicStats() };
   },
