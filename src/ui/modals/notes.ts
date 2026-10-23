@@ -1,7 +1,9 @@
-// 개념 카드(발견) · 연구 노트(도감) · 선생님 안내
+// 개념 카드(발견) · 엘레나의 노트(도감) · 선생님 안내
 import { audio } from '../../audio';
-import type { ConceptDef, ConceptId } from '../../contract/game';
-import { CONCEPTS } from '../../game';
+import type { ConceptId } from '../../contract/game';
+import { CONCEPTS, ELENA_NOTES } from '../../game';
+import { noteCard } from '../story/noteView';
+import { NOTES_UI } from '../story/script';
 import type { Ctx } from '../ctx';
 import { h, button, replaceChildren } from '../h';
 import { play, motion } from '../motion';
@@ -10,20 +12,6 @@ import { activeRunSlot, removeRunSlot } from '../runSlots';
 
 const ORDER = Object.keys(CONCEPTS) as ConceptId[];
 
-function paragraphs(text: string): HTMLElement[] {
-  return text.split(/\n\s*\n/).filter(Boolean).map((part) => h('p', null, part));
-}
-
-function conceptBody(c: ConceptDef): HTMLElement {
-  return h('div', { class: 'concept' },
-    h('div', { class: 'concept__body' }, ...paragraphs(c.body)),
-    h('section', { class: 'concept__box concept__box--real' },
-      h('h4', { class: 'concept__tag' }, '실제 과학에서는'), ...paragraphs(c.real)),
-    c.fiction ? h('section', { class: 'concept__box concept__box--fiction' },
-      h('h4', { class: 'concept__tag' }, '게임에서 정한 규칙'), ...paragraphs(c.fiction)) : null,
-    c.standard ? h('div', { class: 'concept__std' }, `성취기준 ${c.standard}`) : null,
-  );
-}
 
 /** 발견 카드를 하나씩 띄우고 다 보면 ackDiscoveries. 다 닫히면 resolve */
 export function showDiscoveries(ctx: Ctx, ids: ConceptId[]): Promise<void> {
@@ -48,10 +36,10 @@ export function showDiscoveries(ctx: Ctx, ids: ConceptId[]): Promise<void> {
       };
       const m = ctx.modals.open({
         title: c.title,
-        kicker: `새 개념 발견${ids.length > 1 ? ` (${idx + 1}/${ids.length})` : ''}`,
+        kicker: `${NOTES_UI.title} · ${NOTES_UI.discovered}${ids.length > 1 ? ` (${idx + 1}/${ids.length})` : ''}`,
         className: 'modal--discovery',
-        content: conceptBody(c),
-        actions: button('연구 노트에 꽂기', go, { class: 'btn--gold', 'data-autofocus': '' }),
+        content: noteCard(c, { compact: true }),
+        actions: button(NOTES_UI.pin, go, { class: 'btn--gold', 'data-autofocus': '' }),
         onClose: go,
       });
       if (!motion.reduced) void play(m.el, [{ transform: 'perspective(900px) rotateY(160deg) scale(0.6)', opacity: 0 }, { transform: 'perspective(900px) rotateY(-12deg) scale(1.04)', opacity: 1, offset: 0.7 }, { transform: 'none', opacity: 1 }], { duration: 700, easing: 'cubic-bezier(0.2, 0.9, 0.3, 1)' });
@@ -78,10 +66,10 @@ export function openNotes(ctx: Ctx, by: 'all' | 'standard' = 'all'): void {
   const renderDetail = () => {
     if (!selected) {
       replaceChildren(detail, h('div', { class: 'notes__blank' },
-        h('span', { class: 'notes__blank-mark', 'aria-hidden': 'true' }, '관찰 노트'),
-        h('h3', null, '아직 첫 기록을 기다리고 있어요.'),
-        h('p', null, '교배하거나 모종을 출하하면, 발견한 개념이 이 노트에 남아요.'),
-        h('p', null, '목차에서 기록을 골라 다시 읽을 수 있어요.'),
+        h('span', { class: 'notes__blank-mark', 'aria-hidden': 'true' }, NOTES_UI.title),
+        h('h3', null, '할머니의 노트는 아직 빈칸투성이예요.'),
+        h('p', null, '교배하고 모종을 출하하며 현상을 겪으면, 빈칸이 한 쪽씩 채워져요.'),
+        h('p', null, '목차의 빈칸마다 할머니가 남긴 질문이 적혀 있어요.'),
       ));
       return;
     }
@@ -101,7 +89,7 @@ export function openNotes(ctx: Ctx, by: 'all' | 'standard' = 'all'): void {
     const chapter = CHAPTERS.find((entry) => entry.ids.includes(c.id))?.title ?? '관찰 기록';
     replaceChildren(detail,
       h('div', { class: 'notes__detail-head' }, h('span', null, chapter), h('span', { class: 'notes__folio' }, `기록 ${String(no).padStart(2, '0')}`)),
-      h('h3', { class: 'notes__title' }, c.title), conceptBody(c),
+      h('h3', { class: 'notes__title' }, c.title), noteCard(c, { compact: false }),
       observed ? h('section', { class: 'notes__observations' },
         h('h4', null, '내 과수원에서 관찰한 결과'),
         h('p', { class: 'notes__observation-source' }, `시즌 ${observed.ante} · ${observed.name} · ${observed.attempt}차 시도`),
@@ -116,7 +104,7 @@ export function openNotes(ctx: Ctx, by: 'all' | 'standard' = 'all'): void {
         h('p', null, `${ctx.game.state.geneFlow.donor} → ${ctx.game.state.geneFlow.recipient}`),
         h('p', null, '수분받은 개체에서 생긴 씨 표본에 형광 형질이 나타났어요. 수분받은 성체의 유전자형은 바뀌지 않았어요.'),
       ) : null,
-      h('footer', { class: 'notes__page-end' }, '오차드 2150 · 교배와 재배의 기록', h('span', null, no)),
+      h('footer', { class: 'notes__page-end' }, '엘레나 로시의 노트 · 오차드가 채운 기록', h('span', null, no)),
     );
     detail.scrollTop = 0;
     void play(detail, [{ opacity: .55 }, { opacity: 1 }], { duration: 180, decorative: true });
@@ -126,9 +114,9 @@ export function openNotes(ctx: Ctx, by: 'all' | 'standard' = 'all'): void {
     const open = found.has(id);
     const no = String(ORDER.indexOf(id) + 1).padStart(2, '0');
     const b = h('button', { type: 'button', class: ['note', open ? 'is-open' : 'is-locked', selected === id && 'is-selected'],
-      'aria-label': open ? `${no}번 기록, ${c.title}` : `${no}번 기록, 아직 발견하지 못함`,
+      'aria-label': open ? `${no}번 기록, ${c.title}` : `${no}번 빈칸, 할머니의 질문: ${ELENA_NOTES[id].blank}`,
       'aria-pressed': open ? String(selected === id) : undefined, disabled: !open,
-    }, h('span', { class: 'note__num' }, no), h('span', { class: 'note__q' }, open ? c.title : '아직 발견하지 못했어요'), h('span', { class: 'note__state', 'aria-hidden': 'true' }, selected === id ? '→' : open ? '' : '—'));
+    }, h('span', { class: 'note__num' }, no), h('span', { class: ['note__q', !open && 'note__q--blank'] }, open ? c.title : ELENA_NOTES[id].blank), h('span', { class: 'note__state', 'aria-hidden': 'true' }, selected === id ? '→' : open ? '' : '?'));
     if (open) b.addEventListener('click', () => {
       audio.play('select'); selected = id;
       grid.querySelectorAll<HTMLElement>('.note').forEach((entry) => {
@@ -165,12 +153,12 @@ export function openNotes(ctx: Ctx, by: 'all' | 'standard' = 'all'): void {
   const tabB = button('성취기준별', () => fill('standard'), { class: 'btn--seg' });
   fill(by); renderDetail();
   ctx.modals.open({
-    title: '연구 노트', kicker: '오차드의 관찰 기록', className: 'modal--notes', wide: true,
+    title: NOTES_UI.title, kicker: NOTES_UI.kicker, className: 'modal--notes', wide: true,
     content: h('div', { class: 'notes' },
       h('div', { class: 'notes__cover' }, h('span', null, ctx.brand || '오차드 2150'), h('span', { class: 'notes__cover-count' }, `${found.size} / ${ORDER.length}개 발견`)),
       h('div', { class: 'notes__cols' },
         h('section', { class: 'notes__page notes__page--index', 'aria-label': '연구 노트 목차' },
-          h('div', { class: 'notes__page-head' }, h('h3', null, '목차'), h('span', null, '발견한 기록을 고르세요')),
+          h('div', { class: 'notes__page-head' }, h('h3', null, '목차'), h('span', null, '채워진 쪽을 고르세요')),
           h('div', { class: 'sortbox' }, tabA, tabB), grid),
         h('section', { class: 'notes__page notes__page--detail' }, detail),
       ),
@@ -196,7 +184,7 @@ export function openTeacher(ctx: Ctx): void {
     if (!activeSlot) return;
     const m = ctx.modals.open({
       title: '선택된 연대기를 삭제할까요?',
-      content: h('p', { class: 'hint' }, `${activeSlot.brand || '이름 없는 과수원'}의 진행만 이 기기에서 삭제합니다. 다른 연대기와 설정은 남아요.`),
+      content: h('p', { class: 'hint' }, `${activeSlot.brand || '이름 없는 과수원'}의 진행만 이 기기에서 삭제해요. 다른 연대기와 설정은 남아요.`),
       actions: [button('취소', () => m.close(), { class: 'btn--ghost' }), button('삭제', () => { removeRunSlot(activeSlot.id); window.location.reload(); }, { class: 'btn--discard' })],
     });
   }, { class: 'btn--discard' });
@@ -204,7 +192,7 @@ export function openTeacher(ctx: Ctx): void {
   const wipeBtn = button('이 기기 기록 모두 삭제', () => {
     const m = ctx.modals.open({
       title: '이 기기 기록을 모두 삭제할까요?',
-      content: h('p', { class: 'hint' }, '저장된 모든 연대기, 연구 노트, 이름, 성찰, 소리·화면 설정이 이 브라우저에서 삭제됩니다.'),
+      content: h('p', { class: 'hint' }, '저장된 모든 연대기, 엘레나의 노트 기록, 이름, 성찰, 소리와 화면 설정이 이 브라우저에서 삭제돼요.'),
       actions: [button('취소', () => m.close(), { class: 'btn--ghost' }), button('모두 삭제', () => { wipeAll(); window.location.reload(); }, { class: 'btn--discard' })],
     });
   }, { class: 'btn--discard' });
@@ -224,10 +212,10 @@ export function openTeacher(ctx: Ctx): void {
         h(
           'ul',
           { class: 'teacher__list' },
-          h('li', null, '이 기기에 남는 것: 연대기별 진행·계약 관찰·성찰, 과수원 이름(선택, 12자 이내), 소리·화면 설정. 이어하기와 수업 중 돌아보기에 사용합니다.'),
-          h('li', null, '서버·계정·외부 전송이 없어요. 제3자 제공도, 처리 위탁도 없어요. 외부 글꼴·분석 도구도 부르지 않아요.'),
-          h('li', null, '보관 기간: 학생이 지우거나 브라우저 데이터를 지울 때까지. 완료한 연대기도 홈에서 다시 열 수 있습니다.'),
-          h('li', null, '과수원 이름 칸에는 실명·학번을 쓰지 않도록 안내해 주세요.'),
+          h('li', null, '이 기기에 남는 것: 연대기별 진행, 계약 관찰, 성찰, 과수원 이름(선택, 12자 이내), 소리와 화면 설정. 이어하기와 수업 중 돌아보기에 사용해요.'),
+          h('li', null, '서버, 계정, 외부 전송이 없어요. 제3자 제공도, 처리 위탁도 없어요. 외부 글꼴과 분석 도구도 부르지 않아요.'),
+          h('li', null, '보관 기간: 학생이 지우거나 브라우저 데이터를 지울 때까지. 완료한 연대기도 홈에서 다시 열 수 있어요.'),
+          h('li', null, '과수원 이름 칸에는 실명과 학번을 쓰지 않도록 안내해 주세요.'),
         ),
         h('div', { class: 'teacher__btns' }, clearBtn, wipeBtn),
       ),
@@ -257,24 +245,25 @@ export function openTeacher(ctx: Ctx): void {
         h(
           'ul',
           { class: 'teacher__list' },
-          h('li', null, h('b', null, '전체 8시즌'), ' — 멘델 유전부터 유전자 편집·LMO까지. 두 차시에 나누어 진행하기를 권합니다.'),
-          h('li', null, h('b', null, '빠른 4시즌'), ' — 멘델 유전·다유전자·성염색체. 25~35분을 배정하고 돌아보기 8~10분을 남겨 두세요.'),
-          h('li', null, h('b', null, '단원 게임'), ' — 15~20분을 배정하고 돌아보기 8~10분을 남겨 두세요. 성염색체(시즌 3–4) · 염색체 이상(시즌 5–6) · 유전자 편집(시즌 7–8)의 준비된 온실에서 시작합니다. 시간은 수업 배정안이며 학생 대상 측정값은 아닙니다.'),
-          h('li', null, h('b', null, '재도전 허용'), '에서는 계약 실패 이유를 확인한 뒤 같은 계약을 다시 준비합니다. ', h('b', null, '실패 시 종료'), '에서는 실패하면 연대기가 끝납니다. 계약 조건은 같습니다.'),
-          h('li', null, '개념 카드는 학생이 그 현상을 겪은 뒤에 열려요. 각 카드에는 게임 속 설정과 실제 과학을 나누어 적었어요.'),
-          h('li', null, '끝 화면에서 온실 개체들의 실제 유전자형·핵형·계보가 공개돼요. 추론한 것과 비교하게 해 보세요.'),
+          h('li', null, h('b', null, '전체 8시즌'), ' — 멘델 유전부터 유전자 편집과 LMO까지. 두 차시에 나누어 진행하기를 권해요.'),
+          h('li', null, h('b', null, '빠른 4시즌'), ' — 멘델 유전, 다유전자, 성염색체. 25~35분을 배정하고 돌아보기 8~10분을 남겨 두세요.'),
+          h('li', null, h('b', null, '단원 게임'), ' — 15~20분을 배정하고 돌아보기 8~10분을 남겨 두세요. 성염색체(시즌 3–4), 염색체 이상(시즌 5–6), 유전자 편집(시즌 7–8)의 준비된 온실에서 시작해요. 시간은 수업 배정안이며 학생 대상 측정값은 아니에요.'),
+          h('li', null, h('b', null, '재도전 허용'), '에서는 계약 실패 이유를 확인한 뒤 같은 계약을 다시 준비해요. ', h('b', null, '실패 시 종료'), '에서는 실패하면 연대기가 끝나요. 계약 조건은 같아요.'),
+          h('li', null, '「엘레나의 노트」 쪽은 학생이 그 현상을 겪은 뒤에 열려요. 메모, 핵심, 왜 중요한가, 낱말 뜻, 외우기 요령, 오해 바로잡기, 확인 질문 순서이고, 게임 속 설정과 실제 과학을 나누어 적었어요.'),
+          h('li', null, '시즌이 끝나면 레아가 그 시즌에 겪은 현상만 2~3문항으로 물어요. 모두 맞혀야 다음 시즌이 열리고, 몇 번이든 다시 풀 수 있으며 실패로 세지 않아요.'),
+          h('li', null, '끝 화면에서 온실 개체의 실제 유전자형, 핵형, 계보가 공개돼요. 추론한 것과 비교하게 해 보세요.'),
         ),
       ),
       h('section', null,
         h('h3', null, '플레이 뒤 돌아보기 · 8~10분'),
         h('ol', { class: 'teacher__list' },
-          h('li', null, '끝 화면의 플레이 보고서에서 한 계약을 고르고, 부모·예측·관찰 수치를 짝과 비교합니다.'),
-          h('li', null, '부모의 유전자형을 근거로 결과를 설명합니다. 예측이 빗나갔다면 표본 수와 유전 가정을 함께 확인합니다.'),
-          h('li', null, '같은 조건의 다른 부모 조합이라면 어떤 비율이 나올지 먼저 예측합니다. 게임에서 본 규칙이 실제 생물에도 적용되는 범위는 연구 노트의 실제 과학 항목과 대조합니다.'),
-          h('li', null, '다음에 바꿀 선택과 이유를 연대기의 성찰에 적습니다. 보고서는 캡처하거나 텍스트 파일로 저장할 수 있습니다.'),
+          h('li', null, '끝 화면의 플레이 보고서에서 한 계약을 고르고, 부모, 예측, 관찰 수치를 짝과 비교해요.'),
+          h('li', null, '부모의 유전자형을 근거로 결과를 설명해요. 예측이 빗나갔다면 표본 수와 유전 가정을 함께 확인해요.'),
+          h('li', null, '같은 조건의 다른 부모 조합이라면 어떤 비율이 나올지 먼저 예측해요. 게임에서 본 규칙이 실제 생물에도 적용되는 범위는 엘레나의 노트에 있는 실제 과학 항목과 대조해요.'),
+          h('li', null, '다음에 바꿀 선택과 이유를 연대기의 성찰에 적어요. 보고서는 캡처하거나 텍스트 파일로 저장할 수 있어요.'),
         ),
       ),
-      h('section', null, h('h3', null, '성취기준별 연구 노트'), button('연구 노트 성취기준별로 보기', () => openNotes(ctx, 'standard'), { class: 'btn--ghost' })),
+      h('section', null, h('h3', null, '성취기준별 엘레나의 노트'), button('엘레나의 노트 성취기준별로 보기', () => openNotes(ctx, 'standard'), { class: 'btn--ghost' })),
     ),
   });
 }

@@ -55,7 +55,7 @@ export function openSettings(ctx: Ctx): void {
         { class: 'set__sec' },
         h('h3', null, '연출'),
         h('div', { class: 'set__row' }, h('span', { class: 'set__lbl' }, '연출 속도'), h('div', { class: 'sortbox', role: 'group', 'aria-label': '연출 속도' }, ...speedBtns)),
-        h('label', { class: 'set__row set__check' }, reduce, h('span', null, '동작 줄이기 (흔들림·부유·불꽃 끄기)')),
+        h('label', { class: 'set__row set__check' }, reduce, h('span', null, '동작 줄이기 (흔들림, 부유, 불꽃 끄기)')),
         h('p', { class: 'hint' }, '점수 연출 중에는 화면을 누르거나 Space 키로 빨리 감을 수 있어요.'),
       ),
       h(
@@ -63,15 +63,15 @@ export function openSettings(ctx: Ctx): void {
         { class: 'set__sec' },
         h('h3', null, '기록'),
         h('p', { class: 'hint' }, inRun
-          ? '진행은 자동 저장돼요. 홈에서 다른 연대기도 이어할 수 있어요.'
-          : '연대기는 홈에서 하나씩 삭제할 수 있어요. 기록은 이 브라우저에만 남습니다.'),
+          ? '진행은 자동 저장돼요. 홈에서 다른 연대기도 이어서 할 수 있어요.'
+          : '연대기는 홈에서 하나씩 삭제할 수 있어요. 기록은 이 브라우저에만 남아요.'),
         inRun ? null : h(
           'div',
           { class: 'set__btns' },
           button('이 기기 기록 모두 지우기', () => {
             const warning = ctx.modals.open({
               title: '모든 기록을 지울까요?',
-              content: h('p', { class: 'hint' }, '저장된 연대기, 연구 노트, 설정이 이 브라우저에서 모두 삭제됩니다.'),
+              content: h('p', { class: 'hint' }, '저장된 연대기, 엘레나의 노트 기록, 설정이 이 브라우저에서 모두 삭제돼요.'),
               actions: [
                 button('취소', () => warning.close(), { class: 'btn--ghost' }),
                 button('모두 삭제', () => { wipeAll(); window.location.reload(); }, { class: 'btn--discard' }),

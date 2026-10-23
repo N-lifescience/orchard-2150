@@ -15,14 +15,23 @@ import { openSettings } from './modals/settings';
 import { openTutorial } from './modals/tutorial';
 import { Modals, Tips, Toaster } from './overlay';
 import { loadBrand, loadPrefs, type UiPrefs } from './prefs';
-import { activeRunSlot, createRunSlot, listRunSlots, markTutorialSeen, migrateLegacySave, migrateRunReflection, removeRunSlot, selectRunSlot, touchRunSlot, type RunSlot } from './runSlots';
+import { activeRunSlot, createRunSlot, isFirstVisit, listRunSlots, markTutorialSeen, migrateLegacySave, migrateRunReflection, removeRunSlot, selectRunSlot, touchRunSlot, type RunSlot } from './runSlots';
 import { RunScreen } from './run/runscreen';
 import { EndScreen } from './screens/end';
 import { TitleScreen } from './screens/title';
 import { PracticeCoach } from './practiceCoach';
 import { inferTutorialStep } from './tutorialFlow';
-import { acknowledgePractice, initialPractice, loadPractice, savePractice, type PracticeProgress } from './practiceStorage';
+import { initialPractice, loadPractice, recordPractice, savePractice, type PracticeProgress } from './practiceStorage';
 import { parentReason } from './learning';
+import { playIntroFilm, type FilmResult } from './story/introFilm';
+import { TitleLoop } from './story/titleLoop';
+import { filmOptions, withFilm } from './story/host';
+import { introSeen, markBeat, markIntroSeen, seenBeats } from './story/storage';
+import { openSeasonQuiz } from './story/quizModal';
+import { playFailure, playVictory } from './story/ending';
+import { COACH_UI } from './story/script';
+import { playScene } from './story/scene';
+import { SCENES, type SceneId } from '../game/story';
 
 type Mode = 'title' | 'run' | 'end';
 
@@ -53,11 +62,19 @@ export class App implements Ctx {
   private sysReduced: MediaQueryList | null = null;
   private practice: PracticeProgress | null = null;
   private coach: PracticeCoach | null = null;
+  private titleLoop: TitleLoop;
+  private introPlaying = false;
+  private quizOpen = false;
+  private endingRunning = false;
+  /** 이 세션에서 직전에 그린 단계 (결말 장면은 플레이 중에 끝났을 때만 연다) */
+  private prevPhase: string | null = null;
+  private prevKey = '';
+  private finishedLive = false;
 
   readonly open: Ctx['open'];
 
   constructor(root: HTMLElement, opts: { debug?: boolean } = {}) {
-    this.game = createGame();
+    this.game = createGame({ quizGate: true });
     this.prefs = loadPrefs();
     this.brand = loadBrand();
     migrateLegacySave(this.brand);
@@ -73,7 +90,14 @@ export class App implements Ctx {
     this.screenBox = h('div', { class: 'screens' });
     this.stage.appendChild(this.screenBox);
     const viewport = h('div', { class: 'viewport' }, this.stage);
-    root.replaceChildren(canvas, viewport);
+    this.titleLoop = new TitleLoop();
+    root.replaceChildren(canvas, this.titleLoop.el, viewport);
+    this.titleLoop.onState = (playing) => {
+      root.classList.toggle('has-title-film', playing);
+      // The looping film replaces the WebGL scene while it plays; WebGL stays as the fallback.
+      if (playing) this.bg?.stop();
+      else this.bg?.start();
+    };
 
     this.modals = new Modals(this.stage);
     this.tips = new Tips(this.stage);
@@ -97,7 +121,7 @@ export class App implements Ctx {
       teacher: () => openTeacher(this),
       greenhouse: () => openGreenhouse(this),
       orders: () => openOrders(this),
-      pod: () => openPod(this),
+      pod: () => { openPod(this); this.tutorialEvent('pod'); },
       reagent: (i) => !this.isBusy() && openReagent(this, i),
       joker: (uid) => !this.isBusy() && openJoker(this, uid),
     };
@@ -138,6 +162,73 @@ export class App implements Ctx {
 
     this.goTitle();
     if (opts.debug) this.installDebug();
+    void this.boot(!!opts.debug);
+  }
+
+  /** 처음 접속: 소개 영상 → 서막 대화 → 첫 계약이 곧 튜토리얼. 다시 온 사람은 제목 화면부터. */
+  private async boot(debug: boolean): Promise<void> {
+    const params = new URLSearchParams(location.search);
+    const forceIntro = params.get('intro') === '1';
+    const firstVisit = isFirstVisit();
+    if (forceIntro || (!debug && !introSeen())) await this.playIntro();
+    if (firstVisit && !debug && this.mode === 'title' && !this.isBusy()) this.startPractice();
+  }
+
+  private async playIntro(): Promise<FilmResult> {
+    if (this.introPlaying) return 'skipped';
+    this.introPlaying = true;
+    this.titleLoop.set(false, motion.reduced);
+    try {
+      const result = await withFilm(this, () => playIntroFilm(document.body, filmOptions(this)));
+      // A missing film does not count as seen, so it plays once the file is in place.
+      if (result !== 'failed') markIntroSeen();
+      return result;
+    } finally {
+      this.introPlaying = false;
+      if (this.mode === 'title') this.titleLoop.set(true, motion.reduced);
+    }
+  }
+
+  replayIntro(): void {
+    void this.playIntro();
+  }
+
+  pauseAmbient(): void {
+    audio.music(null);
+    this.ambientKey = 'paused';
+  }
+
+  resumeAmbient(): void {
+    this.ambientKey = '';
+    this.syncAmbient(this.game.state);
+  }
+
+  /** 튜토리얼이 기다리던 실제 조작 (자손 덱 열기·정렬) */
+  tutorialEvent(kind: 'pod' | 'sorted'): void {
+    if (!this.practice?.active || this.game.state.phase !== 'play') return;
+    if (recordPractice(this.practice, kind)) {
+      this.persistPractice();
+      queueMicrotask(() => this.refreshCoach());
+    }
+  }
+
+  get guided(): boolean {
+    return !!this.practice?.active;
+  }
+
+  /** 시즌의 세 번째 계약 뒤 공방을 나서면 레아의 확인 질문을 먼저 연다(모두 맞혀야 다음 시즌) */
+  leaveShop(): void {
+    if (this.isBusy() || this.quizOpen) return;
+    const due = this.game.quizDue();
+    if (due === null) {
+      this.game.leaveShop();
+      return;
+    }
+    this.quizOpen = true;
+    void openSeasonQuiz(this, due, false).then((passed) => {
+      this.quizOpen = false;
+      if (passed && this.game.state.phase === 'shop') this.game.leaveShop();
+    });
   }
 
   // ─────────────────────────────────────── 잠금·그리기
@@ -172,6 +263,12 @@ export class App implements Ctx {
       return;
     }
     const s = this.game.state;
+    const key = this.game.getSaveKey();
+    const ended = s.phase === 'victory' || s.phase === 'gameover';
+    if (!ended || this.prevKey !== key) this.finishedLive = false;
+    if (ended && this.prevKey === key && this.prevPhase !== null && !['victory', 'gameover', 'review', 'title'].includes(this.prevPhase)) this.finishedLive = true;
+    this.prevPhase = s.phase;
+    this.prevKey = key;
     if (this.mode === 'title') {
       this.title.refresh();
     } else {
@@ -206,7 +303,7 @@ export class App implements Ctx {
           title: '진행을 저장할 수 없어요',
           content: h('p', { class: 'hint' }, this.game.hasSave()
             ? '최근 진행을 저장할 수 없어요. 홈으로 가면 마지막으로 저장된 시점부터 이어서 하게 돼요.'
-            : '브라우저 저장 공간을 사용할 수 없어요. 홈으로 가면 이 연대기를 이어할 수 없어요.'),
+            : '브라우저 저장 공간을 사용할 수 없어요. 홈으로 가면 이 연대기를 이어서 할 수 없어요.'),
           actions: [
             button('계속 플레이', () => warning.close(), { class: 'btn--play' }),
             button('저장 없이 홈으로', () => {
@@ -230,6 +327,7 @@ export class App implements Ctx {
     this.swapScreen(this.title.el);
     this.title.show();
     this.syncAmbient(this.game.state);
+    if (!this.introPlaying) this.titleLoop.set(true, motion.reduced);
   }
 
   startRun(): void {
@@ -238,6 +336,7 @@ export class App implements Ctx {
     this.coach = null;
     this.run = new RunScreen(this);
     this.mode = 'run';
+    this.titleLoop.set(false, motion.reduced);
     this.swapScreen(this.run.el);
     this.render();
   }
@@ -260,12 +359,6 @@ export class App implements Ctx {
     if (this.coach) this.coach.el.hidden = false;
     if (!this.practice?.active || this.mode === 'title') return;
     if (!this.coach) this.coach = new PracticeCoach(this.stage, {
-      acknowledge: (step) => {
-        if (!this.practice || this.isBusy()) return;
-        acknowledgePractice(this.practice, step);
-        this.persistPractice();
-        this.refreshCoach();
-      },
       stop: () => this.stopPractice(),
       finish: (fresh) => this.finishPractice(fresh),
     });
@@ -277,7 +370,7 @@ export class App implements Ctx {
     const parents = this.run?.cross.tutorialInteraction ?? { parentCount: 0, predicted: false };
     const selectedCards = this.run?.play.hand.selected.size ?? 0;
     const s = this.game.state;
-    const step = inferTutorialStep(s, { ...parents, ...this.practice, selectedCards });
+    const step = inferTutorialStep(s, { ...parents, observed: this.practice.observed, sorted: this.practice.sorted, selectedCards });
     let feedback = '';
     if (step === 'parent-first' || step === 'parent-second') feedback = `지금 ${parents.parentCount} / 2개체 선택했어요.`;
     if (step === 'predict' || step === 'cross') {
@@ -302,15 +395,15 @@ export class App implements Ctx {
     this.coach?.destroy();
     this.coach = null;
     if (fresh) { this.goTitle(); this.title.prepareNew(); }
-    else this.toast.show('튜토리얼 완료. 다음 계약을 자유롭게 진행하세요.', 'good');
+    else this.toast.show(COACH_UI.done, 'good');
   }
 
   private stopPractice(): void {
     if (!this.practice || this.isBusy()) return;
     const modal = this.modals.open({
-      title: '튜토리얼 안내를 종료할까요?',
-      content: h('p', { class: 'hint' }, '지금까지의 교배, 보상, 모종은 이 과수원에 남습니다. 안내를 끝내고 자유롭게 플레이할 수 있어요. 홈에서 튜토리얼을 다시 시작할 수도 있습니다.'),
-      actions: [button('안내 계속 보기', () => modal.close(), { class: 'btn--ghost' }), button('안내만 종료', () => {
+      title: COACH_UI.stopTitle,
+      content: h('p', { class: 'hint' }, COACH_UI.stopBody),
+      actions: [button(COACH_UI.stopKeep, () => modal.close(), { class: 'btn--ghost' }), button(COACH_UI.stopEnd, () => {
         modal.close();
         if (this.practice) { this.practice.active = false; this.persistPractice(); }
         this.coach?.destroy(); this.coach = null;
@@ -321,13 +414,52 @@ export class App implements Ctx {
   private showRun(): void {
     if (!this.run) this.run = new RunScreen(this);
     this.mode = 'run';
+    this.titleLoop.set(false, motion.reduced);
     this.swapScreen(this.run.el);
   }
 
   private showEnd(s: RunState): void {
+    // Only a chronicle that finished during this session plays its ending; reopened records go straight to results.
+    const live = this.finishedLive;
     if (this.mode !== 'end') {
       this.mode = 'end';
+      this.titleLoop.set(false, motion.reduced);
       this.swapScreen(this.end.el);
+    }
+    if (this.endingRunning) return;
+    const saveKey = this.game.getSaveKey();
+    const seen = seenBeats(saveKey);
+    // Victory: the final season's check comes first, then the expo, the drawer and Elena's letter.
+    if (s.phase === 'victory' && (this.game.quizDue() !== null || live && !seen.includes('ending'))) {
+      this.endingRunning = true;
+      this.end.el.replaceChildren();
+      void (async () => {
+        try {
+          const due = this.game.quizDue();
+          if (due !== null && !(await openSeasonQuiz(this, due, true))) {
+            // The results stay locked behind the final check; it reopens when the record is opened again.
+            this.endingRunning = false;
+            this.goTitle();
+            return;
+          }
+          if (!seenBeats(saveKey).includes('ending')) await playVictory(this, this.game.state);
+          markBeat(saveKey, 'ending');
+        } finally {
+          this.endingRunning = false;
+        }
+        if (this.mode === 'end') this.end.show(this.game.state);
+      })();
+      return;
+    }
+    if (s.phase === 'gameover' && s.playStyle === 'challenge' && live && !seen.includes('failure')) {
+      this.endingRunning = true;
+      this.end.el.replaceChildren();
+      void playFailure().then(() => {
+        markBeat(saveKey, 'failure');
+        this.endingRunning = false;
+        if (this.mode === 'end') this.end.show(this.game.state);
+      });
+      return;
     }
     this.end.show(s);
   }
@@ -337,7 +469,7 @@ export class App implements Ctx {
     if (!slot) {
       const warning = this.modals.open({
         title: '진행을 저장할 수 없어요',
-        content: h('p', { class: 'hint' }, '브라우저 저장 공간을 사용할 수 없습니다. 지금은 플레이할 수 있지만, 홈으로 나가면 이어할 수 없어요.'),
+        content: h('p', { class: 'hint' }, '브라우저 저장 공간을 사용할 수 없어요. 지금은 플레이할 수 있지만, 홈으로 나가면 이어서 할 수 없어요.'),
         actions: [
           button('취소', () => warning.close(), { class: 'btn--ghost' }),
           button('저장 없이 시작', () => {
@@ -522,6 +654,12 @@ export class App implements Ctx {
       },
       autoplay: (steps = 400) => this.autoplay(steps),
       newRun: (mode: RunMode = 'quick', policy: PolicyId = 'heritage', seed?: number, playStyle: PlayStyle = 'learning') => this.newRun(mode, policy, playStyle, seed),
+      /** 연출 확인용: 확인 질문·결말·소개 영상을 바로 연다 */
+      quiz: (season = this.game.state.ante, final = false) => openSeasonQuiz(this, season, final),
+      ending: () => playVictory(this, this.game.state),
+      failure: () => playFailure(),
+      intro: () => this.playIntro(),
+      scene: (id: SceneId) => playScene(SCENES[id], filmOptions(this)),
     };
     (window as unknown as { __sa: typeof api }).__sa = api;
     console.info('[오차드 2150] 디버그: window.__sa = { game, fast(on), autoplay(steps), newRun(mode, policy, seed) }');
@@ -570,11 +708,37 @@ export class App implements Ctx {
         continue;
       }
       if (s.phase === 'gameover' || s.phase === 'victory') break;
+      if (this.run?.story.busy && !document.querySelector('.film, .scene') && !this.modals.has('modal--story')) {
+        // The season scene is still being checked; the workbench waits for it.
+        await new Promise<void>((r) => setTimeout(r, 120));
+        continue;
+      }
       if (s.phase === 'review') {
         log.push(`${s.ante}-${s.orderIdx} review: retry`);
         if (!this.game.retryOrder()) break;
         this.startRun();
         n++;
+        continue;
+      }
+      // 이야기 장면·대화는 넘기고, 확인 질문은 검증 도구가 통과 처리한다 (학생 화면에는 없는 경로)
+      const overlay = document.querySelector<HTMLButtonElement>('.film .film__skip:not([hidden]), .film .film__next, .scene .scene__skip, .epilogue .film__next');
+      if (overlay) {
+        overlay.click();
+        await new Promise<void>((r) => setTimeout(r, motion.fast ? 0 : 450));
+        continue;
+      }
+      if (this.modals.has('modal--story')) {
+        this.stage.querySelector<HTMLButtonElement>('.story__skip, .story__next')?.click();
+        continue;
+      }
+      if (this.modals.has('modal--quiz')) {
+        const due = this.game.quizDue();
+        if (due !== null) this.game.passQuiz(due);
+        this.modals.closeTop();
+        continue;
+      }
+      if (this.modals.has('modal--letter')) {
+        this.stage.querySelector<HTMLButtonElement>('.modal--letter .modal__actions .btn')?.click();
         continue;
       }
       // 발견 카드·일반 모달은 닫는다 (봉투 모달은 봇이 고른다)

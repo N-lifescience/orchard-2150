@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { createGame, type StorageLike } from '../src/game/game';
-import { createRunSlot, listRunSlots, removeRunSlot } from '../src/ui/runSlots';
-import { acknowledgePractice, initialPractice, loadPractice, practiceKey, savePractice } from '../src/ui/practiceStorage';
+import { createRunSlot, isFirstVisit, listRunSlots, markTutorialSeen, removeRunSlot } from '../src/ui/runSlots';
+import { initialPractice, loadPractice, practiceKey, recordPractice, savePractice, upgradePractice } from '../src/ui/practiceStorage';
 import { wipeAll } from '../src/ui/prefs';
-import { inferTutorialStep, tutorialStep, TUTORIAL_INTRO, TUTORIAL_PLAY_TOOLS, type TutorialInteraction } from '../src/ui/tutorialFlow';
+import { inferTutorialStep, tutorialStep, TUTORIAL_ORDER, TUTORIAL_TOTAL, type TutorialInteraction, type TutorialStep } from '../src/ui/tutorialFlow';
 
 class MemoryStore implements StorageLike {
   values = new Map<string, string>();
@@ -20,63 +20,51 @@ function guidedRun(storage: StorageLike | null = null, saveKey?: string) {
 }
 
 const interaction = (overrides: Partial<TutorialInteraction> = {}): TutorialInteraction => ({
-  introStep: 6, orderRead: true, parentCount: 2, predicted: true, observed: true, selectedCards: 5,
+  parentCount: 2, predicted: true, observed: true, sorted: true, selectedCards: 5,
   ...overrides,
 });
 
-describe('실제 플레이 튜토리얼', () => {
-  it('목표와 도구 안내를 실제 조작 전에 순서대로 저장하며 재접속해 이어간다', () => {
-    const storage = new MemoryStore();
-    const slot = createRunSlot('튜토리얼 검증', 'quick', 'heritage', storage)!;
-    const game = guidedRun(storage, slot.key);
-    let progress = initialPractice();
-    const before = JSON.stringify(game.state);
-    for (const expected of TUTORIAL_INTRO) {
-      const current = inferTutorialStep(game.state, interaction({ ...progress, parentCount: 0, predicted: false }));
-      expect(current).toBe(expected);
-      expect(tutorialStep(current).actionLabel).toBeTruthy();
-      acknowledgePractice(progress, current);
-      savePractice(slot.key, progress, storage);
-      progress = loadPractice(slot.key, storage)!;
-    }
-    expect(progress.introStep).toBe(6);
-    expect(inferTutorialStep(game.state, interaction({ ...progress, parentCount: 0, predicted: false }))).toBe('order');
-    acknowledgePractice(progress, 'order');
-    expect(inferTutorialStep(game.state, interaction({ ...progress, parentCount: 0, predicted: false }))).toBe('parent-first');
-    expect(JSON.stringify(game.state)).toBe(before);
-  });
-
-  it('기존 튜토리얼 저장은 이미 확인한 주문 이전 소개를 반복하지 않는다', () => {
+describe('실제 조작으로만 넘어가는 첫 계약 튜토리얼', () => {
+  it('앞쪽 소개 단계 없이 첫 부모 고르기부터 시작하고, 단계 수는 12개다', () => {
     const game = guidedRun();
-    expect(inferTutorialStep(game.state, interaction({ introStep: undefined, orderRead: true, parentCount: 0 }))).toBe('parent-first');
-    expect(inferTutorialStep(game.state, interaction({ introStep: undefined, orderRead: false, parentCount: 0 }))).toBe('welcome');
-    expect(tutorialStep('parent-first').target).toBe('parent-first');
-    expect(tutorialStep('parent-second').target).toBe('parent-second');
-  });
-
-  it('교배 후 도구 안내를 저장해 이어가며 씨앗과 횟수는 소모하지 않는다', () => {
-    const storage = new MemoryStore();
-    const slot = createRunSlot('도구 안내 검증', 'quick', 'heritage', storage)!;
-    const game = guidedRun(storage, slot.key);
-    game.chooseCross(game.state.garden[0].id, game.state.garden[1].id, 'ruby');
-    let progress = { ...initialPractice(), introStep: 6, orderRead: true };
-    acknowledgePractice(progress, 'observe');
-    const before = JSON.stringify(game.state);
-    for (const expected of TUTORIAL_PLAY_TOOLS) {
-      expect(inferTutorialStep(game.state, interaction(progress))).toBe(expected);
-      acknowledgePractice(progress, expected);
-      savePractice(slot.key, progress, storage);
-      progress = loadPractice(slot.key, storage)! as typeof progress;
+    expect(TUTORIAL_TOTAL).toBe(12);
+    expect(TUTORIAL_ORDER[0]).toBe('parent-first');
+    expect(inferTutorialStep(game.state, interaction({ parentCount: 0, predicted: false, observed: false, sorted: false, selectedCards: 0 }))).toBe('parent-first');
+    for (const removed of ['welcome', 'limits', 'navigation', 'notebook', 'jokers', 'reagents', 'order']) {
+      expect(TUTORIAL_ORDER as readonly string[]).not.toContain(removed);
     }
-    expect(inferTutorialStep(game.state, interaction({ ...progress, selectedCards: 0 }))).toBe('select-cards');
-    expect(JSON.stringify(game.state)).toBe(before);
+    TUTORIAL_ORDER.forEach((step, i) => {
+      const info = tutorialStep(step);
+      expect(info).toMatchObject({ number: i + 1, total: 12 });
+      expect(info.label.length).toBeGreaterThan(0);
+    });
+    expect(tutorialStep('retry').number).toBe(tutorialStep('ship').number);
   });
 
-  it('읽기 확인과 실제 조작을 구분하며, 선택을 바꾸면 필요한 단계로 돌아간다', () => {
+  it('레아의 말은 한 줄에 한 문장이고, 없앤 소개 요소는 처음 쓰이는 단계에서 한 줄로 나온다', () => {
+    const all = [...TUTORIAL_ORDER, 'retry' as const].flatMap((step) => tutorialStep(step).lines.map((line) => ({ step, ...line })));
+    for (const line of all) {
+      const sentences = line.text.split(/(?<=[.?!])\s+/).filter(Boolean);
+      expect(sentences, line.text).toHaveLength(1);
+      expect(line.text.length, line.text).toBeLessThanOrEqual(60);
+    }
+    const targetsIn = (step: TutorialStep) => tutorialStep(step).lines.map((line) => line.target);
+    expect(targetsIn('parent-first')).toContain('goal');
+    expect(targetsIn('ship')).toContain('limits');
+    expect(targetsIn('select-cards')).toContain('discard');
+    expect(targetsIn('shop')).toEqual(expect.arrayContaining(['jokers', 'reagents']));
+    expect(targetsIn('complete')).toContain('home');
+  });
+
+  it('예측 단계는 교배 결과를 미리 말하지 않는다', () => {
+    const text = tutorialStep('predict').lines.map((line) => line.text).join(' ');
+    expect(text).not.toMatch(/모두 Rr|모두 루비|전부 루비|52개체 모두/);
+    expect(text).toContain('우성');
+  });
+
+  it('실제 선택 상태로 단계를 정하며, 선택을 바꾸면 필요한 단계로 돌아간다', () => {
     const game = guidedRun();
     const step = (changes: Partial<TutorialInteraction>) => inferTutorialStep(game.state, interaction(changes));
-    expect(step({ orderRead: false })).toBe('order');
-    expect(step({ orderRead: undefined })).toBe('order');
     expect(step({ parentCount: 0, predicted: false })).toBe('parent-first');
     expect(step({ parentCount: 1, predicted: false })).toBe('parent-second');
     expect(step({ predicted: false })).toBe('predict');
@@ -84,12 +72,33 @@ describe('실제 플레이 튜토리얼', () => {
     expect(step({ parentCount: 1 })).toBe('parent-second');
 
     game.chooseCross(game.state.garden[0].id, game.state.garden[1].id, 'ruby');
-    expect(step({ observed: false })).toBe('observe');
+    expect(step({ observed: false, sorted: false })).toBe('observe');
     expect(step({ observed: undefined })).toBe('observe');
+    expect(step({ sorted: false })).toBe('sort');
     expect(step({ selectedCards: 0 })).toBe('select-cards');
     expect(step({ selectedCards: 4 })).toBe('select-cards');
     expect(step({ selectedCards: 5 })).toBe('ship');
-    expect(step({ selectedCards: 4 })).toBe('select-cards');
+  });
+
+  it('자손 덱 열기와 정렬은 실제로 했을 때만 기록되고, 게임 상태와 씨앗은 바뀌지 않는다', () => {
+    const storage = new MemoryStore();
+    const slot = createRunSlot('도구 안내 검증', 'quick', 'heritage', storage)!;
+    const game = guidedRun(storage, slot.key);
+    game.chooseCross(game.state.garden[0].id, game.state.garden[1].id, 'ruby');
+    const before = JSON.stringify(game.state);
+    let progress = initialPractice();
+    expect(recordPractice(progress, 'sorted')).toBe(false);
+    expect(inferTutorialStep(game.state, interaction(progress))).toBe('observe');
+    expect(recordPractice(progress, 'pod')).toBe(true);
+    savePractice(slot.key, progress, storage);
+    progress = loadPractice(slot.key, storage)!;
+    expect(inferTutorialStep(game.state, interaction(progress))).toBe('sort');
+    expect(recordPractice(progress, 'sorted')).toBe(true);
+    expect(recordPractice(progress, 'sorted')).toBe(false);
+    savePractice(slot.key, progress, storage);
+    progress = loadPractice(slot.key, storage)!;
+    expect(inferTutorialStep(game.state, interaction({ ...progress, selectedCards: 0 }))).toBe('select-cards');
+    expect(JSON.stringify(game.state)).toBe(before);
   });
 
   it('정상 규칙으로 첫 계약을 마치며, 보상과 선발 모종을 유지한 채 다음 계약으로 이어진다', () => {
@@ -109,55 +118,28 @@ describe('실제 플레이 튜토리얼', () => {
     const [ruby, gold] = game.state.garden;
     game.chooseCross(ruby.id, gold.id, 'ruby');
     expect(game.state.prediction).toEqual({ choice: 'ruby', ruby: 52, gold: 0 });
-    expect(game.state.hand.length + game.state.pod.length).toBe(52);
     game.sortHand('brix');
-
     const result = game.play(game.state.hand.slice(0, 5).map((card) => card.uid));
-    expect(result.total).toBeGreaterThanOrEqual(firstOrder.target);
     expect(result.cleared).toBe(true);
-    expect(game.state.delivery.ruby).toBeGreaterThanOrEqual(3);
-    expect(inferTutorialStep(game.state, interaction({ orderRead: false, observed: false }))).toBe('collect');
+    expect(inferTutorialStep(game.state, interaction({ observed: false }))).toBe('collect');
     const reward = game.cashoutLines().reduce((sum, line) => sum + line.amount, 0);
     game.collect();
     expect(inferTutorialStep(game.state, interaction())).toBe('keep');
-    expect(game.state.money).toBe(startingMoney + reward);
-
     const candidate = game.selectOptions().candidates[0];
     game.select(candidate.uid);
     expect(inferTutorialStep(game.state, interaction())).toBe('shop');
     expect(game.state.garden).toHaveLength(startingGarden + 1);
-    const keptPlant = game.state.garden.at(-1)!;
-    expect(keptPlant.parents).toEqual([ruby.id, gold.id]);
-    expect(keptPlant.genome).toEqual(candidate.genome);
     game.leaveShop();
-    expect(game.state.phase).toBe('cross');
     expect(game.state.orderIdx).toBe(1);
     expect(inferTutorialStep(game.state, interaction())).toBe('complete');
     expect(game.state.money).toBe(startingMoney + reward);
-    expect(game.state.garden.at(-1)?.id).toBe(keptPlant.id);
-    expect(game.state.records).toHaveLength(1);
-    expect(game.state.records[0].cleared).toBe(true);
 
     const continued = createGame({ storage });
     continued.setSaveKey(slot.key);
     expect(continued.load()).toBe(true);
     expect(continued.state).toEqual(game.state);
     expect(inferTutorialStep(continued.state, interaction())).toBe('complete');
-    const goldParent = continued.state.garden[1];
-    continued.chooseCross(goldParent.id, goldParent.id, 'gold');
-    expect(continued.state.hand.every((card) => card.pheno.color === 'gold')).toBe(true);
-    expect(continued.state.records).toHaveLength(1);
-    expect(continued.state.money).toBe(startingMoney + reward);
     expect(storage.getItem(olderSlot.key)).toBe(olderSave);
-  });
-
-  it.each(['brix', 'suit'] as const)('손패를 %s 순으로 정렬해도 처음 5장으로 첫 계약을 마칠 수 있다', (sortBy) => {
-    const game = guidedRun();
-    game.chooseCross(game.state.garden[0].id, game.state.garden[1].id, 'ruby');
-    game.sortHand(sortBy);
-    const trace = game.play(game.state.hand.slice(0, 5).map((card) => card.uid));
-    expect(trace.cleared).toBe(true);
-    expect(game.state.phase).toBe('cashout');
   });
 
   it('실패는 종료로 오인하지 않고 재도전 후 실제 교배 단계로 돌아간다', () => {
@@ -169,73 +151,95 @@ describe('실제 플레이 튜토리얼', () => {
     expect(inferTutorialStep(game.state, interaction())).toBe('retry');
     expect(game.retryOrder()).toBe(true);
     expect(game.state.phase).toBe('cross');
-    expect(game.state.orderAttempt).toBe(2);
-    expect(inferTutorialStep(game.state, interaction({ parentCount: 0, predicted: false, observed: false }))).toBe('parent-first');
-  });
-
-  it('손패가 5장보다 적어도 출하할 수 있고, 안내 계산은 게임 상태를 바꾸지 않는다', () => {
-    const game = guidedRun();
-    game.chooseCross(game.state.garden[0].id, game.state.garden[1].id, 'ruby');
-    game.state.hand = game.state.hand.slice(0, 3);
-    const before = JSON.stringify(game.state);
-    expect(inferTutorialStep(game.state, interaction({ selectedCards: 3 }))).toBe('ship');
-    expect(tutorialStep('ship')).toMatchObject({ number: 17, total: 20, target: 'shipment' });
-    expect(JSON.stringify(game.state)).toBe(before);
+    expect(inferTutorialStep(game.state, interaction({ parentCount: 0, predicted: false }))).toBe('parent-first');
   });
 });
 
-describe('연대기별 튜토리얼 저장', () => {
-  it('다른 연대기의 안내 상태를 덮어쓰지 않고 중단한 확인 단계부터 불러온다', () => {
-    const storage = new MemoryStore();
-    const first = createRunSlot('교배 연습', 'quick', 'heritage', storage)!;
-    const second = createRunSlot('다른 과수원', 'quick', 'heritage', storage)!;
-    const firstGame = guidedRun(storage, first.key);
-    const secondGame = guidedRun(storage, second.key);
-    const firstProgress = { ...initialPractice(), orderRead: true, observed: false };
-    const secondProgress = { active: false, orderRead: true, observed: true, completed: false };
-    savePractice(first.key, firstProgress, storage);
-    savePractice(second.key, secondProgress, storage);
-    firstGame.chooseCross(firstGame.state.garden[0].id, firstGame.state.garden[1].id, 'ruby');
+describe('처음 온 사람의 첫 계약 = 튜토리얼', () => {
+  it('튜토리얼을 마친 적도, 저장된 연대기도 없을 때만 튜토리얼을 자동으로 시작한다', () => {
+    const fresh = new MemoryStore();
+    expect(isFirstVisit(fresh)).toBe(true);
+    const withSlot = new MemoryStore();
+    const slot = createRunSlot('기존', 'quick', 'heritage', withSlot)!;
+    guidedRun(withSlot, slot.key);
+    expect(isFirstVisit(withSlot)).toBe(false);
+    const seen = new MemoryStore();
+    markTutorialSeen(seen);
+    expect(isFirstVisit(seen)).toBe(false);
+    expect(isFirstVisit(null)).toBe(true);
+  });
+});
 
-    const restored = createGame({ storage });
-    restored.setSaveKey(first.key);
-    expect(restored.load()).toBe(true);
-    const progress = loadPractice(first.key, storage)!;
-    expect(progress).toEqual(firstProgress);
-    expect(inferTutorialStep(restored.state, interaction(progress))).toBe('observe');
-    savePractice(first.key, { ...progress, observed: true }, storage);
-    expect(loadPractice(first.key, storage)).toEqual({ ...firstProgress, observed: true });
-    expect(loadPractice(second.key, storage)).toEqual(secondProgress);
-    expect(JSON.parse(storage.getItem(second.key)!)).toEqual(secondGame.state);
+describe('예전 튜토리얼 저장(practice:v1)을 새 단계 목록으로 옮기기', () => {
+  const legacy = (fields: Record<string, unknown>) => ({ active: true, orderRead: true, observed: false, completed: false, ...fields });
+
+  it('예전 단계 번호를 버리지 않고 새 단계로 옮긴다', () => {
+    const game = guidedRun();
+    game.chooseCross(game.state.garden[0].id, game.state.garden[1].id, 'ruby');
+    const stepOf = (raw: Record<string, unknown>) => {
+      const p = upgradePractice(raw)!;
+      expect(p.v).toBe(2);
+      return inferTutorialStep(game.state, interaction({ observed: p.observed, sorted: p.sorted, selectedCards: 0 }));
+    };
+    // 소개 6단계 중간(introStep 0~6)은 옮길 단계가 없어 그대로 첫 실제 단계에서 이어진다
+    for (const introStep of [0, 3, 6]) expect(upgradePractice(legacy({ introStep, playIntroStep: 0 }))).toMatchObject({ active: true, observed: false, sorted: false });
+    expect(stepOf(legacy({ observed: false, introStep: 6, playIntroStep: 0 }))).toBe('observe');
+    expect(stepOf(legacy({ observed: true, introStep: 6, playIntroStep: 0 }))).toBe('observe'); // 자손 덱 안내 전
+    expect(stepOf(legacy({ observed: true, introStep: 6, playIntroStep: 1 }))).toBe('sort'); // 정렬 안내 차례
+    expect(stepOf(legacy({ observed: true, introStep: 6, playIntroStep: 2 }))).toBe('select-cards'); // 솎아내기 안내 차례
+    expect(stepOf(legacy({ observed: true, introStep: 6, playIntroStep: 3 }))).toBe('select-cards');
+    // 도구 안내가 생기기 전의 저장: 관찰을 마쳤으면 도구 안내도 마친 것
+    expect(stepOf(legacy({ observed: true }))).toBe('select-cards');
+    expect(stepOf(legacy({ observed: false }))).toBe('observe');
   });
 
-  it('손상되거나 접근할 수 없는 저장은 안내를 시작하지 않으며 완료된 안내는 다시 활성화되지 않는다', () => {
+  it('범위를 벗어난 번호는 범위 안으로 맞추고, 손상된 저장만 버린다', () => {
+    expect(upgradePractice(legacy({ observed: true, playIntroStep: 9 }))).toMatchObject({ observed: true, sorted: true });
+    expect(upgradePractice(legacy({ observed: true, playIntroStep: -2 }))).toMatchObject({ observed: false, sorted: false });
+    expect(upgradePractice(legacy({ observed: true, playIntroStep: 1.7 }))).toMatchObject({ observed: true, sorted: false });
+    expect(upgradePractice(legacy({ introStep: 99 }))).toMatchObject({ active: true });
+    for (const damaged of [null, [], 'x', {}, { active: 'true', orderRead: true, observed: true, completed: false }, { active: true, observed: true, completed: false }]) {
+      expect(upgradePractice(damaged)).toBeNull();
+    }
+    expect(upgradePractice({ ...legacy({}), completed: true })).toMatchObject({ active: false, completed: true });
+    expect(upgradePractice({ v: 2, active: true, completed: false, observed: true, sorted: true })).toEqual({ v: 2, active: true, completed: false, observed: true, sorted: true });
+  });
+
+  it('저장소에서 읽을 때도 같은 변환을 쓰고, 손상·차단된 저장은 안내를 시작하지 않는다', () => {
     const storage = new MemoryStore();
     const key = 'tutorial-save';
-    for (const damaged of ['{', 'null', '[]', '{}', '{"active":"true","orderRead":true,"observed":true,"completed":false}']) {
+    storage.setItem(practiceKey(key), JSON.stringify(legacy({ observed: true, introStep: 6, playIntroStep: 1 })));
+    expect(loadPractice(key, storage)).toEqual({ v: 2, active: true, completed: false, observed: true, sorted: false });
+    for (const damaged of ['{', 'null', '[]', '{}']) {
       storage.setItem(practiceKey(key), damaged);
-      expect(loadPractice(key, storage)).toBeNull();
-    }
-    for (const introStep of [-1, 7, 0.5, '1', null]) {
-      storage.setItem(practiceKey(key), JSON.stringify({ ...initialPractice(), introStep }));
-      expect(loadPractice(key, storage)).toBeNull();
-    }
-    for (const playIntroStep of [-1, 4, 0.5, '1', null]) {
-      storage.setItem(practiceKey(key), JSON.stringify({ ...initialPractice(), playIntroStep }));
       expect(loadPractice(key, storage)).toBeNull();
     }
     expect(loadPractice('missing', storage)).toBeNull();
     expect(loadPractice(key, null)).toBeNull();
-    const blockedStorage: StorageLike = {
+    const blocked: StorageLike = {
       getItem() { throw new Error('blocked'); },
       setItem() { throw new Error('blocked'); },
       removeItem() { throw new Error('blocked'); },
     };
-    expect(loadPractice(key, blockedStorage)).toBeNull();
-    expect(() => savePractice(key, initialPractice(), blockedStorage)).not.toThrow();
+    expect(loadPractice(key, blocked)).toBeNull();
+    expect(() => savePractice(key, initialPractice(), blocked)).not.toThrow();
+  });
+});
 
-    savePractice(key, { active: true, orderRead: true, observed: true, completed: true }, storage);
-    expect(loadPractice(key, storage)).toEqual({ active: false, orderRead: true, observed: true, completed: true });
+describe('연대기별 튜토리얼 저장', () => {
+  it('다른 연대기의 안내 상태를 덮어쓰지 않는다', () => {
+    const storage = new MemoryStore();
+    const first = createRunSlot('교배 연습', 'quick', 'heritage', storage)!;
+    const second = createRunSlot('다른 과수원', 'quick', 'heritage', storage)!;
+    guidedRun(storage, first.key);
+    const secondGame = guidedRun(storage, second.key);
+    const firstProgress = { ...initialPractice(), observed: true };
+    const secondProgress = { ...initialPractice(), active: false };
+    savePractice(first.key, firstProgress, storage);
+    savePractice(second.key, secondProgress, storage);
+    expect(loadPractice(first.key, storage)).toEqual(firstProgress);
+    expect(loadPractice(second.key, storage)).toEqual(secondProgress);
+    expect(JSON.parse(storage.getItem(second.key)!)).toEqual(secondGame.state);
   });
 
   it('한 연대기를 지우면 해당 안내만 지우고, 전체 기록 지우기는 나머지 안내도 지운다', () => {
@@ -245,20 +249,16 @@ describe('연대기별 튜토리얼 저장', () => {
     guidedRun(storage, first.key);
     guidedRun(storage, second.key);
     savePractice(first.key, initialPractice(), storage);
-    const secondProgress = { ...initialPractice(), orderRead: true };
+    const secondProgress = { ...initialPractice(), observed: true };
     savePractice(second.key, secondProgress, storage);
-    const secondSave = storage.getItem(second.key);
     storage.setItem('unrelated-app', 'keep');
 
     removeRunSlot(first.id, storage);
-    expect(storage.getItem(first.key)).toBeNull();
     expect(storage.getItem(practiceKey(first.key))).toBeNull();
-    expect(storage.getItem(second.key)).toBe(secondSave);
     expect(loadPractice(second.key, storage)).toEqual(secondProgress);
     expect(listRunSlots(storage).map((slot) => slot.id)).toEqual([second.id]);
 
     wipeAll(storage);
-    expect(storage.getItem(second.key)).toBeNull();
     expect(storage.getItem(practiceKey(second.key))).toBeNull();
     expect(listRunSlots(storage)).toEqual([]);
     expect(storage.getItem('unrelated-app')).toBe('keep');

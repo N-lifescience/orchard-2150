@@ -59,6 +59,7 @@ import { marketPlant, rarePlant, rescuePlant, seasonMaterials, starterGarden, ty
 import { seasonGoals } from './contracts';
 import { countDelivery, deliveryComplete, deliveryProgressText, goalHint } from './learning';
 import { cardSuit, classify, effBrix, handBase, isSurprise, scoreHand, type ScoreCtx } from './rules';
+import { legacyQuizPassed, quizDueFor } from './quiz';
 
 export const SAVE_KEY = 'seed-atelier-2150:save:v1';
 export const POD_SIZE = 52;
@@ -74,6 +75,11 @@ export interface CreateGameOptions {
   storage?: StorageLike | null;
   /** 앤티별 기본 목표 (밸런스 시뮬레이션용). 생략하면 ANTE_BASES */
   bases?: number[];
+  /**
+   * 시즌 끝 확인 질문을 맞혀야 공방에서 다음 시즌으로 나갈 수 있게 한다(화면이 켠다).
+   * 시뮬레이션·봇·규칙 테스트는 기본값(false)으로 기존 흐름을 그대로 쓴다.
+   */
+  quizGate?: boolean;
 }
 
 /** 계약 밖의 내부 상태 (모두 JSON 직렬화 가능) */
@@ -106,6 +112,8 @@ export interface InternalState extends RunState {
   usedBosses: string[];
   orderCheckpoint: string | null;
   suppliedSeasons: number[];
+  /** 시즌 끝 확인 질문을 모두 맞힌 시즌 (점수·보상·실패 기록과 무관) */
+  quizPassed: number[];
 }
 
 /** 계약 Game + 점수 미리보기(상태를 바꾸지 않음) */
@@ -117,6 +125,10 @@ export interface GameImpl extends Game {
   reset(): void;
   /** 지금 이 카드들을 내면 몇 점인지 (비법·보스 포함, 상태 변화 없음). 잘못된 선택이면 null */
   simulate(uids: string[]): ScoreTrace | null;
+  /** 지금 풀어야 할 시즌 끝 확인 질문의 시즌 (없으면 null) */
+  quizDue(): number | null;
+  /** 확인 질문을 모두 맞힌 시즌을 기록한다. 이 연대기에 없는 시즌이면 false */
+  passQuiz(season: number): boolean;
 }
 
 const START_ANTE: Record<RunMode, number> = { full: 1, quick: 1, 'unit-sex': 3, 'unit-chromo': 5, 'unit-edit': 7 };
@@ -249,6 +261,7 @@ function emptyState(): InternalState {
     usedBosses: [],
     orderCheckpoint: null,
     suppliedSeasons: [],
+    quizPassed: [],
   };
 }
 
@@ -881,11 +894,12 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
       st.discoveries = failed.discoveries;
       st.pendingDiscoveries = [];
       st.stats = { ...failed.stats, retries: failed.stats.retries + 1 };
+      st.quizPassed = failed.quizPassed;
       st.handsLeft += Math.min(2, st.orderAttempt - 1);
       st.discardsLeft += Math.min(3, st.orderAttempt - 1);
       st.orders[st.orderIdx].target = Math.round(restored.orders[st.orderIdx].target * Math.max(0.65, 1 - 0.15 * (st.orderAttempt - 1)));
       st.review = null;
-      toast(`같은 계약을 다시 준비해요. 형질 조건은 그대로이고 출하·솎아내기 도움을 받았어요.`);
+      toast(`같은 계약을 다시 준비해요. 형질 조건은 그대로이고 출하와 솎아내기 도움을 받았어요.`);
       commit();
       return true;
     },
@@ -1005,7 +1019,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
         st.phase = 'cashout';
       } else if (st.handsLeft <= 0) {
         const points = Math.max(0, target - st.roundScore);
-        gameOver(points ? `출하를 다 썼어요. 목표까지 ${points}점 모자라고, 납품은 ${deliveryProgressText(order(), st.delivery)}입니다.` : `목표 점수는 넘겼지만 필수 형질을 더 납품해야 해요: ${deliveryProgressText(order(), st.delivery)}.`);
+        gameOver(points ? `출하를 다 썼어요. 목표까지 ${points}점 모자라고, 납품은 ${deliveryProgressText(order(), st.delivery)}이에요.` : `목표 점수는 넘겼지만 필수 형질을 더 납품해야 해요: ${deliveryProgressText(order(), st.delivery)}.`);
       } else {
         drawToHand();
         if (st.hand.length === 0) gameOver('자손 덱에 남은 개체가 없어요.');
@@ -1239,6 +1253,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
 
     leaveShop() {
       if (st.phase !== 'shop') return;
+      if (opts.quizGate && quizDueFor(st) !== null) return;
       st.pack = null;
       st.shop = null;
       if (st.orderIdx < 2) {
@@ -1319,7 +1334,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
               x.debuffed = isDebuffed(x);
             });
           }
-          message = '당도 +2. 이번 주문에서만이고 유전되지는 않아요.';
+          message = '당도 +2. 이번 주문에만 적용되고 유전되지는 않아요.';
           break;
         }
         case 'brush': {
@@ -1331,7 +1346,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
           st.prediction = null;
           st.crossInfo = null;
           st.phase = 'cross';
-          message = '교배를 다시 골라요. 남은 출하·솎아내기는 그대로예요.';
+          message = '교배를 다시 골라요. 남은 출하와 솎아내기는 그대로예요.';
           break;
         }
         default:
@@ -1432,6 +1447,9 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
         st.stats.retries ??= 0;
         st.suppliedSeasons ??= [];
         st.orderCheckpoint ??= null;
+        st.startAnte ??= START_ANTE[st.mode];
+        // Saves made before the season-end check count every finished season as passed.
+        st.quizPassed = Array.isArray(st.quizPassed) ? st.quizPassed.filter((n) => Number.isInteger(n)) : legacyQuizPassed(st);
         for (const item of st.shop?.items ?? []) if (item.kind === 'pack' && !item.choices) item.choices = packChoices(item.pack);
         // Old contracts retain their original requirements until the next season.
         if (st.phase === 'cross' && !st.orderCheckpoint) st.orderCheckpoint = JSON.stringify({ ...st, orderCheckpoint: null });
@@ -1475,6 +1493,17 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
     },
     conceptDef(id) {
       return CONCEPTS[id];
+    },
+
+    // ── 시즌 끝 확인 질문 ──
+    quizDue() {
+      return quizDueFor(st);
+    },
+    passQuiz(season) {
+      if (!Number.isInteger(season) || season < st.startAnte || season > st.maxAnte) return false;
+      if (!st.quizPassed.includes(season)) st.quizPassed.push(season);
+      commit();
+      return true;
     },
   };
 

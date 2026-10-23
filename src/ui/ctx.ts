@@ -16,6 +16,8 @@ export interface Ctx {
   brand: string;
   /** 지금 보이는 화면 */
   readonly screen: 'title' | 'run' | 'end';
+  /** 첫 계약 튜토리얼 안내가 켜져 있는가 */
+  readonly guided: boolean;
 
   /** 연출 중 입력 잠금 + 다시 그리기 보류. 끝나면 밀린 그리기를 한 번 한다 */
   lock<T>(fn: () => Promise<T>): Promise<T>;
@@ -42,4 +44,14 @@ export interface Ctx {
 
   /** 설정이 바뀌면 (속도·동작 줄이기) */
   applyPrefs(): void;
+
+  /** 공방에서 다음 주문으로. 시즌 끝이면 확인 질문을 먼저 연다 */
+  leaveShop(): void;
+  /** 소개 영상을 다시 본다 (제목 화면) */
+  replayIntro(): void;
+  /** 튜토리얼이 기다리는 실제 조작이 일어났음을 알린다 */
+  tutorialEvent(kind: 'pod' | 'sorted'): void;
+  /** 영상 소리를 켤 때 게임 배경음을 멈추고, 끝나면 되살린다 */
+  pauseAmbient(): void;
+  resumeAmbient(): void;
 }

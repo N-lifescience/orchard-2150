@@ -98,7 +98,7 @@ export function openEditor(ctx: Ctx, reagentIndex: number): void {
     const sp = targets.find((t) => t.id === targetId)?.species ?? 'lumi';
     delBtn.setAttribute('aria-pressed', String(delMode));
     delBtn.classList.toggle('is-on', delMode);
-    setText(modeHint, delMode ? '지울 염기를 코딩 가닥에서 눌러요.' : '코딩 가닥의 염기를 누르면 A → T → G → C 로 바뀌어요. 한 번에 한 곳만 바꿀 수 있어요.');
+    setText(modeHint, delMode ? '코딩 가닥에서 지울 염기를 눌러요.' : '코딩 가닥의 염기를 누르면 A → T → G → C로 바뀌어요. 한 번에 한 곳만 바꿀 수 있어요.');
     if (!entry) {
       replaceChildren(strands);
       replaceChildren(focus);

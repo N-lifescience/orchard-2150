@@ -16,7 +16,7 @@ export function openGreenhouse(ctx: Ctx): void {
   const glasses = hasGlasses(s);
   ctx.modals.open({
     title: `온실 ${s.garden.length}/${s.gardenCap}`,
-    kicker: '부모 개체들',
+    kicker: '부모 개체',
     className: 'modal--greenhouse',
     wide: true,
     content: h(

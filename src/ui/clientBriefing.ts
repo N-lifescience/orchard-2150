@@ -1,4 +1,5 @@
 import type { OrderInfo, RunState } from '../contract/game';
+import { BOSS_STORY } from '../game/story';
 import { josa } from './fmt';
 
 export interface ClientLine { heading: string; text: string; details?: string[] }
@@ -13,11 +14,15 @@ export function clientLines(order: OrderInfo): ClientLine[] {
   const lines: ClientLine[] = [{
     heading: '온실을 찾아온 손님',
     text: `안녕하세요. ${affiliation.length ? affiliation[0] + '의 ' : ''}${name}입니다. 이번 ${josa(order.name, '을를')} 부탁드리러 왔어요.`,
-  }, {
+  }];
+  // A special client brings one belief or question; the finished contract becomes the answer.
+  const question = order.kind === 'boss' && order.boss ? BOSS_STORY[order.boss.id]?.question : undefined;
+  if (question) lines.push({ heading: '손님의 질문', text: question });
+  lines.push({
     heading: '이번에 필요한 품종',
     text: order.goals?.length ? '아래 형질을 가진 개체가 필요해요. 출하할 때 이 조건을 꼭 확인해 주세요.' : '이번에는 좋은 열매를 골라 출하해 주세요.',
     details: order.goals?.map((goal) => `${goal.label} · ${goal.count}개체 — ${goal.detail}`),
-  }];
+  });
   if (order.boss) lines.push({ heading: '이번 계약의 특별 조건', text: order.boss.desc });
   if (order.requestedColor) lines.push({
     heading: '추가로 부탁드릴 것이 있어요',

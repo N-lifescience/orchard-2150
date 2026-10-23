@@ -40,28 +40,28 @@ export const FLUSH_FAMILY: ReadonlySet<HandTypeId> = new Set<HandTypeId>(['flush
 
 // ── 장인의 비법(조커) ───────────────────────────────────────────
 export const JOKERS: JokerDef[] = [
-  { id: 'shears', name: '엘레나 로시의 전지가위', rarity: 'common', cost: 2, desc: '+4 배수.', flavor: '발렌시아 육종가 엘레나가 쓰던 가위예요.' },
+  { id: 'shears', name: '엘레나 로시의 전지가위', rarity: 'common', cost: 2, desc: '+4 배수.', flavor: '할머니 엘레나가 쓰던 가위예요. 손잡이에 손때가 그대로 남아 있어요.' },
   { id: 'rubyLover', name: '루비 애호가', rarity: 'common', cost: 5, desc: '점수 내는 루비 모종마다 +3 배수.', flavor: '루비빛만 보면 지갑이 열리는 단골이에요.' },
   { id: 'goldCollector', name: '골드 수집가', rarity: 'common', cost: 5, desc: '점수 내는 골드 모종마다 +3 배수.', flavor: '골드 과육만 모아요. 열성 동형접합이라야 나오니 더 귀하대요.' },
   { id: 'patternArtisan', name: '무늬 장인', rarity: 'common', cost: 5, desc: '점수 내는 무늬 있는 모종마다 +30 칩.', flavor: '별무늬 한 줄에 값이 달라져요.' },
   { id: 'refractometer', name: '굴절계', rarity: 'common', cost: 4, desc: '점수 내는 모종마다 +(당도−10) 칩. 당도 11 이상일 때만.', flavor: '빛이 꺾이는 정도로 당도를 재요.' },
-  { id: 'purebredCert', name: '빛깔 인증서', rarity: 'uncommon', cost: 6, desc: '한 빛깔 계열 족보(한 빛깔·빛깔 계단·빛깔 바구니·완전 균일)면 ×3 배수. 빛깔만 확인하며 순계 인증은 아니에요.', flavor: '겉모습이 같아도 숨은 대립유전자는 다를 수 있어요.', concept: 'purebred' },
-  { id: 'heterosis', name: '잡종강세', rarity: 'uncommon', cost: 6, desc: '과육색·무늬 유전자 중 하나라도 이형접합인 모종이 점수 낼 때마다 +2 배수.', flavor: '겉은 같아 보여도 속은 섞여 있어요.', concept: 'heterozygote' },
+  { id: 'purebredCert', name: '빛깔 인증서', rarity: 'uncommon', cost: 6, desc: '한 빛깔 계열 족보(한 빛깔, 빛깔 계단, 빛깔 바구니, 완전 균일)면 ×3 배수. 빛깔만 확인하며 순계 인증은 아니에요.', flavor: '겉모습이 같아도 숨은 대립유전자는 다를 수 있어요.', concept: 'purebred' },
+  { id: 'heterosis', name: '잡종강세', rarity: 'uncommon', cost: 6, desc: '과육색이나 무늬 유전자 중 하나라도 이형접합인 모종이 점수 낼 때마다 +2 배수.', flavor: '겉은 같아 보여도 속은 섞여 있어요.', concept: 'heterozygote' },
   { id: 'hideAndSeek', name: '숨바꼭질 대립유전자', rarity: 'uncommon', cost: 7, desc: '과육색이나 무늬가 두 부모 어느 쪽에도 없던 모종마다 ×1.5 배수.', flavor: '부모가 숨겨 둔 대립유전자가 얼굴을 내밀었어요.', concept: 'segregation' },
   { id: 'selfingMaster', name: '자가수분 명인', rarity: 'uncommon', cost: 6, desc: '이번 교배가 자가수분이면 ×2 배수.', flavor: '한 개체, 한 꽃, 한 가족.', concept: 'selfing' },
-  { id: 'breedingLog', name: '교배 일지', rarity: 'common', cost: 5, desc: '골드 또는 무늬 없는 모종이 점수를 낸 출하마다 +1 배수가 쌓여요.', flavor: '엘레나의 기록에는 실패한 교배도 빠짐없이 적혀 있어요.' },
+  { id: 'breedingLog', name: '교배 일지', rarity: 'common', cost: 5, desc: '골드 또는 무늬 없는 모종이 점수를 낸 출하마다 +1 배수가 쌓여요.', flavor: '할머니의 기록에는 실패한 교배도 빠짐없이 적혀 있어요.' },
   { id: 'mendelGlasses', name: '멘델의 안경', rarity: 'common', cost: 3, desc: '겉모습만으로 확실한 유전자형을 카드에 표시해요.', flavor: '완두밭을 오래 들여다본 사람의 눈을 빌려요.' },
-  { id: 'punnettNote', name: '퍼넷 노트', rarity: 'uncommon', cost: 4, desc: '유전자형이 공개된 두 부모의 자손 빛깔·당도 기대 분포를 보여 줘요.', flavor: '관찰한 부모 정보를 토대로 다음 자손을 예상해요.' },
+  { id: 'punnettNote', name: '퍼넷 노트', rarity: 'uncommon', cost: 4, desc: '유전자형이 공개된 두 부모의 자손 빛깔과 당도 기대 분포를 보여 줘요.', flavor: '관찰한 부모 정보를 토대로 다음 자손을 예상해요.' },
   { id: 'beeSwarm', name: '꿀벌 군단', rarity: 'uncommon', cost: 6, desc: '주문마다 출하 +1.', flavor: '윙윙, 오늘도 출근 완료.' },
-  { id: 'seedVault', name: '씨앗 금고', rarity: 'common', cost: 5, desc: '이자 상한 +$5 (최대 $10).', flavor: '씨앗도 돈도 묵힐수록 불어나요.' },
+  { id: 'seedVault', name: '씨앗 금고', rarity: 'common', cost: 5, desc: '이자 상한 +$5 (최대 $10).', flavor: '할머니의 금고처럼, 아껴 둔 것은 조금씩 불어나요.' },
   { id: 'pollenTrader', name: '꽃가루 상인', rarity: 'common', cost: 4, desc: '수그루를 솎아낼 때마다 +$1.', flavor: '"꽃가루 삽니다, 수그루 삽니다."', minAnte: 3 },
   { id: 'xHeir', name: 'X의 상속자', rarity: 'uncommon', cost: 6, desc: '별다래 교배에서 아비(수그루)와 잎 빛깔이 같은 암그루 모종마다 +4 배수.', flavor: '아비의 X 염색체는 모든 딸에게 가요.', concept: 'xlinked', minAnte: 3 },
   { id: 'colchicineNotes', name: '콜히친 노트', rarity: 'rare', cost: 8, desc: '씨 없는(3배체) 모종의 배수가 ×1.5 대신 ×2.', flavor: '방추사가 멈추면 염색체가 두 배로.', concept: 'triploid', minAnte: 5 },
-  { id: 'karyoScope', name: '핵형 현미경', rarity: 'uncommon', cost: 5, desc: '이수성 모종이 손에 들어오면 유전자형·핵형을 공개해요. 그 모종을 솎아내면 +$1.', flavor: '염색체 수를 보고 직접 선발해요.', concept: 'nondisjunction', minAnte: 5 },
+  { id: 'karyoScope', name: '핵형 현미경', rarity: 'uncommon', cost: 5, desc: '이수성 모종이 손에 들어오면 유전자형과 핵형을 공개해요. 그 모종을 솎아내면 +$1.', flavor: '염색체 수를 보고 직접 선발해요.', concept: 'nondisjunction', minAnte: 5 },
   { id: 'scissorRack', name: '가위 거치대', rarity: 'rare', cost: 7, desc: '주문을 시작할 때 시약 칸이 비어 있으면 유전자 가위 1개를 받아요.', flavor: '가위는 늘 제자리에.', minAnte: 7, policy: ['precision', 'biotech'] },
   { id: 'jellyfishGene', name: '형광 해파리 유전자', rarity: 'rare', cost: 6, desc: '점수 내는 형광 모종마다 ×1.5 배수. 대신 주문이 끝날 때 꽃가루 유출 확률 +25%.', flavor: '바닷속 빛을 과일에 옮겼어요. 대가도 따라와요.', concept: 'lmo', policy: ['biotech'] },
-  { id: 'climateHouse', name: '기후 적응 온실', rarity: 'rare', cost: 8, desc: '의뢰인(보스)의 특별 규칙을 무시해요. 목표 점수는 그대로예요.', flavor: '2150년 날씨에도 끄떡없는 돔.' },
-  { id: 'grandpaNotes', name: '마테오 비앙키의 향기 노트', rarity: 'legendary', cost: 10, desc: '당도 16 이상 모종은 칩을 한 번 더 더해요.', flavor: '마테오는 향과 당도를 함께 기록했어요.' },
+  { id: 'climateHouse', name: '기후 적응 온실', rarity: 'rare', cost: 8, desc: '의뢰인(보스)의 특별 규칙을 무시해요. 목표 점수는 그대로예요.', flavor: '2150년 날씨에도 끄떡없는 돔. 모노그로브 것과 달리 안에서 여러 품종을 길러요.' },
+  { id: 'grandpaNotes', name: '마테오 비앙키의 향기 노트', rarity: 'legendary', cost: 10, desc: '당도 16 이상 모종은 칩을 한 번 더 더해요.', flavor: '할아버지 마테오가 향과 당도를 나란히 적어 둔 노트예요.' },
   { id: 'tissueLab', name: '조직배양 랩', rarity: 'uncommon', cost: 6, desc: '선발 때 1개체를 더 들일 수 있어요. 같은 모종을 한 번 더 고르면 클론이에요.', flavor: '잎 한 조각이면 충분해요.', concept: 'clone' },
 ];
 
@@ -69,11 +69,11 @@ export const JOKERS: JokerDef[] = [
 export const REAGENTS: ReagentDef[] = [
   { id: 'genetest', name: '유전자 검사 키트', desc: '손에 든 모종이나 온실 개체 최대 2개의 유전자형을 공개해요.', cost: 3, target: 'hand2', concept: 'heterozygote' },
   { id: 'colchicine', name: '콜히친', desc: '온실의 2배체 개체 하나를 4배체로 만들어요. 4배체는 열매가 커요.', cost: 4, target: 'garden1', concept: 'polyploid', minAnte: 5 },
-  { id: 'scissors', name: '유전자 가위', desc: '편집 작업대에서 과육색·쓴맛 유전자의 DNA를 한 글자씩 고쳐요.', cost: 5, target: 'garden1', concept: 'transcription', minAnte: 7, policy: ['precision', 'biotech'] },
+  { id: 'scissors', name: '유전자 가위', desc: '편집 작업대에서 과육색과 쓴맛 유전자의 DNA를 한 글자씩 고쳐요.', cost: 5, target: 'garden1', concept: 'transcription', minAnte: 7, policy: ['precision', 'biotech'] },
   { id: 'vector', name: '형질전환 벡터', desc: '온실 개체 하나에 형광 해파리 유전자를 넣어요. 유전자 변형 생물체(LMO)가 돼요.', cost: 5, target: 'garden1', concept: 'lmo', minAnte: 7, policy: ['biotech'] },
   { id: 'tissue', name: '조직배양', desc: '온실 개체 하나를 똑같이 복제해요. 온실에 빈 칸이 있어야 해요.', cost: 4, target: 'garden1', concept: 'clone' },
-  { id: 'fertilizer', name: '선발 비료', desc: '손에 든 모종 최대 2개의 당도 +2. 이번 주문에서만이고 유전되지 않아요.', cost: 2, target: 'hand2', concept: 'environment' },
-  { id: 'brush', name: '붓 한 자루', desc: '출하 중에 써요. 남은 출하·솎아내기는 그대로 두고 교배를 다시 골라요.', cost: 3, target: 'none' },
+  { id: 'fertilizer', name: '선발 비료', desc: '손에 든 모종 최대 2개의 당도 +2. 이번 주문에만 적용되고 유전되지 않아요.', cost: 2, target: 'hand2', concept: 'environment' },
+  { id: 'brush', name: '붓 한 자루', desc: '출하 중에 써요. 남은 출하와 솎아내기는 그대로 두고 교배를 다시 골라요.', cost: 3, target: 'none' },
 ];
 
 // ── 보스(명품 의뢰인) ──────────────────────────────────────────
@@ -91,12 +91,12 @@ export const BOSSES: BossDef[] = [
 
 // ── 브랜드 철학(덱) ────────────────────────────────────────────
 export const POLICIES: PolicyDef[] = [
-  { id: 'heritage', name: '교배·선발팀', desc: '원하는 자손이 나올 부모를 고르고, 좋은 모종을 다음 부모로 남깁니다.', tradeoff: '혜택: 계약마다 출하 1회 추가. 제한: 유전자 가위와 형질전환 도구를 사용할 수 없습니다.' },
-  { id: 'precision', name: '유전자 편집팀', desc: '유전자 가위로 염기를 바꿔 쓴맛 같은 형질을 조절합니다.', tradeoff: '시작 도구: 유전자 가위 1개. 직접 편집할 수 있지만 다른 종의 유전자를 넣는 형질전환은 불가능합니다.' },
-  { id: 'biotech', name: '형질전환팀', desc: '형질전환 도구로 형광 유전자를 넣어 형광 모종을 만들 수 있습니다.', tradeoff: '시작 비법: 형광 모종의 점수를 높이는 해파리 유전자. 계약 보상도 $1 추가됩니다. 형질전환 도구는 공방에서 구해야 하며, LMO 검사와 꽃가루 유출을 관리해야 합니다.' },
+  { id: 'heritage', name: '교배·선발팀', desc: '원하는 자손이 나올 부모를 고르고, 좋은 모종을 다음 부모로 남겨요.', tradeoff: '혜택: 계약마다 출하 1회 추가. 제한: 유전자 가위와 형질전환 도구를 사용할 수 없어요.' },
+  { id: 'precision', name: '유전자 편집팀', desc: '유전자 가위로 염기를 바꿔 쓴맛 같은 형질을 조절해요.', tradeoff: '시작 도구: 유전자 가위 1개. 직접 편집할 수 있지만 다른 종의 유전자를 넣는 형질전환은 불가능해요.' },
+  { id: 'biotech', name: '형질전환팀', desc: '형질전환 도구로 형광 유전자를 넣어 형광 모종을 만들 수 있어요.', tradeoff: '시작 비법: 형광 모종의 점수를 높이는 해파리 유전자. 계약 보상도 $1 추가돼요. 형질전환 도구는 공방에서 구해야 하며, LMO 검사와 꽃가루 유출을 관리해야 해요.' },
 ];
 
-// ── 개념 카드(연구 노트) ───────────────────────────────────────
+// ── 개념 카드(엘레나의 노트) — 층별 글은 elenaNotes.ts ─────────────
 export const CONCEPTS: Record<ConceptId, ConceptDef> = {
   segregation: {
     id: 'segregation',
@@ -182,14 +182,14 @@ export const CONCEPTS: Record<ConceptId, ConceptDef> = {
     title: '비분리와 이수성',
     body: '감수분열 중 염색체가 제대로 나뉘지 않았어요. 자손의 염색체 수가 하나 많거나 적어요.',
     fiction: '냉해가 비분리 확률을 높이고 이수성 모종의 당도를 3 낮추는 것은 게임 규칙이에요.',
-    real: "감수분열에서 상동 염색체나 염색 분체가 나뉘지 않는 현상을 비분리라고 해요.\n\n그 생식세포가 수정되면 염색체가 2n+1개 또는 2n−1개인 이수성 개체가 생길 수 있어요. 다운 증후군은 21번 염색체가 3개인 사례예요.",
+    real: "감수분열에서 상동염색체나 염색분체가 나뉘지 않는 현상을 비분리라고 해요.\n\n그 생식세포가 수정되면 염색체가 2n+1개 또는 2n−1개인 이수성 개체가 생길 수 있어요. 다운 증후군은 21번 염색체가 3개인 사례예요.",
     standard: '12유전01-04',
   },
   transcription: {
     id: 'transcription',
     title: '전사와 번역',
     body: 'DNA의 염기 하나를 바꾸자 mRNA도 달라졌어요. 아미노산 배열이 달라졌는지 확인해 보세요.',
-    fiction: '루미의 과육색·쓴맛 유전자는 게임을 위해 만든 짧은 서열이에요.',
+    fiction: '루미의 과육색과 쓴맛 유전자는 게임을 위해 만든 짧은 서열이에요.',
     real: "DNA 정보는 mRNA로 전사돼요. mRNA는 염기 세 개씩 읽혀 아미노산을 지정하고 그 아미노산들이 이어져 단백질이 돼요. DNA를 바꿔도 단백질이 그대로일 때가 있으니 결과를 확인해야 해요.",
     standard: '12유전02-01',
   },
@@ -197,7 +197,7 @@ export const CONCEPTS: Record<ConceptId, ConceptDef> = {
     id: 'stopCodon',
     title: '종결 코돈',
     body: '바꾼 염기가 종결 코돈을 만들었어요. 단백질이 끝까지 만들어지지 않았어요.',
-    real: 'mRNA의 UAA·UAG·UGA는 아미노산을 지정하지 않고 번역을 멈춰요. 유전자 중간에 종결 코돈이 생기면 단백질이 짧아져 기능을 잃을 수 있어요.',
+    real: 'mRNA의 UAA, UAG, UGA는 아미노산을 지정하지 않고 번역을 멈춰요. 유전자 중간에 종결 코돈이 생기면 단백질이 짧아져 기능을 잃을 수 있어요.',
     standard: '12유전02-02',
   },
   synonymous: {
@@ -263,7 +263,7 @@ export const UPGRADE_ORDER: UpgradeId[] = ['greenhouse', 'hands', 'discards', 'h
 export interface PackDef { kind: PackKind; name: string; desc: string; price: number; size: number; picks: number }
 export const PACKS: Record<PackKind, PackDef> = {
   seed: { kind: 'seed', name: '시장 묘목 목록', desc: '구입 전에 품종 3개체를 살펴보고 1개체를 골라요. 유전자형은 검사로 확인해요.', price: 4, size: 3, picks: 1 },
-  rareSeed: { kind: 'rareSeed', name: '연구 품종 목록', desc: '당도 높은 품종·순계·4배체·은빛 수그루 3개체를 미리 보고 1개체를 골라요.', price: 6, size: 3, picks: 1 },
+  rareSeed: { kind: 'rareSeed', name: '연구 품종 목록', desc: '당도 높은 품종, 순계, 4배체, 은빛 수그루 3개체를 미리 보고 1개체를 골라요.', price: 6, size: 3, picks: 1 },
   reagent: { kind: 'reagent', name: '시약 꾸러미', desc: '연구 시약 3개 중 1개.', price: 4, size: 3, picks: 1 },
   medal: { kind: 'medal', name: '품평회 메달함', desc: '족보 3개 중 하나의 레벨을 올려요.', price: 4, size: 3, picks: 1 },
   joker: { kind: 'joker', name: '비법 두루마리', desc: '장인의 비법 2개 중 1개.', price: 6, size: 2, picks: 1 },

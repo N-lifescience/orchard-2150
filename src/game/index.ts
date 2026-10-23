@@ -10,6 +10,10 @@ export type { PackDef, UpgradeDef } from './content';
 export { SAVE_KEY } from './game';
 export type { CreateGameOptions, GameImpl, StorageLike } from './game';
 export { goalMatches, deliveryComplete, deliveryProgressText, goalHint } from './learning';
+// 이야기·확인 질문·엘레나의 노트 (순수 데이터)
+export * as story from './story';
+export * as quiz from './quiz';
+export { ELENA_NOTES } from './elenaNotes';
 
 /** 계약 전체를 한 객체로 (타입 검사로 계약과 어긋나지 않음을 보증) */
 export const gameContent: GameContent = { HAND_TYPES, JOKERS, REAGENTS, BOSSES, POLICIES, CONCEPTS, createGame };

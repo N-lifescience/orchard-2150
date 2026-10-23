@@ -37,6 +37,8 @@ export class Sidebar {
   private seasonEl: HTMLElement;
   private dots: HTMLElement;
   private orderKey = '';
+  /** 첫 발견 전에는 숨겨 두는 「엘레나의 노트」 단추 */
+  readonly notesButton: HTMLButtonElement;
   /** 점수 연출 중이면 update 가 칩·배수·점수를 덮지 않는다 */
   scoring = false;
   private shownChips = 0;
@@ -74,6 +76,8 @@ export class Sidebar {
     this.chipsBox = h('div', { class: 'cm cm--chips', 'aria-label': '칩' }, this.chipsEl);
     this.multBox = h('div', { class: 'cm cm--mult', 'aria-label': '배수' }, this.multEl);
 
+    this.notesButton = menu('엘레나의 노트', '', () => ctx.open.notes(), 'notebook');
+    this.notesButton.classList.add('side__notes');
     this.handsEl = h('span', { class: 'num' }, '0');
     this.discardsEl = h('span', { class: 'num' }, '0');
     this.moneyEl = h('span', { class: 'num' }, '$0');
@@ -116,7 +120,7 @@ export class Sidebar {
         { class: 'side__menus', 'aria-label': '메뉴', 'data-tutorial': 'navigation' },
         menu('주문 정보', '', () => ctx.open.orders()),
         menu('온실', '', () => ctx.open.greenhouse()),
-        menu('연구 노트', '', () => ctx.open.notes(), 'notebook'),
+        this.notesButton,
         menu('플레이 방법', '', () => ctx.open.tutorial()),
         menu('설정', '', () => ctx.open.settings()),
       ),
@@ -172,6 +176,11 @@ export class Sidebar {
       this.setRound(s.roundScore, false);
       this.setFlames(s.roundScore >= o.target && deliveryComplete(o, s.delivery) && (s.phase === 'play' || s.phase === 'cashout'));
     }
+  }
+
+  setNotesVisible(on: boolean): void {
+    if (this.notesButton.hidden === !on) return;
+    this.notesButton.hidden = !on;
   }
 
   /** 선택한 카드의 족보 미리보기 (null 이면 비움) */

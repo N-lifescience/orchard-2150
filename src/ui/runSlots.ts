@@ -3,6 +3,7 @@ import type { PlayStyle, PolicyId, RunMode } from '../contract/game';
 import { SAVE_KEY, type StorageLike } from '../game/game';
 import { sanitizeBrand, sanitizeLine } from './fmt';
 import { practiceKey } from './practiceStorage';
+import { storyKey } from './story/storage';
 
 export const SLOTS_KEY = 'seed-atelier-2150:slots:v1';
 export const TUTORIAL_KEY = 'seed-atelier-2150:tutorial:v1';
@@ -110,7 +111,7 @@ export function runSlotDetails(slot: RunSlot, kv: StorageLike | null = localStor
   const start = slot.mode === 'unit-sex' ? 3 : slot.mode === 'unit-chromo' ? 5 : slot.mode === 'unit-edit' ? 7 : 1;
   const end = slot.mode === 'quick' || slot.mode === 'unit-sex' ? 4 : slot.mode === 'unit-chromo' ? 6 : 8;
   const total = (end - start + 1) * 3;
-  const unknown: RunSlotDetails = { status: 'unknown', label: '기록 확인 필요', location: '진행 정보를 확인할 수 없습니다.', completed: 0, total };
+  const unknown: RunSlotDetails = { status: 'unknown', label: '기록 확인 필요', location: '진행 정보를 확인할 수 없어요.', completed: 0, total };
   try {
     const raw = kv?.getItem(slot.key);
     if (!raw) return unknown;
@@ -175,6 +176,7 @@ export function removeRunSlot(id: string, kv: StorageLike | null = localStore())
   try { kv?.removeItem(`${slot.key}:reflection`); } catch { /* no storage */ }
   try { kv?.removeItem(`${slot.key}:client-briefing:v1`); } catch { /* no storage */ }
   try { kv?.removeItem(practiceKey(slot.key)); } catch { /* no storage */ }
+  try { kv?.removeItem(storyKey(slot.key)); } catch { /* no storage */ }
   index.slots = index.slots.filter((s) => s.id !== id);
   if (index.activeId === id) index.activeId = index.slots[0]?.id ?? null;
   write(kv, index);
@@ -186,7 +188,9 @@ export function removeAllRunSlots(kv: StorageLike | null = localStore()): void {
     try { kv?.removeItem(`${slot.key}:reflection`); } catch { /* continue */ }
     try { kv?.removeItem(`${slot.key}:client-briefing:v1`); } catch { /* continue */ }
     try { kv?.removeItem(practiceKey(slot.key)); } catch { /* continue */ }
+    try { kv?.removeItem(storyKey(slot.key)); } catch { /* continue */ }
   }
+  try { kv?.removeItem(storyKey(SAVE_KEY)); } catch { /* continue */ }
   try { kv?.removeItem(SAVE_KEY); } catch { /* continue */ }
   try { kv?.removeItem(`${SAVE_KEY}:reflection`); } catch { /* continue */ }
   try { kv?.removeItem(`${SAVE_KEY}:client-briefing:v1`); } catch { /* continue */ }
@@ -223,4 +227,9 @@ export function tutorialSeen(kv: StorageLike | null = localStore()): boolean {
 
 export function markTutorialSeen(kv: StorageLike | null = localStore()): void {
   try { kv?.setItem(TUTORIAL_KEY, '1'); } catch { /* optional preference */ }
+}
+
+/** 처음 온 사람: 튜토리얼을 마친 적도, 저장된 연대기도 없다. 이때 첫 계약이 곧 튜토리얼이 된다. */
+export function isFirstVisit(kv: StorageLike | null = localStore()): boolean {
+  return !tutorialSeen(kv) && listRunSlots(kv).length === 0;
 }

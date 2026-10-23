@@ -32,8 +32,8 @@ export function deliveryProgressText(order: OrderInfo, delivery: Record<string, 
 export function goalHint(goal: DeliveryGoal): string {
   const t = goal.trait;
   if (t.knockout) return '유전자 가위로 B 자리의 기능을 없애 보세요. 기능 있는 B가 남아 있으면 쓴맛은 사라지지 않아요.';
-  if (t.seedless) return '4배체와 2배체를 교배하면 게임에서 씨 없는 3배체 모종을 얻어요. 3배체 자체는 다음 교배의 부모가 될 수 없어요.';
-  if (t.species === 'stella' && t.marked) return '은빛 잎 수그루의 X는 모든 딸에게 갑니다. 암그루와 은빛 잎 수그루를 골라 보세요.';
+  if (t.seedless) return '4배체와 2배체를 교배하면 게임에서 씨 없는 3배체 모종을 얻어요. 3배체는 다음 교배의 부모가 될 수 없어요.';
+  if (t.species === 'stella' && t.marked) return '은빛 잎 수그루의 X는 모든 딸에게 가요. 암그루와 은빛 잎 수그루를 골라 보세요.';
   if (t.species === 'stella') return '별다래는 암그루와 수그루가 필요해요. 열매가 있는 암그루 모종을 남기고 수그루는 솎아내세요.';
   if (t.minBrix) return '당도가 높은 자손을 선발해 다음 부모로 남기세요. 비료로 오른 당도는 유전 형질 납품 수에 포함되지 않아요.';
   if (t.color === 'gold') return '골드 과육에는 기능 있는 R이 없어야 해요. 골드 부모의 자가수분이나 r을 가진 부모끼리의 교배를 비교해 보세요.';

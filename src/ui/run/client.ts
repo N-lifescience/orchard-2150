@@ -10,10 +10,12 @@ export class ClientVisit {
   private reading = '';
   private acknowledged = new Set<string>();
 
-  constructor(private ctx: Ctx, private workbench: HTMLElement) {}
+  constructor(private ctx: Ctx, private workbench: HTMLElement, private holds: (s: RunState) => boolean = () => false) {}
 
   update(s: RunState): void {
     if (s.phase !== 'cross') return;
+    // The season's story beat (and its scene film) comes before the client.
+    if (this.holds(s)) return;
     const key = briefingKey(s);
     const storageKey = `${this.ctx.game.getSaveKey()}:client-briefing:v1`;
     try { if (localStorage.getItem(storageKey) === key) this.acknowledged.add(key); } catch { /* Session memory is sufficient. */ }

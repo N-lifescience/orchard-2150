@@ -27,8 +27,8 @@ export type EditOutcome = { ok: true; state: EditState } | { ok: false; reason: 
 export function clickSub(s: EditState, i: number): EditOutcome {
   if (i < 0 || i >= s.orig.length) return { ok: false, reason: '없는 자리예요.' };
   const c = s.change;
-  if (c && c.kind === 'del') return { ok: false, reason: '이미 한 염기를 지웠어요. 한 번에 한 곳만 바꿀 수 있어요. [되돌리기]를 먼저 눌러요.' };
-  if (c && c.pos !== i) return { ok: false, reason: '한 번에 한 곳만 바꿀 수 있어요. [되돌리기]를 먼저 눌러요.' };
+  if (c && c.kind === 'del') return { ok: false, reason: '이미 한 염기를 지웠어요. 한 번에 한 곳만 바꿀 수 있어요. [되돌리기]를 먼저 눌러 주세요.' };
+  if (c && c.pos !== i) return { ok: false, reason: '한 번에 한 곳만 바꿀 수 있어요. [되돌리기]를 먼저 눌러 주세요.' };
   const cur = c ? c.base : s.orig[i];
   const nb = nextBase(cur);
   if (nb === s.orig[i]) return { ok: true, state: { orig: s.orig, change: null } };
@@ -38,7 +38,7 @@ export function clickSub(s: EditState, i: number): EditOutcome {
 /** i번째 염기 지우기 (결실) */
 export function clickDel(s: EditState, i: number): EditOutcome {
   if (i < 0 || i >= s.orig.length) return { ok: false, reason: '없는 자리예요.' };
-  if (s.change) return { ok: false, reason: '한 번에 한 곳만 바꿀 수 있어요. [되돌리기]를 먼저 눌러요.' };
+  if (s.change) return { ok: false, reason: '한 번에 한 곳만 바꿀 수 있어요. [되돌리기]를 먼저 눌러 주세요.' };
   return { ok: true, state: { orig: s.orig, change: { kind: 'del', pos: i } } };
 }
 

@@ -63,7 +63,7 @@ export function openReagent(ctx: Ctx, index: number): void {
     colchicine: '온실의 2배체 개체 하나를 골라요.',
     scissors: '편집 작업대를 열어 DNA 글자를 한 곳 고쳐요.',
     vector: '온실 개체 하나를 골라 형광 유전자를 넣어요.',
-    tissue: '온실 개체 하나를 골라 복제해요. 빈 칸이 있어야 해요.',
+    tissue: '온실 개체 하나를 골라 복제해요. 빈칸이 있어야 해요.',
     fertilizer: '손에 든 모종 1~2개를 골라요. 이번 주문에서만 효과가 있어요.',
     brush: '지금 자손 덱을 버리고 교배를 다시 골라요.',
   };

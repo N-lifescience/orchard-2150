@@ -7,6 +7,7 @@ import { h, button, replaceChildren, setText } from '../h';
 import * as fmt from '../fmt';
 import { play, wait, rectIn, motion } from '../motion';
 import { fx } from '../rng';
+import { BOSS_STORY } from '../../game/story';
 
 export class CashoutView {
   readonly el: HTMLElement;
@@ -28,7 +29,7 @@ export class CashoutView {
     this.card = h('div', { class: 'cash panel panel--gold', role: 'region', 'aria-label': '계약 정산서' }, this.head, this.delivery,
       h('div', { class: 'cash__section-label' }, '보상 내역'), this.lines,
       h('div', { class: 'cash__total' }, h('span', null, '이번 계약 보상'), this.totalEl), this.collectBtn,
-      h('p', { class: 'cash__next' }, '보상을 받으면 다음 교배에 쓸 개체를 선발합니다.'));
+      h('p', { class: 'cash__next' }, '보상을 받으면 다음 교배에 쓸 개체를 선발해요.'));
     this.el = h('div', { class: 'view view--cashout' }, this.card);
   }
 
@@ -48,7 +49,7 @@ export class CashoutView {
       h('div', { class: 'cash__masthead' }, h('span', { class: 'cash__kicker' }, `시즌 ${s.ante} · 계약 정산서`), h('span', { class: 'cash__stamp' }, '✓ 납품 완료')),
       h('h2', { class: 'cash__title' }, `${fmt.josa(o.name, '을를')} 마쳤어요`),
       h('div', { class: 'cash__client' }, characterPortrait(o.client, 64),
-        h('div', null, h('b', null, characterName(o.client) ?? o.client.split(' · ')[0]), h('p', null, '부탁드린 품종이 잘 도착했어요. 고마워요!'))),
+        h('div', null, h('b', null, characterName(o.client) ?? o.client.split(' · ')[0]), h('p', null, (o.kind === 'boss' && o.boss ? BOSS_STORY[o.boss.id]?.answer : undefined) ?? '부탁드린 품종이 잘 도착했어요. 고마워요!'))),
       h('div', { class: 'cash__score' }, h('span', null, '획득 점수'), h('strong', { class: 'num' }, fmt.score(s.roundScore)), h('span', { class: 'cash__of' }, `목표 ${fmt.score(o.target)}점`)),
     );
     replaceChildren(this.delivery, ...(o.goals ?? []).map((goal) => h('div', { class: 'cash__goal' },

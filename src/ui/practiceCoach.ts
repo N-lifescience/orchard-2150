@@ -1,33 +1,36 @@
+// 레아의 말풍선 안내 — 한 번에 한 문장, 단계 막대, 실제 조작부 옆 말풍선. 단계는 실제 조작으로만 넘어간다.
+// 화면 전체를 어둡게 하고 지금 말하는 곳만 밝힌다. 모달·이야기 장면이 열리면 잠시 숨는다.
 import type { RunState } from '../contract/game';
 import leaPortrait from '../art/assets/generated/lea-guide.webp';
 import { button, h, replaceChildren, setText } from './h';
+import { COACH_UI } from './story/script';
 import { tutorialStep, type TutorialStep, type TutorialTarget } from './tutorialFlow';
 
 const TARGETS: Record<TutorialTarget, string> = {
   goal: '.side__target', limits: '.side__stats', home: '.side__home',
-  notebook: '.side__menus button:nth-child(3)', jokers: '.jokers', reagents: '.reagents',
-  order: '.view--cross .ordercard', 'parent-first': '.garden .gslot:nth-child(1)',
-  'parent-second': '.garden .gslot:nth-child(2)', prediction: '.cross__prediction-actions',
-  cross: '.cross__bar .btn--play', observation: '.play__prediction', hand: '.hand .slot:not(.is-selected)',
-  shipment: '.actions .btn--play', cashout: '.cash .btn--gold', selection: '.sel__grid .sslot',
-  shop: '.shop__side .btn--play', review: '.end__btns .btn--play', none: '',
+  jokers: '.jokers', reagents: '.reagents', 'shop-cards': '.view--shop .shop__cards',
+  'parent-first': '.garden .gslot:nth-child(1)', 'parent-second': '.garden .gslot:nth-child(2)',
+  prediction: '.cross__prediction-actions', cross: '.cross__bar .btn--play', observation: '.play__prediction',
   pod: '.view--play .pod', sort: '.view--play .sortbox', discard: '.actions .btn--discard',
+  hand: '.hand .slot:not(.is-selected)', shipment: '.actions .btn--play', cashout: '.cash .btn--gold',
+  selection: '.sel__grid .sslot', shop: '.shop__side .btn--play', review: '.end__btns .btn--play', none: '',
 };
 const FOCUSABLE = 'button:not([disabled]), [href], [tabindex="0"], summary';
 const PAD = 7;
+const GAP = 14;
 interface Box { left: number; top: number; width: number; height: number; }
 const overlap = (a: Box, b: Box): number => Math.max(0, Math.min(a.left + a.width, b.left + b.width) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.top + a.height, b.top + b.height) - Math.max(a.top, b.top));
 
 /** A viewport overlay keeps the cutout aligned even when the game stage is scaled. */
 export class PracticeCoach {
-  /** App may mount this anchor in any current screen; the visible guide lives outside the scaled stage. */
+  /** App may mount this anchor in any current screen; the visible guide lives outside the stage. */
   readonly el = h('span', { class: 'coach-anchor', hidden: true, 'aria-hidden': 'true' });
   private overlay: HTMLElement;
   private panel: HTMLElement;
   private shades: HTMLElement[];
   private frame: HTMLElement;
-  private title: HTMLElement;
-  private body: HTMLElement;
+  private label: HTMLElement;
+  private line: HTMLElement;
   private evidence: HTMLElement;
   private count: HTMLElement;
   private progress: HTMLProgressElement;
@@ -35,35 +38,37 @@ export class PracticeCoach {
   private stop: HTMLButtonElement;
   private hint: HTMLElement;
   private step: TutorialStep | null = null;
+  private sentence = 0;
   private target: HTMLElement | null = null;
   private busy = false;
   private raf = 0;
   private destroyed = false;
   private shouldReveal = true;
+  private wasPaused = false;
   private observer: MutationObserver;
   private resize: ResizeObserver;
   private restoreFocus: HTMLElement | null;
 
-  constructor(private root: HTMLElement, private callbacks: { acknowledge(step: TutorialStep): void; stop(): void; finish(fresh: boolean): void }) {
+  constructor(private root: HTMLElement, private callbacks: { stop(): void; finish(fresh: boolean): void }) {
     this.restoreFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    this.title = h('h2', { class: 'guide__title', id: 'lea-guide-title' });
-    this.body = h('p', { class: 'guide__body' });
+    this.label = h('span', { class: 'guide__label' });
+    this.line = h('p', { class: 'guide__line', id: 'lea-guide-line' });
     this.evidence = h('p', { class: 'guide__evidence' });
     this.count = h('span', { class: 'guide__count' });
-    this.progress = h('progress', { class: 'guide__progress', max: 20, value: 0, 'aria-label': '튜토리얼 진행' });
+    this.progress = h('progress', { class: 'guide__progress', max: 12, value: 0, 'aria-label': COACH_UI.progress });
     this.actions = h('div', { class: 'guide__actions' });
-    this.stop = button('튜토리얼 나가기', () => callbacks.stop(), { class: 'guide__stop' });
-    this.hint = h('span', { class: 'guide__tap', 'aria-hidden': 'true' }, '빛나는 곳을 눌러 주세요');
+    this.stop = button(COACH_UI.stop, () => callbacks.stop(), { class: 'guide__stop' });
+    this.hint = h('span', { class: 'guide__tap', 'aria-hidden': 'true' }, COACH_UI.tap);
     this.frame = h('div', { class: 'guide__spotlight', 'aria-hidden': 'true' }, this.hint);
     this.shades = Array.from({ length: 4 }, () => h('div', { class: 'guide__shade', 'aria-hidden': 'true' }));
-    this.panel = h('section', { class: 'guide__dialogue', role: 'dialog', 'aria-modal': 'false', 'aria-labelledby': 'lea-guide-title', tabindex: '-1' },
-      h('div', { class: 'guide__portrait' }, h('img', { src: leaPortrait, alt: '과수원 매니저 레아 모레노', draggable: false })),
-      h('div', { class: 'guide__speech' },
-        h('header', { class: 'guide__head' }, h('span', { class: 'guide__name' }, '레아 모레노'), this.count, this.stop),
-        this.progress,
-        h('div', { class: 'guide__words', 'aria-live': 'polite', 'aria-atomic': 'true' }, this.title, this.body, this.evidence),
-        this.actions,
-      ),
+    this.panel = h('section', { class: 'guide__dialogue', role: 'dialog', 'aria-modal': 'false', 'aria-labelledby': 'lea-guide-line', tabindex: '-1' },
+      h('header', { class: 'guide__head' },
+        h('img', { class: 'guide__face', src: leaPortrait, alt: '', draggable: false }),
+        h('span', { class: 'guide__who' }, h('span', { class: 'guide__name' }, COACH_UI.name), this.label),
+        this.count, this.stop),
+      this.progress,
+      h('div', { class: 'guide__words', 'aria-live': 'polite', 'aria-atomic': 'true' }, this.line, this.evidence),
+      this.actions,
     );
     this.overlay = h('div', { class: 'guide', 'data-tutorial': 'spotlight' }, ...this.shades, this.frame, this.panel);
     document.body.appendChild(this.overlay);
@@ -77,7 +82,8 @@ export class PracticeCoach {
     window.visualViewport?.addEventListener('resize', this.viewportChanged);
     window.visualViewport?.addEventListener('scroll', this.schedule);
     this.observer = new MutationObserver(this.schedule);
-    this.observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'aria-hidden', 'disabled'] });
+    this.observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'aria-hidden', 'disabled', 'hidden'] });
+    this.observer.observe(document.body, { attributes: true, attributeFilter: ['data-story', 'data-story-beat'] });
     this.resize = new ResizeObserver(this.schedule);
     this.resize.observe(this.panel);
     this.resize.observe(root);
@@ -91,32 +97,53 @@ export class PracticeCoach {
     this.overlay.dataset.step = step;
     this.el.dataset.phase = state.phase;
     setText(this.count, `${info.number} / ${info.total}`);
+    setText(this.label, info.label);
+    this.progress.max = info.total;
     this.progress.value = step === 'complete' ? info.total : info.number - 1;
     if (changed) {
       this.step = step;
-      setText(this.title, info.title);
-      setText(this.body, info.body);
-      const actions: HTMLElement[] = [];
-      if (step === 'complete') {
-        actions.push(button('이 과수원에서 계속하기', () => this.callbacks.finish(false), { class: 'btn--play' }));
-        actions.push(button('새 과수원 시작', () => this.callbacks.finish(true), { class: 'btn--ghost' }));
-      } else if (info.actionLabel) {
-        actions.push(button(info.actionLabel, () => this.callbacks.acknowledge(step), { class: 'btn--play' }));
-      } else {
-        actions.push(h('span', { class: 'guide__instruction' }, '빛나는 곳을 직접 눌러 보세요.'));
-      }
-      replaceChildren(this.actions, ...actions);
-      this.shouldReveal = true;
+      this.sentence = 0;
+      this.drawSentence();
     }
     setText(this.evidence, feedback);
-    this.evidence.hidden = !feedback;
+    this.evidence.hidden = !feedback || !this.onLastSentence();
     this.stop.hidden = step === 'complete';
     this.stop.disabled = busy;
     for (const btn of this.actions.querySelectorAll<HTMLButtonElement>('button')) btn.disabled = busy;
     this.schedule();
   }
 
-  private isPaused(): boolean { return !!this.root.querySelector('.modal-layer[aria-hidden="false"]'); }
+  private onLastSentence(): boolean {
+    return !!this.step && this.sentence >= tutorialStep(this.step).lines.length - 1;
+  }
+
+  private drawSentence(): void {
+    if (!this.step) return;
+    const info = tutorialStep(this.step);
+    const line = info.lines[Math.min(this.sentence, info.lines.length - 1)];
+    setText(this.line, line.text);
+    const actions: HTMLElement[] = [];
+    if (!this.onLastSentence()) {
+      actions.push(button(`${COACH_UI.next} · ${this.sentence + 1}/${info.lines.length}`, () => {
+        this.sentence++;
+        this.drawSentence();
+        this.evidence.hidden = !this.evidence.textContent || !this.onLastSentence();
+      }, { class: 'btn--play guide__next' }));
+    } else if (this.step === 'complete') {
+      actions.push(button(COACH_UI.continueHere, () => this.callbacks.finish(false), { class: 'btn--play' }));
+      actions.push(button(COACH_UI.startFresh, () => this.callbacks.finish(true), { class: 'btn--ghost' }));
+    } else {
+      actions.push(h('span', { class: 'guide__instruction' }, COACH_UI.doIt));
+    }
+    replaceChildren(this.actions, ...actions);
+    this.shouldReveal = true;
+    this.schedule();
+    queueMicrotask(() => this.actions.querySelector<HTMLElement>('button')?.focus({ preventScroll: true }));
+  }
+
+  private isPaused(): boolean {
+    return !!this.root.querySelector('.modal-layer[aria-hidden="false"]') || document.body.dataset.story === 'on' || document.body.dataset.storyBeat === 'on';
+  }
   private permitted(node: EventTarget | null): boolean {
     return node instanceof Node && (this.panel.contains(node) || (!this.busy && !!this.target?.contains(node)));
   }
@@ -166,22 +193,25 @@ export class PracticeCoach {
   };
   private viewportChanged = (): void => { this.shouldReveal = true; this.schedule(); };
 
+  private find(target: TutorialTarget): HTMLElement | null {
+    if (target === 'none') return null;
+    const el = this.root.querySelector<HTMLElement>(TARGETS[target]);
+    return el && el.isConnected && el.getClientRects().length && !el.closest('[hidden]') ? el : null;
+  }
+
   private resolveTarget(): HTMLElement | null {
     if (!this.step) return null;
     const info = tutorialStep(this.step);
-    let target = info.target === 'none' ? null : this.root.querySelector<HTMLElement>(TARGETS[info.target]);
-    if (info.target === 'order' && !target?.getClientRects().length) target = this.root.querySelector('.side__target');
-    if (this.step === 'keep') {
-      const selected = this.root.querySelector('.sel__grid .sslot.is-picked');
-      if (selected) {
+    const line = info.lines[Math.min(this.sentence, info.lines.length - 1)];
+    let target = this.find(line.target ?? info.target) ?? (line.target ? this.find(info.target) : null);
+    if (this.step === 'keep' && this.onLastSentence()) {
+      if (this.root.querySelector('.sel__grid .sslot.is-picked')) {
         target = this.root.querySelector('.sel__btns .btn--play');
-        setText(this.title, '이 모종을 온실에 들여요.');
-        setText(this.body, '온실에 들이기를 눌러 주세요. 방금 고른 자손이 다음 주문부터 부모 후보에 들어가요. 이렇게 좋은 형질을 다음 세대로 이어 가요.');
+        setText(this.line, COACH_UI.keepTitle);
       } else if (!target) {
         target = this.root.querySelector('.sel__btns .btn--ghost');
       }
     }
-    if (target && (!target.getClientRects().length || !target.isConnected)) return null;
     return target;
   }
 
@@ -189,7 +219,9 @@ export class PracticeCoach {
     if (this.destroyed || !this.step) return;
     const paused = this.isPaused();
     this.overlay.hidden = paused;
-    if (paused) return;
+    if (paused) { this.wasPaused = true; return; }
+    // A closed window (story, client, note) may have scrolled the page: show the control again.
+    if (this.wasPaused) { this.wasPaused = false; this.shouldReveal = true; }
     const next = this.resolveTarget();
     if (next !== this.target) {
       this.target?.classList.remove('is-tutorial-target');
@@ -200,40 +232,53 @@ export class PracticeCoach {
     const width = window.innerWidth;
     const height = window.visualViewport?.height ?? window.innerHeight;
     const topInset = window.visualViewport?.offsetTop ?? 0;
-    const margin = width < 600 ? 10 : 20;
-    const panelWidth = Math.min(width - margin * 2, width >= 1000 ? 620 : 560);
+    const narrow = width < 600;
+    const margin = narrow ? 8 : 16;
+    const panelWidth = Math.min(width - margin * 2, narrow ? 560 : 420);
     this.panel.style.width = `${panelWidth}px`;
+    this.panel.dataset.place = '';
     const panelHeight = this.panel.getBoundingClientRect().height;
     const availableHeight = Math.max(100, height - panelHeight - margin * 3);
     // On a short screen, light the card itself; its repeated description can stay below the fold.
     const focusNode = this.target && this.target.getBoundingClientRect().height > availableHeight
       ? this.target.querySelector<HTMLElement>('.sa-card') ?? this.target
       : this.target;
-    // First place the dialogue at the bottom; scrolling puts the actual control in the space above it.
-    let panelBox: Box = { left: Math.max(margin, (width - panelWidth) / 2), top: topInset + height - panelHeight - margin, width: panelWidth, height: panelHeight };
     if (this.shouldReveal && focusNode && !this.busy) {
       focusNode.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });
-      if (this.root.classList.contains('is-responsive')) {
+      if (narrow && this.root.classList.contains('is-responsive')) {
+        // The bubble docks at the bottom on phones: keep the control in the space above it.
         const rect = focusNode.getBoundingClientRect();
         const desiredTop = topInset + margin + Math.max(0, (availableHeight - rect.height) / 2);
         window.scrollBy({ top: rect.top - desiredTop, behavior: 'instant' });
       }
       this.shouldReveal = false;
     }
+    const dockBottom: Box = { left: Math.max(margin, (width - panelWidth) / 2), top: topInset + height - panelHeight - margin, width: panelWidth, height: panelHeight };
+    const dockTop: Box = { ...dockBottom, top: topInset + margin };
+    let panelBox: Box = dockBottom;
     let hole: Box | null = null;
     if (focusNode) {
       const rect = focusNode.getBoundingClientRect();
       const left = Math.max(0, rect.left - PAD);
       const top = Math.max(topInset, rect.top - PAD);
       hole = { left, top, width: Math.max(0, Math.min(width, rect.right + PAD) - left), height: Math.max(0, Math.min(topInset + height, rect.bottom + PAD) - top) };
-      // Pick a corner that does not cover the target. This also handles small landscape tablets.
-      const candidates: Box[] = [panelBox,
-        { ...panelBox, left: width - panelWidth - margin, top: topInset + margin },
-        { ...panelBox, left: margin, top: topInset + margin },
-        { ...panelBox, left: margin },
-        { ...panelBox, left: width - panelWidth - margin },
+      const clampX = (x: number) => Math.min(Math.max(margin, x), width - panelWidth - margin);
+      const clampY = (y: number) => Math.min(Math.max(topInset + margin, y), topInset + height - panelHeight - margin);
+      const near: [string, Box][] = narrow ? [] : [
+        ['below', { left: clampX(hole.left), top: hole.top + hole.height + GAP, width: panelWidth, height: panelHeight }],
+        ['above', { left: clampX(hole.left), top: hole.top - panelHeight - GAP, width: panelWidth, height: panelHeight }],
+        ['right', { left: hole.left + hole.width + GAP, top: clampY(hole.top), width: panelWidth, height: panelHeight }],
+        ['left', { left: hole.left - panelWidth - GAP, top: clampY(hole.top), width: panelWidth, height: panelHeight }],
       ];
-      panelBox = candidates.reduce((best, candidate) => overlap(candidate, hole!) < overlap(best, hole!) ? candidate : best);
+      const fits = (b: Box) => b.left >= margin - 0.5 && b.top >= topInset + margin - 0.5 && b.left + b.width <= width - margin + 0.5 && b.top + b.height <= topInset + height - margin + 0.5;
+      const found = near.find(([, b]) => fits(b) && overlap(b, hole!) === 0);
+      if (found) {
+        panelBox = found[1];
+        this.panel.dataset.place = found[0];
+      } else {
+        panelBox = [dockBottom, dockTop].reduce((best, candidate) => overlap(candidate, hole!) < overlap(best, hole!) ? candidate : best);
+        this.panel.dataset.place = panelBox === dockTop ? 'dock-top' : 'dock-bottom';
+      }
     }
     this.position(this.panel, panelBox);
     if (!hole || hole.width <= 0 || hole.height <= 0) {
@@ -243,7 +288,7 @@ export class PracticeCoach {
     } else {
       this.frame.hidden = false;
       this.position(this.frame, hole);
-      this.hint.hidden = !!tutorialStep(this.step).actionLabel || this.busy;
+      this.hint.hidden = !this.onLastSentence() || this.step === 'complete' || this.busy;
       this.frame.classList.toggle('is-below', hole.top < 38);
       this.shades.forEach((shade) => { shade.hidden = false; });
       this.position(this.shades[0], { left: 0, top: 0, width, height: hole.top });

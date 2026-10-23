@@ -55,7 +55,7 @@ export class PlayView {
       this.podCount,
       h('span', { class: 'pod__lbl' }, '자손 덱'),
     );
-    ctx.tips.attach(this.podBtn, '남은 씨앗의 빛깔·당도 분포를 봐요');
+    ctx.tips.attach(this.podBtn, '남은 씨앗의 빛깔과 당도 분포를 봐요');
     this.hand.dealFrom = () => this.podBtn.getBoundingClientRect();
     this.el = h(
       'div',
@@ -105,11 +105,11 @@ export class PlayView {
         h('details', { class: 'play__evidence' },
           h('summary', null, '예측과 관찰값을 어떻게 읽나요?'),
           expected ? h('p', null, `${expected.a} × ${expected.b} → ${expected.offspring}. ${expected.reasoning}`) : h('p', null, cold
-            ? '냉해 계약에서는 염색체 비분리가 늘어납니다. 정상 감수분열의 RR·Rr·rr 비율을 그대로 적용할 수 없어요. 실제 핵형과 자손 분포를 함께 관찰하세요.'
-            : '부모의 유전자형이 모두 공개되지 않았거나 배수성·편집 상태가 달라 정확한 기대 비율을 표시하지 않았습니다. 검사 결과와 여러 교배의 관찰을 함께 보세요.'),
+            ? '냉해 계약에서는 염색체 비분리가 늘어나요. 정상 감수분열의 RR, Rr, rr 비율을 그대로 적용할 수 없어요. 실제 핵형과 자손 분포를 함께 관찰하세요.'
+            : '부모의 유전자형이 모두 공개되지 않았거나 배수성이나 편집 상태가 달라 정확한 기대 비율을 표시하지 않았어요. 검사 결과와 여러 교배의 관찰 결과를 함께 보세요.'),
           h('p', null, expected && (expected.gold === 0 || expected.ruby === 0)
-            ? '이 R 자리 교배는 과육색 한 종류만 기대됩니다. 무늬·당도 같은 다른 형질은 별도로 살펴보세요.'
-            : '52개체는 한 번의 관찰입니다. 표본이 작으면 기대 비율과 차이가 날 수 있어요. 한 번의 교배만으로 부모 유전자형이나 다음 결과를 확정할 수 없습니다.'),
+            ? '이 R 자리 교배에서는 과육색 한 종류만 기대돼요. 무늬나 당도 같은 다른 형질은 따로 살펴보세요.'
+            : '52개체는 한 번의 관찰이에요. 표본이 작으면 기대 비율과 차이가 날 수 있어요. 한 번의 교배만으로 부모 유전자형이나 다음 결과를 확정할 수 없어요.'),
         ),
       );
     }
@@ -133,7 +133,7 @@ export class PlayView {
       const cards = s.hand.filter((c) => sel.includes(c.uid));
       replaceChildren(this.requestEl,
         deliveryGoals(order, s.delivery, true),
-        cards.length ? h('p', { class: 'play__delivery-preview' }, `이대로 출하하면 · ${selectedGoalText(order, s.delivery, cards)}`) : h('p', { class: 'play__delivery-preview' }, '필수 형질과 목표 점수를 모두 채우면 계약이 끝납니다.'),
+        cards.length ? h('p', { class: 'play__delivery-preview' }, `이대로 출하하면 · ${selectedGoalText(order, s.delivery, cards)}`) : h('p', { class: 'play__delivery-preview' }, '필수 형질과 목표 점수를 모두 채우면 계약이 끝나요.'),
       );
     } else if (order.requestedColor) {
       setText(this.requestEl, `추가 보상: ${order.requestedColor === 'ruby' ? '루비' : '골드'} 과육 · ${s.requestFulfilled ? '출하 완료 (+$2)' : '출하하면 +$2'}`);
@@ -171,6 +171,7 @@ export class PlayView {
     this.sortBrix.setAttribute('aria-pressed', String(this.sortBy === 'brix'));
     this.sortSuit.setAttribute('aria-pressed', String(this.sortBy === 'suit'));
     this.ctx.game.sortHand(this.sortBy);
+    this.ctx.tutorialEvent('sorted');
   }
 
   toggleByKey(n: number): void {

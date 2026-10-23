@@ -80,7 +80,7 @@ export class CrossView {
       this.predictionBox,
       h('div', { class: 'cross__prediction-title' }, '예측해 봐요: 자손 52개체에는 어느 과육색이 더 많을까요?'),
       h('div', { class: 'cross__prediction-actions' }, ...this.predictionButtons),
-      h('p', { class: 'hint' }, '예측을 고른 뒤 교배할 수 있어요. 결과는 자손 덱이 만들어진 후 비교해요.'),
+      h('p', { class: 'hint' }, '예측을 고른 뒤 교배할 수 있어요. 결과는 자손 덱이 만들어진 뒤 비교해요.'),
     );
     this.el = h(
       'div',
@@ -300,9 +300,9 @@ export class CrossView {
     const cold = s.orders[s.orderIdx].boss?.id === 'coldsnap' && !s.jokers.some((j) => j.id === 'climateHouse');
     replaceChildren(this.guidanceBox,
       h('b', null, lesson ? `레아의 예시 · ${lesson.title}` : firstCross ? example ? '레아의 첫 교배 시범' : '레아의 첫 교배 안내' : '선택한 부모의 과육색'),
-      h('span', null, lesson ? lesson.steps.join(' ') : a && b ? parentReason(a, b) : example ? 'RR 부모는 R만, rr 부모는 r만 전달합니다. 자손은 모두 Rr이므로 루비 과육입니다.' : '공개된 유전자형을 확인하고, 의뢰 형질이 나올 부모를 고르세요.'),
-      firstCross ? h('small', null, lesson ? '이번 단원의 예시입니다. [교배 도움]에서 과정을 다시 볼 수 있어요.' : a && b && expectation ? `${colorExpectationText(expectation)}. 예측을 확인하고 직접 교배해 보세요.` : example ? '시범 버튼은 부모와 예측을 채웁니다. [교배하기]는 직접 누르세요.' : '부모를 고르면 공개된 정보로 추론을 도와드려요. 예측하고 직접 교배해 보세요.') : null,
-      cold && expectation ? h('small', null, '위 비율은 정상 감수분열 기준입니다. 냉해 계약에서는 비분리로 달라질 수 있어요.') : null,
+      h('span', null, lesson ? lesson.steps.join(' ') : a && b ? parentReason(a, b) : example ? 'RR 부모는 R만, rr 부모는 r만 전달해요. 자손은 모두 Rr이므로 루비 과육이에요.' : '공개된 유전자형을 확인하고, 의뢰 형질이 나올 부모를 고르세요.'),
+      firstCross ? h('small', null, lesson ? '이번 단원의 예시예요. [교배 도움]에서 과정을 다시 볼 수 있어요.' : a && b && expectation ? `${colorExpectationText(expectation)}. 예측을 확인하고 직접 교배해 보세요.` : example ? '시범 버튼은 부모와 예측을 채워 줘요. [교배하기]는 직접 누르세요.' : '부모를 고르면 공개된 정보로 추론을 도와드려요. 예측하고 직접 교배해 보세요.') : null,
+      cold && expectation ? h('small', null, '위 비율은 정상 감수분열 기준이에요. 냉해 계약에서는 비분리로 달라질 수 있어요.') : null,
     );
   }
 
@@ -319,9 +319,9 @@ export class CrossView {
       content: h('div', { class: 'learning-help' },
         h('section', null,
           h('h3', null, '이번 주문에서 필요한 것'),
-          order.goals?.length ? deliveryGoals(order, s.delivery) : h('p', null, '목표 점수에 맞는 빛깔·무늬·당도 조합을 준비하세요.'),
+          order.goals?.length ? deliveryGoals(order, s.delivery) : h('p', null, '목표 점수에 맞는 빛깔, 무늬, 당도 조합을 준비하세요.'),
           h('p', null, goalRetryHint(order.goals)),
-          order.goals?.some((goal) => goal.trait.minBrix !== undefined) ? h('p', { class: 'hint' }, '당도 납품 조건은 모종의 원래 당도로 셉니다. 비료·가뭄으로 바뀐 출하 당도는 유전되지 않습니다.') : null,
+          order.goals?.some((goal) => goal.trait.minBrix !== undefined) ? h('p', { class: 'hint' }, '당도 납품 조건은 모종의 원래 당도로 세어요. 비료나 가뭄으로 바뀐 출하 당도는 유전되지 않아요.') : null,
         ),
         lesson ? h('section', null, h('h3', null, `이번 단원 예시 · ${lesson.title}`), h('ol', null, ...lesson.steps.map((step) => h('li', null, step)))) : null,
         h('section', null,
@@ -329,18 +329,18 @@ export class CrossView {
           h('p', null, parentReason(a, b)),
           expectation ? h('p', null, expectation.reasoning) : null,
           expectation ? h('p', { class: 'learning-help__result' }, colorExpectationText(expectation)) : null,
-          expectation && order.boss?.id === 'coldsnap' && !s.jokers.some((j) => j.id === 'climateHouse') ? h('p', { class: 'hint' }, '이 비율은 정상 감수분열 기준입니다. 이번 냉해 규칙은 비분리를 늘려 염색체 수와 과육색 분포를 바꿀 수 있어요.') : null,
+          expectation && order.boss?.id === 'coldsnap' && !s.jokers.some((j) => j.id === 'climateHouse') ? h('p', { class: 'hint' }, '이 비율은 정상 감수분열 기준이에요. 이번 냉해 규칙은 비분리를 늘려 염색체 수와 과육색 분포를 바꿀 수 있어요.') : null,
         ),
         h('section', null,
           h('h3', null, '예시 · RR × rr'),
           h('ol', null,
-            h('li', null, 'RR 부모의 배우자는 R, rr 부모의 배우자는 r만 가집니다.'),
-            h('li', null, '두 배우자가 만나면 자손은 모두 Rr입니다.'),
-            h('li', null, 'R이 하나라도 기능하면 루비입니다. 이 교배의 과육색 예측은 루비 100%입니다.'),
+            h('li', null, 'RR 부모의 생식세포는 R, rr 부모의 생식세포는 r만 가져요.'),
+            h('li', null, '두 생식세포가 만나면 자손은 모두 Rr이에요.'),
+            h('li', null, 'R이 하나라도 기능하면 루비예요. 이 교배의 과육색 예측은 루비 100%예요.'),
           ),
-          h('p', { class: 'hint' }, '예시를 다른 부모에게 그대로 적용하지 마세요. Rr × rr에서는 루비·골드가 각각 50%, Rr × Rr에서는 75%·25%로 기대됩니다.'),
+          h('p', { class: 'hint' }, '예시를 다른 부모에게 그대로 적용하지 마세요. Rr × rr에서는 루비와 골드가 각각 50%, Rr × Rr에서는 75%와 25%로 기대돼요.'),
         ),
-        h('p', { class: 'learning-help__note' }, '예측은 교배 전에 세운 생각입니다. 교배 뒤 52개체의 관찰값과 비교하고 다음 부모 선택에 써 보세요.'),
+        h('p', { class: 'learning-help__note' }, '예측은 교배 전에 세운 생각이에요. 교배 뒤 52개체의 관찰값과 비교하고 다음 부모 선택에 써 보세요.'),
       ),
     });
   }

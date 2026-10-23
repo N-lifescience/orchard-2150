@@ -10,6 +10,8 @@ import { h, button, replaceChildren } from '../h';
 import * as fmt from '../fmt';
 import { play, wait, motion } from '../motion';
 import { loadRunReflection, saveRunReflection } from '../runSlots';
+import { ENDING } from '../../game/story';
+import { openLetter } from '../story/ending';
 
 function predictionText(p: PredictionRecord): string {
   const choice = p.choice === 'ruby' ? '루비가 더 많다' : p.choice === 'gold' ? '골드가 더 많다' : '두 빛깔이 비슷하다';
@@ -50,10 +52,10 @@ export class EndScreen {
     audio.play(win ? 'victory' : 'gameOver');
     const pol = POLICIES.find((p) => p.id === s.policy);
     const policyEvidence = s.geneFlow
-      ? `최근 꽃가루 유출: ${s.geneFlow.donor}에서 ${s.geneFlow.recipient}로 전달됐고, 자손 씨 표본에서 형광 형질을 관찰했습니다. 수분받은 성체의 유전자형은 그대로입니다.`
+      ? `최근 꽃가루 유출: ${s.geneFlow.donor}에서 ${s.geneFlow.recipient}로 전달됐고, 자손 씨 표본에서 형광 형질을 관찰했어요. 수분받은 성체의 유전자형은 그대로예요.`
       : s.policy === 'heritage'
-      ? `교배 ${s.stats.crosses}번 중 자가수분은 ${s.stats.selfings}번이었고, 두 부모에 없던 형질은 ${s.stats.recessiveSurprises}번 나타났습니다.`
-      : `편집 ${s.stats.edits}번, 꽃가루 유출 ${s.stats.lmoEvents}번을 기록했습니다. 얻은 형질과 관리에 든 비용을 함께 돌아보세요.`;
+      ? `교배 ${s.stats.crosses}번 중 자가수분은 ${s.stats.selfings}번이었고, 두 부모에 없던 형질은 ${s.stats.recessiveSurprises}번 나타났어요.`
+      : `편집 ${s.stats.edits}번, 꽃가루 유출 ${s.stats.lmoEvents}번을 기록했어요. 얻은 형질과 관리에 든 비용을 함께 돌아보세요.`;
     const counts = HAND_RANK.filter((id) => (s.stats.handCounts[id] ?? 0) > 0).map((id) => [id, s.stats.handCounts[id] ?? 0] as [HandTypeId, number]);
     const order = s.orders[s.orderIdx];
     const record = evidenceRecord(s);
@@ -67,7 +69,7 @@ export class EndScreen {
     const saveWriting = () => {
       reflectInput.value = fmt.sanitizeLine(reflectInput.value);
       const ok = saveRunReflection(saveKey, reflectInput.value);
-      saved.textContent = ok ? '이 연대기에 적어 두었습니다.'
+      saved.textContent = ok ? '이 연대기에 적어 두었어요.'
         : '이 기기에 성찰을 저장하지 못했어요. 글을 복사하거나 플레이 보고서의 텍스트 파일 저장을 눌러 보관해 주세요.';
       return reflectInput.value;
     };
@@ -75,7 +77,7 @@ export class EndScreen {
       h('header', { class: 'end__head' },
         h('div', { class: 'end__kicker' }, `${this.ctx.brand ? this.ctx.brand + ' · ' : ''}${s.playStyle === 'learning' ? '재도전 허용' : '실패 시 종료'} 플레이 기록`),
         h('h1', { class: ['end__title', win ? 'is-win' : 'is-lose'] }, win ? '마지막 계약까지 완수했어요' : '이번 도전은 여기까지예요'),
-        h('p', { class: 'end__sub' }, win ? '모든 계약의 점수와 납품 조건을 충족했습니다. 기록을 근거로 선택을 돌아보세요.' : `시즌 ${s.ante}의 ${order.name}: 목표 ${fmt.score(order.target)}점, 획득 ${fmt.score(s.roundScore)}점. ${s.review?.reason ?? ''}`),
+        h('p', { class: 'end__sub' }, win ? '모든 계약의 점수와 납품 조건을 충족했어요. 기록을 근거로 선택을 돌아보세요.' : `시즌 ${s.ante}의 ${order.name}: 목표 ${fmt.score(order.target)}점, 획득 ${fmt.score(s.roundScore)}점. ${s.review?.reason ?? ''}`),
       ),
       h('div', { class: 'end__body' },
         h('section', { class: 'end__stats panel' },
@@ -91,7 +93,7 @@ export class EndScreen {
             h('dt', null, '발견한 개념'), h('dd', { class: 'num' }, `${s.discoveries.length}개`),
           ),
           counts.length ? h('div', { class: 'end__hands' }, h('div', { class: 'bar__label' }, '족보별 횟수'), h('ul', null, ...counts.map(([id, n]) => h('li', null, h('span', null, HAND_TYPES[id].name), h('b', { class: 'num' }, `${n}`))))) : null,
-          h('p', { class: 'hint' }, '완료한 연대기도 홈에서 다시 열 수 있습니다.'),
+          h('p', { class: 'hint' }, '완료한 연대기도 홈에서 다시 열 수 있어요.'),
         ),
         h('section', { class: 'end__reveal panel' }, h('h2', { class: 'h2' }, '추론과 실제 유전자형 비교'), reveal),
         h('section', { class: 'end__reflect panel panel--gold' },
@@ -109,6 +111,7 @@ export class EndScreen {
         ),
       ),
       h('footer', { class: 'end__btns' },
+        win ? button(ENDING.replayLabel, () => void openLetter(this.ctx), { class: 'btn--ghost' }) : null,
         button('플레이 보고서', () => this.openReport(s, saveWriting()), { class: 'btn--gold' }),
         button('새 연대기', () => this.onAgain(), { class: 'btn--play', 'data-autofocus': '' }),
         button('홈으로', () => this.ctx.goTitle(), { class: 'btn--ghost' }),
@@ -132,7 +135,7 @@ export class EndScreen {
       h('div', { class: 'review-layout' },
         h('section', { class: 'review-result panel' },
           h('h2', { class: 'h2' }, '충족하지 못한 조건'),
-          h('p', { class: 'review-reason' }, review?.reason ?? '계약 조건을 채우지 못했습니다.'),
+          h('p', { class: 'review-reason' }, review?.reason ?? '계약 조건을 채우지 못했어요.'),
           h('dl', { class: 'stats' }, h('dt', null, '획득 / 목표 점수'), h('dd', { class: 'num' }, `${fmt.score(review?.score ?? s.roundScore)} / ${fmt.score(review?.target ?? order.target)}`)),
           h('ul', { class: 'review-goals' }, ...(order.goals ?? []).map((goal) => {
             const count = review?.delivery[goal.id] ?? s.delivery[goal.id] ?? 0;
@@ -143,8 +146,8 @@ export class EndScreen {
           h('h2', { class: 'h2' }, '다음 시도에서 바꿀 것'),
           h('p', { class: 'review-hint' }, review?.hint ?? '계약에서 요구한 형질을 만드는 부모부터 다시 살펴보세요.'),
           s.prediction ? h('p', { class: 'reflect__evidence' }, predictionText(s.prediction)) : null,
-          h('p', { class: 'hint' }, '같은 계약을 처음 상태에서 다시 시작합니다. 이번에 관찰한 결과와 발견한 개념은 기록에 남습니다.'),
-          button('연구 노트 보기', () => this.ctx.open.notes(), { class: 'btn--ghost' }),
+          h('p', { class: 'hint' }, '같은 계약을 처음 상태에서 다시 시작해요. 이번에 관찰한 결과와 발견한 개념은 기록에 남아요.'),
+          button('엘레나의 노트 보기', () => this.ctx.open.notes(), { class: 'btn--ghost' }),
         ),
       ),
       h('footer', { class: 'end__btns' },
@@ -180,7 +183,7 @@ export class EndScreen {
       '2. 같은 계약을 다시 맡으면 부모 선택이나 출하를 무엇부터 바꾸겠어요?',
       '3. 운영 방식에서 얻은 이점과 감수한 대가는 무엇인가요?',
       '', `내 성찰: ${reflection || '(아직 적지 않음)'}`, '',
-      '루미·별다래는 가상의 식물입니다. 게임의 제한된 형질 모형을 실제 생물의 모든 유전에 적용할 수는 없습니다.',
+      '루미와 별다래는 가상의 식물입니다. 게임의 제한된 형질 모형을 실제 생물의 모든 유전에 적용할 수는 없습니다.',
     ].join('\n');
   }
 

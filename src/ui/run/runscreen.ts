@@ -11,6 +11,9 @@ import { ShopView } from './shop';
 import { Sidebar } from './sidebar';
 import { JokerBar, ReagentBar } from './topbar';
 import { ClientVisit } from './client';
+import { StoryDirector } from '../story/director';
+import { revealFlags, type RevealFlags } from '../story/reveal';
+import { REVEAL_LINES } from '../story/script';
 
 type ViewKey = 'cross' | 'play' | 'cashout' | 'select' | 'shop';
 
@@ -27,6 +30,11 @@ export class RunScreen {
   private phaseBox: HTMLElement;
   private current: ViewKey | null = null;
   private client: ClientVisit;
+  private topbar: HTMLElement;
+  readonly story: StoryDirector;
+  private shownTools: RevealFlags | null = null;
+  private revealLines: string[] = [];
+  private pendingGlow: HTMLElement | null = null;
 
   constructor(private ctx: Ctx) {
     this.side = new Sidebar(ctx);
@@ -43,13 +51,41 @@ export class RunScreen {
       return rectIn(this.play.podBtn, ctx.stage);
     };
     this.phaseBox = h('div', { class: 'phase' });
+    this.topbar = h('div', { class: 'topbar' }, this.jokers.el, this.reagents.el);
     this.el = h(
       'div',
       { class: 'run' },
       this.side.el,
-      h('main', { class: 'main', 'aria-label': '작업대' }, h('div', { class: 'topbar' }, this.jokers.el, this.reagents.el), this.phaseBox),
+      h('main', { class: 'main', 'aria-label': '작업대' }, this.topbar, this.phaseBox),
     );
-    this.client = new ClientVisit(ctx, this.el);
+    this.story = new StoryDirector(ctx, this.el);
+    this.client = new ClientVisit(ctx, this.el, (s) => this.story.holds(s));
+  }
+
+  /** 비법 줄·시약 칸·엘레나의 노트 단추는 처음 필요할 때 나타나고, 그 순간 잠깐 빛난다 */
+  private reveal(s: RunState): void {
+    const flags = revealFlags({ ...s, startAnte: this.ctx.game.state.startAnte });
+    const before = this.shownTools;
+    this.shownTools = flags;
+    this.jokers.el.hidden = !flags.jokers;
+    this.reagents.el.hidden = !flags.reagents;
+    this.topbar.hidden = !flags.jokers && !flags.reagents;
+    this.side.setNotesVisible(flags.notes);
+    if (!before) return;
+    const glow = (el: HTMLElement) => {
+      el.classList.remove('is-revealing');
+      void el.offsetWidth;
+      el.classList.add('is-revealing');
+      setTimeout(() => el.classList.remove('is-revealing'), 2600);
+    };
+    if (flags.jokers && !before.jokers) { glow(this.jokers.el); if (!this.ctx.guided) this.revealLines.push(REVEAL_LINES.jokers); }
+    if (flags.reagents && !before.reagents) { glow(this.reagents.el); if (!this.ctx.guided) this.revealLines.push(REVEAL_LINES.reagents); }
+    if (flags.notes && !before.notes) { this.revealLines.push(REVEAL_LINES.notes); this.pendingGlow = this.side.notesButton; }
+    // Lea's one line waits until the discovery card or other windows are closed.
+    if (this.revealLines.length && this.ctx.modals.count === 0 && s.pendingDiscoveries.length === 0) {
+      for (const line of this.revealLines.splice(0)) this.ctx.toast.show(line);
+      if (this.pendingGlow) { glow(this.pendingGlow); this.pendingGlow = null; }
+    }
   }
 
   private viewFor(k: ViewKey): { el: HTMLElement } {
@@ -68,6 +104,7 @@ export class RunScreen {
     this.side.update(s);
     this.jokers.update(s);
     this.reagents.update(s);
+    this.reveal(s);
     const k = RunScreen.keyOf(s.phase);
     if (!k) return;
     const phaseChanged = this.current !== null && k !== this.current;
@@ -106,6 +143,7 @@ export class RunScreen {
         break;
     }
     if (k !== 'play') this.side.preview(null);
+    this.story.update(s);
     this.client.update(s);
     if (phaseChanged && this.ctx.stage.classList.contains('is-responsive')) {
       queueMicrotask(() => {

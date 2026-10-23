@@ -127,7 +127,7 @@ export class ShopView {
 
   private previewOffer(item: Extract<ShopItem, { kind: 'pack' }>): void {
     const choices = item.choices ?? [];
-    const content = h('div', { class: 'offer-preview' }, h('p', { class: 'hint' }, `이 목록에서 ${PACKS[item.pack].picks}개를 고릅니다. 지금 보이는 선택지는 구입 뒤에도 같아요.`));
+    const content = h('div', { class: 'offer-preview' }, h('p', { class: 'hint' }, `이 목록에서 ${PACKS[item.pack].picks}개를 골라요. 지금 보이는 선택지는 구입한 뒤에도 같아요.`));
     for (const choice of choices) {
       let name: string;
       let detail: string;
@@ -169,7 +169,7 @@ export class ShopView {
     if (this.ctx.isBusy() || this.ctx.game.state.pack) return;
     audio.play('select');
     this.sig = '';
-    this.ctx.game.leaveShop();
+    this.ctx.leaveShop();
   }
 
   private renderNext(s: RunState): void {

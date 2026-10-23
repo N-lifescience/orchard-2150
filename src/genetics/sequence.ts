@@ -8,7 +8,7 @@ import { alleleDef, functionalAllele, locusDef } from './species';
 /** 공백 제거·대문자·U→T */
 export function normalizeDna(seq: string): string {
   const s = seq.replace(/\s+/g, '').toUpperCase().replace(/U/g, 'T');
-  if (!/^[ACGT]*$/.test(s)) throw new Error('서열에는 A·T·G·C 만 쓸 수 있어요');
+  if (!/^[ACGT]*$/.test(s)) throw new Error('서열에는 A·T·G·C만 쓸 수 있어요');
   return s;
 }
 
@@ -290,7 +290,7 @@ export function editCoding(
 ): { genome: Genome; result: EditResult } {
   const { functionalId } = refFor(locus, g.species);
   const src = g.chromosomes[group]?.[copyIndex];
-  if (!src) throw new Error(`${group} 의 ${copyIndex}번 사본이 없어요`);
+  if (!src) throw new Error(`${group}의 ${copyIndex}번 사본이 없어요`);
   if (src.alleles[locus] === undefined) throw new Error(`이 염색체 사본에는 ${locus} 자리가 없어요`);
   const result = analyzeCoding(locus, g.species, newSeq);
   const s = normalizeDna(newSeq);
