@@ -462,9 +462,9 @@ body[data-story-beat='on'] { background: #040706; }
 .stage .modal--client { width: min(1000px, 100%); padding: 0; background: #130801; border-color: var(--hud-line); }
 .stage .modal--client > .modal__head { display: none; }
 .stage .client { display: grid; grid-template-columns: minmax(180px, .65fr) minmax(0, 1.35fr); min-height: 0; height: min(530px, calc(100dvh - 60px)); background: transparent; }
-.stage .client__scene { position: relative; min-height: 0; overflow: hidden; border: 0; background: linear-gradient(#13080122, #040706cc), url('/film/intro-poster.webp') center/cover; }
+.stage .client__scene { position: relative; min-height: 0; overflow: hidden; border: 0; background: radial-gradient(ellipse at 50% 30%, #231a0c, #040706); }
 .stage .client__window { display: none; }
-.stage .client__portrait { position: absolute; bottom: 50px; left: 8%; width: 84% !important; height: 74% !important; max-height: 360px; border: 1px solid var(--hud-line); background: #130801; border-radius: 3px; filter: none; box-shadow: none; }
+.stage .client__portrait { position: absolute; inset: 0; width: 100% !important; height: 100% !important; max-height: none; align-items: flex-start; margin: 0; border: 1px solid var(--hud-line); background: #130801; border-radius: 3px; filter: none; box-shadow: none; mask-image: none; }
 .stage .client__arrival { position: absolute; inset: auto 10px 14px; font: 12px/1.4 var(--mono); color: var(--hud-muted); background: #04070699; padding: 8px; border: 1px solid var(--hud-line); border-radius: 2px; }
 .stage .client__dialogue { display: flex; flex-direction: column; gap: 12px; padding: 24px; color: var(--hud-text); background: var(--hud-glass); }
 .stage .client__speaker { display: block; padding: 0; border: 0; }
@@ -715,7 +715,6 @@ body[data-story-beat='on'] { background: #040706; }
   .stage .story__log .page-deck__body { font-size: 14px; }
   .stage .client { display: flex; flex-direction: column; height: auto; }
   .stage .client__scene { height: 160px; }
-  .stage .client__portrait { width: 130px !important; height: 144px !important; inset: 8px auto auto 12px; }
   .stage .client__arrival { left: auto; max-width: calc(100% - 160px); }
   .stage .client__dialogue { padding: 14px; gap: 12px; }
   .stage .client__speech { font-size: 17px; }
