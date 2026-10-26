@@ -130,10 +130,10 @@ describe('특별 계약 의뢰인의 질문과 대답', () => {
     const g = createGame({ storage: null });
     g.newRun({ mode: 'quick', policy: 'heritage', seed: 3 });
     const boss = g.state.orders[2];
-    const lines = clientLines(boss);
+    const lines = clientLines(boss, g.state.playStyle);
     const question = lines.find((line) => line.heading === '손님의 질문');
     expect(question?.text).toBe(BOSS_STORY[boss.boss!.id].question);
-    expect(clientLines(g.state.orders[0]).some((line) => line.heading === '손님의 질문')).toBe(false);
+    expect(clientLines(g.state.orders[0], g.state.playStyle).some((line) => line.heading === '손님의 질문')).toBe(false);
     expect(BOSS_STORY.uniformity.question).toContain('같은 빛깔이면 같은 계통');
   });
 });

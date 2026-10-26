@@ -2,6 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { explainImage, traitBadge } from '../src/ui/traitBadge';
 import { colorPredictionChoices } from '../src/ui/predictionChoices';
 import { conceptPicture, CONCEPT_PICTURES } from '../src/ui/conceptPlate';
+import { CrossView } from '../src/ui/run/cross';
+import { plantCard } from '../src/art';
+import { plantView } from '../src/ui/cards';
+import { describeGenotype } from '../src/genetics';
+import { createGame } from '../src/game';
+import type { Ctx } from '../src/ui/ctx';
 import { difficultyBadge } from '../src/ui/difficultyBadge';
 import type { ConceptId, Difficulty } from '../src/contract/game';
 
@@ -12,17 +18,33 @@ class DomNode extends EventTarget {
   constructor(private text = '') { super(); }
   appendChild(node: DomNode) { this.childNodes.push(node); return node; }
   prepend(...nodes: DomNode[]) { this.childNodes.unshift(...nodes); }
+  get firstChild(): DomNode | undefined { return this.childNodes[0]; }
+  removeChild(node: DomNode) { this.childNodes = this.childNodes.filter(child => child !== node); return node; }
+  contains(node: DomNode | undefined): boolean { return !!node && (node === this || this.childNodes.some(child => child.contains(node))); }
   get textContent(): string { return this.text + this.childNodes.map((node) => node.textContent).join(''); }
+  set textContent(value: string) { this.text = value; this.childNodes = []; }
   get children(): DomElement[] { return this.childNodes.filter((node): node is DomElement => node instanceof DomElement); }
 }
 class DomElement extends DomNode {
   readonly attrs = new Map<string, string>();
   readonly dataset: Record<string, string> = {};
-  readonly style = { setProperty: (_key: string, _value: string) => {} };
+  readonly style = { setProperty: (_key: string, _value: string) => {}, removeProperty: (_key: string) => {} };
+  readonly classList = {
+    add: (name: string) => { this.classList.toggle(name, true); },
+    toggle: (name: string, force?: boolean) => {
+      const classes = new Set((this.getAttribute('class') ?? '').split(/\s+/).filter(Boolean));
+      const enabled = force ?? !classes.has(name);
+      if (enabled) classes.add(name); else classes.delete(name);
+      this.setAttribute('class', [...classes].join(' '));
+      return enabled;
+    },
+  };
   hidden = false;
   disabled = false;
   readonly tagName: string;
   constructor(tag: string) { super(); this.tagName = tag.toUpperCase(); }
+  get className(): string { return this.getAttribute('class') ?? ''; }
+  set className(value: string) { this.setAttribute('class', value); }
   setAttribute(name: string, value: string) { this.attrs.set(name, value); }
   getAttribute(name: string) { return this.attrs.get(name) ?? null; }
 }
@@ -106,5 +128,90 @@ describe('공통 난이도 막대', () => {
     const badge = dom(difficultyBadge('unit'));
     expect(badge.children).toHaveLength(1);
     expect(badge.textContent).toBe('단원 연습');
+  });
+});
+
+describe('교배 화면의 작업 순서와 예측 잠금', () => {
+  const setupCross = () => {
+    const game = createGame({ storage: null });
+    game.newRun({ seed: 4, mode: 'unit-sex', policy: 'heritage', playStyle: 'learning' });
+    const view = new CrossView({ game, isBusy: () => false } as unknown as Ctx);
+    const nodes = descendants(dom(view.el));
+    const find = (name: string) => nodes.find(node => hasClass(node, name))!;
+    return { game, view, nodes, find };
+  };
+  it('부모 카드와 요약 다음에 예측, 마지막에 교배 실행 단추가 온다', () => {
+    const { nodes, find } = setupCross();
+    const garden = nodes.indexOf(find('garden'));
+    const pages = nodes.indexOf(find('garden-pages'));
+    const parents = nodes.indexOf(find('cross__bar'));
+    const prediction = nodes.indexOf(find('cross__prediction'));
+    const actions = nodes.indexOf(find('cross__actions'));
+    expect(garden).toBeLessThan(pages);
+    expect(pages).toBeLessThan(parents);
+    expect(parents).toBeLessThan(prediction);
+    expect(prediction).toBeLessThan(actions);
+    expect(descendants(find('cross__bar')).some(node => node.tagName === 'BUTTON')).toBe(false);
+    expect(descendants(find('cross__actions')).some(node => hasClass(node, 'btn--play'))).toBe(true);
+  });
+  it('카탈로그 스크롤 영역 밖에 넘김과 모든 행동 요소를 둔다', () => {
+    const { find } = setupCross();
+    const catalog = find('cross__catalog');
+    const decision = find('cross__decision');
+    expect(catalog.contains(find('garden'))).toBe(true);
+    expect(catalog.contains(find('garden-pages'))).toBe(false);
+    expect(catalog.contains(decision)).toBe(false);
+    for (const name of ['cross__bar', 'cross__prediction', 'cross__actions']) {
+      expect(decision.contains(find(name))).toBe(true);
+      expect(catalog.contains(find(name))).toBe(false);
+    }
+  });
+  it('조작 안내와 부모 힌트를 카드 앞의 같은 묶음에 보존한다', () => {
+    const { find } = setupCross();
+    const notes = find('cross__catalog-notes');
+    expect(notes.children.map(node => node.getAttribute('class'))).toEqual(['hint', 'cross__guidance']);
+    expect(notes.textContent).toContain('같은 종 두 개체를 고르거나 한 개체를 골라 자가수분하세요.');
+    expect(find('cross__head').contains(notes)).toBe(true);
+    expect(find('garden').contains(notes)).toBe(false);
+  });
+  it('성염색체 단원 카드에 이름, 두 형질과 성염색체를 포함한 유전자형 전체를 남긴다', () => {
+    const { game } = setupCross();
+    for (const plant of game.state.garden.filter(p => p.genome.species === 'stella')) {
+      const card = dom(plantCard(plantView(plant, { glasses: false })));
+      const nodes = descendants(card);
+      const find = (name: string) => nodes.find(node => hasClass(node, name))!;
+      expect(find('sa-plant__title').textContent).toBe(plant.name);
+      expect(find('sa-card__traits').children).toHaveLength(2);
+      expect(find('sa-card__traits').textContent).toContain(plant.pheno.sex === 'M' ? '꽃잎' : '과육');
+      expect(find('sa-card__traits').textContent).toContain('잎');
+      expect(find('sa-geno__text').textContent).toBe(describeGenotype(plant.genome));
+      expect(find('sa-geno__text').textContent).toMatch(/X[XY] [Ll]+$/);
+      expect(find('sa-card__art').children[0].tagName).toBe('IMG');
+    }
+  });
+  it('자가수분 시작도 행동 영역에 남고 예측 뒤에만 활성화된다', () => {
+    const { view, find } = setupCross();
+    view.toggleByKey(5);
+    view.confirm();
+    const self = descendants(find('cross__actions')).find(node => node.textContent === '자가수분 시작')!;
+    expect(self.hidden).toBe(false);
+    expect(self.disabled).toBe(true);
+    const choice = descendants(find('cross__prediction')).find(node => node.dataset.prediction === 'ruby')!;
+    choice.dispatchEvent(new Event('click'));
+    expect(self.disabled).toBe(false);
+    expect(find('cross__decision').contains(self)).toBe(true);
+  });
+  it('부모 둘을 골라도 예측 전에는 실행할 수 없고 부모를 바꾸면 다시 잠긴다', () => {
+    const { view, find } = setupCross();
+    const button = descendants(find('cross__actions')).find(node => hasClass(node, 'btn--play'))!;
+    view.toggleByKey(2);
+    view.toggleByKey(3);
+    expect(find('cross__prediction').hidden).toBe(false);
+    expect(button.disabled).toBe(true);
+    const choice = descendants(find('cross__prediction')).find(node => node.dataset.prediction === 'even')!;
+    choice.dispatchEvent(new Event('click'));
+    expect(button.disabled).toBe(false);
+    view.toggleByKey(1);
+    expect(button.disabled).toBe(true);
   });
 });

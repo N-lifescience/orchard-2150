@@ -266,7 +266,7 @@ app.addEventListener('pointerout', (e) => {
     ['patternArtisan', '무늬 장인', 'common', '무늬 있는 모종마다 +30 칩'],
     ['refractometer', '굴절계', 'uncommon', '모종마다 +(당도−10) 칩'],
     ['purebredCert', '빛깔 인증서', 'rare', '한 빛깔 계열이면 ×3 배수. 순계 인증은 아니에요'],
-    ['heterosis', '잡종강세', 'uncommon', '이형접합 모종이 점수 낼 때마다 +2 배수'],
+    ['heterosis', '이형접합 표지', 'uncommon', 'R, S, L 중 한 자리라도 이형접합인 모종이 점수를 낼 때마다 +2 배수'],
     ['hideAndSeek', '숨바꼭질 대립유전자', 'rare', '두 부모에 안 보이던 형질의 모종마다 ×1.5'],
     ['selfingMaster', '자가수분 명인', 'uncommon', '자가수분 주문이면 ×2 배수'],
     ['breedingLog', '교배 일지', 'uncommon', '열성 표현형 모종을 낼 때마다 영구 +1 배수'],

@@ -4,7 +4,7 @@ import { explainImage, traitBadge } from './traitBadge';
 
 /** Every choice uses one bounded trait frame, including the two-image choice. */
 export function colorPredictionChoices(onChoose: (value: ColorPrediction) => void): HTMLButtonElement[] {
-  return ([['ruby', '루비가 많아요'], ['gold', '골드가 많아요'], ['even', '비슷해요']] as const).map(([value, label]) => {
+  return ([['ruby', '루비 확률이 높아요'], ['gold', '골드 확률이 높아요'], ['even', '같은 확률이에요']] as const).map(([value, label]) => {
     const frame = traitBadge({}, label, false);
     if (value !== 'even') frame.dataset.color = value;
     const colors = value === 'even' ? ['ruby', 'gold'] : [value];

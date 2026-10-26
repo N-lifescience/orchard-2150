@@ -2,7 +2,7 @@
 // 부모의 자손 분포는 게임의 실제 자손 덱와 별개의 고정 표본으로 추정한다.
 import type { DeliveryGoal, Plant, SeedCard } from '../contract/game';
 import { codingSeq, editCoding, formatGenotype, makePod, makeRng, phenotype } from '../genetics';
-import { goalMatches, type GameImpl } from '../game';
+import { meetsCrossRequirement, predictionExpectation, expectedChoice, goalMatches, type GameImpl } from '../game';
 
 export type BotAction =
   | { kind: 'cross'; a: string; b: string }
@@ -173,7 +173,7 @@ function crossScore(g: GameImpl, aId: string, bId: string): number {
   const maxSuit = Math.max(0, ...counts.values()) / sample.length;
   const peak = Math.max(0, ...brixes.values()) / sample.length;
   const quality = 100 * maxSuit + 40 * peak + 3 * mean / sample.length - 30 * (1 - fruitful / sample.length);
-  return 100000 * worst + 10000 * progress + quality;
+  return (meetsCrossRequirement(g.state.orders[g.state.orderIdx], a, b) ? 1e7 : 0) + 100000 * worst + 10000 * progress + quality;
 }
 
 export function bestCross(g: GameImpl): [string, string] | null {
@@ -293,7 +293,11 @@ export function decide(g: GameImpl): BotAction {
 /** 화면 없이 같은 공개된 행동을 적용한다. */
 export function applyDirect(g: GameImpl, a: BotAction): void {
   switch (a.kind) {
-    case 'cross': g.chooseCross(a.a, a.b); break;
+    case 'cross': {
+      const e = predictionExpectation(g.state, g.plantById(a.a), g.plantById(a.b));
+      g.chooseCross(a.a, a.b, e ? expectedChoice(e) : undefined);
+      break;
+    }
     case 'play': g.play(a.uids); break;
     case 'discard': g.discard(a.uids); break;
     case 'edit': g.applyEdit(a.reagentIndex, a.targetId, a.group, a.copyIndex, a.locus, a.newSeq); break;

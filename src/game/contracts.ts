@@ -33,3 +33,25 @@ export function seasonGoals(ante: number, orderIdx: number, policy: PolicyId): D
   const sweetGold = goal('sweet-gold', '기본 당도 16 이상·골드', '앞에서 선발한 당도 형질과 열성 과육색을 한 자손에 모으세요.', { color: 'gold', minBrix: 16, bitter: false });
   return orderIdx === 0 ? [sweetGold] : orderIdx === 1 ? [ruby] : [sweetGold, ruby];
 }
+
+/** 단원 연습은 우연히 얻은 몇 개체와 별개로 부모 조합의 기대 분포를 확인한다. */
+export function unitContract(mode: import('../contract/game').RunMode, ante: number, idx: number): Pick<import('../contract/game').OrderInfo, 'goals' | 'crossRequirement'> | null {
+  if (mode === 'unit-sex') {
+    const patterns = [[1, 0], [0, 0], [1, 1]] as const;
+    const [daughtersMarked, sonsMarked] = patterns[idx];
+    const marked = !!daughtersMarked;
+    return {
+      crossRequirement: { kind: 'sex-linked', daughtersMarked, sonsMarked },
+      goals: [goal('unit-daughters', marked ? '은빛 잎 암그루' : '초록 잎 암그루', '목표 분포를 만드는 부모를 고르고 암그루 모종을 3개체 출하하세요.', { species: 'stella', sex: 'F', marked })],
+    };
+  }
+  if (mode === 'unit-chromo') {
+    const patterns = ante === 5 ? [[3, 'gold'], [4, 'gold'], [3, 'ruby']] as const : [[2, 'gold'], [4, 'ruby'], [3, 'gold']] as const;
+    const [ploidy, color] = patterns[idx];
+    return {
+      crossRequirement: { kind: 'uniform', ploidy, color },
+      goals: [goal('unit-ploidy', `${color === 'gold' ? '골드' : '루비'} 과육 ${ploidy}배체`, '목표 분포를 만드는 부모를 고르고 해당 모종을 3개체 출하하세요.', { species: 'lumi', ploidy, color, bitter: false, ...(ploidy === 3 ? { seedless: true } : {}) })],
+    };
+  }
+  return null;
+}

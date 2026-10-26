@@ -818,3 +818,8 @@
 .sa-reduced-motion .sa-body::after, .sa-reduced-motion .sa-body::before { display: none; }
 .sa-reduced-motion :is(.sa-logo__title, .sa-holo-sweep, .sa-gem__iri, .sa-holo, .sa-badge--lmo, .sa-fruit__lmo) { animation: none !important; }
 .sa-reduced-motion .sa-rarity--legendary .sa-face::after { animation: none !important; }
+
+/* 서로 다른 대립유전자를 표시하는 표지. 생장이나 수확량의 우열을 뜻하지 않는다. */
+.sa-icon--alleles { display: inline-flex; align-items: center; justify-content: center; gap: 4%; background: #16362d; border: 1px solid #b3a16a; border-radius: 16%; font: 700 18px/1 serif; color: #f0d18d; }
+.sa-icon--alleles b { display: grid; place-items: center; width: 36%; height: 66%; border-radius: 30%; border: 1px solid currentColor; }
+.sa-icon--alleles b + b { color: #b0d3c5; }

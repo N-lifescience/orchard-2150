@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { comma, josa, mult, money, sanitizeBrand, sanitizeLine, score, short } from '../src/ui/fmt';
+import { comma, josa, mult, money, sanitizeBrand, sanitizeLine, score, scoreGoalLabel, short } from '../src/ui/fmt';
 
 describe('숫자 표기', () => {
   it('천 단위 쉼표', () => {
@@ -56,5 +56,14 @@ describe('입력 정리 (개인정보 칸)', () => {
   it('성찰 한 줄은 200자까지, 제어문자는 공백으로', () => {
     expect(sanitizeLine('가\n나')).toBe('가 나');
     expect(sanitizeLine('x'.repeat(500)).length).toBe(200);
+  });
+});
+
+describe('점수의 진행 방식별 역할', () => {
+  it('수업의 정산과 재도전 표시는 보너스 기준임을 밝힌다', () => {
+    expect(scoreGoalLabel('learning')).toBe('보너스 기준');
+  });
+  it('도전은 기존 목표 표기를 유지한다', () => {
+    expect(scoreGoalLabel('challenge')).toBe('목표');
   });
 });

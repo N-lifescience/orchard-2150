@@ -10,13 +10,14 @@ import * as fmt from '../fmt';
 import { play, wait, all, rectIn, motion } from '../motion';
 import { fx } from '../rng';
 import { attachTilt } from './hand';
-import { canUseThinking, colorExpectationText, contractExample, deliveryGoals, goalRetryHint, knownColorExpectation, parentReason } from '../learning';
+import { canUseThinking, deliveryGoals, goalRetryHint, knownColorExpectation, parentReason } from '../learning';
 import { exampleSelection, learningTools, memoryFor } from '../learningFlow';
 import { openThinkingHelper } from '../thinkingHelper';
 import { openNoteSheet } from '../story/noteView';
 import { CONCEPT_PICTURES } from '../conceptPlate';
 import { explainImage, traitBadge } from '../traitBadge';
 import { colorPredictionChoices } from '../predictionChoices';
+import { predictionExpectation, expectedChoice } from '../../game/prediction';
 import { locusLetters } from '../cards';
 
 const SUITS: SuitKey[] = ['ruby-m', 'ruby-p', 'gold-m', 'gold-p'];
@@ -50,6 +51,7 @@ export class CrossView {
   private selfBtn: HTMLButtonElement;
   private previewBox: HTMLElement;
   private predictionBox: HTMLElement;
+  private predictionHint = h('p', { class: 'hint' });
   private guidanceBox: HTMLElement;
   private exampleBtn: HTMLButtonElement;
   private helpBtn: HTMLButtonElement;
@@ -89,9 +91,9 @@ export class CrossView {
     });
     replaceChildren(
       this.predictionBox,
-      h('div', { class: 'cross__prediction-title' }, '자손 52개체, 어느 과육색이 많을까요?'),
+      h('div', { class: 'cross__prediction-title' }, '자손은 어느 과육색이 나올 확률이 높을까요?'),
       h('div', { class: 'cross__prediction-actions' }, ...this.predictionButtons),
-      h('p', { class: 'hint' }, '먼저 고르고, 교배 뒤에 비교해요.'),
+      this.predictionHint,
     );
     this.el = h(
       'div',
@@ -100,15 +102,25 @@ export class CrossView {
       h(
         'div',
         { class: 'cross__right' },
-        h('div', { class: 'cross__head' },
-          h('div', { class: 'cross__headrow' }, h('h2', { class: 'h2' }, '교배할 부모 선택'), h('div', { class: 'cross__tools' }, this.exampleBtn, this.helpBtn, this.memoryBtn)),
-          h('p', { class: 'hint' }, '같은 종 두 개체를 고르거나 한 개체를 골라 자가수분하세요.'),
+        h('div', { class: 'cross__catalog' },
+          h('div', { class: 'cross__head' },
+            h('div', { class: 'cross__headrow' }, h('h2', { class: 'h2' }, '교배할 부모 선택'), h('div', { class: 'cross__tools' }, this.exampleBtn, this.helpBtn, this.memoryBtn)),
+            h('div', { class: 'cross__catalog-notes' },
+              h('p', { class: 'hint' }, '같은 종 두 개체를 고르거나 한 개체를 골라 자가수분하세요.'),
+              this.guidanceBox,
+            ),
+          ),
+          this.garden,
         ),
-        this.guidanceBox,
-        this.garden, this.gardenNav,
-        h('div', { class: 'cross__bar' }, this.pickA, h('span', { class: 'cross__x', 'aria-hidden': 'true' }, '×'), this.pickB, this.selfBtn, this.crossBtn),
-        this.reason,
-        h('div', { class: 'cross__insights' }, this.predictionBox, this.previewBox),
+        this.gardenNav,
+        h('div', { class: 'cross__decision' },
+          h('div', { class: 'cross__bar' }, this.pickA, h('span', { class: 'cross__x', 'aria-hidden': 'true' }, '×'), this.pickB),
+          h('div', { class: 'cross__decision-body' },
+            h('div', { class: 'cross__insights' }, this.predictionBox, this.previewBox),
+            this.reason,
+          ),
+          h('div', { class: 'cross__actions' }, this.selfBtn, this.crossBtn),
+        ),
       ),
     );
   }
@@ -210,7 +222,7 @@ export class CrossView {
       h('h2', { class: 'ordercard__name' }, o.name),
       h('p', { class: 'ordercard__client' }, o.client),
       o.goals?.length ? deliveryGoals(o, s.delivery) : o.requestedColor ? traitBadge({ color: o.requestedColor }, `${o.requestedColor === 'ruby' ? '루비' : '골드'} 과육 출하 +$2`) : null,
-      h('div', { class: 'ordercard__target' }, h('span', { class: 'side__label' }, '목표 점수'), h('span', { class: 'num' }, fmt.score(o.target))),
+      h('div', { class: 'ordercard__target' }, h('span', { class: 'side__label' }, s.playStyle === 'learning' ? '추가 보상 점수 (+$2)' : '목표 점수'), h('span', { class: 'num' }, fmt.score(o.target))),
       h('div', { class: 'ordercard__reward' }, `보상 $${o.reward}`),
       o.boss ? h('div', { class: 'ordercard__rule' }, h('b', null, '특별 규칙 '), o.boss.desc) : null,
       s.jokers.some((j) => j.id === 'climateHouse') && o.boss ? h('div', { class: 'ordercard__note' }, '기후 적응 온실 덕분에 특별 규칙을 무시해요.') : null,
@@ -274,22 +286,24 @@ export class CrossView {
     } else {
       reason = '';
     }
-    this.crossBtn.disabled = busy || !okCross || !this.prediction;
+    const parentA = a ? g.plantById(a) : undefined;
+    const parentB = (b || this.selfingSelected) && a ? g.plantById(b ?? a) : undefined;
+    const required = g.state.playStyle === 'learning' && !!predictionExpectation(g.state, parentA, parentB);
+    this.crossBtn.disabled = busy || !okCross || (required && !this.prediction);
     setText(this.selfBtn, this.selfingSelected ? '자가수분 시작' : '자가수분 선택');
-    this.selfBtn.disabled = busy || !okSelf || (this.selfingSelected && !this.prediction);
+    this.selfBtn.disabled = busy || !okSelf || (this.selfingSelected && required && !this.prediction);
     this.selfBtn.hidden = !a || !!b;
     setText(this.reason, reason);
     this.reason.classList.toggle('is-bad', !!reason);
     const pa = a;
     const pb = b ?? (this.selfingSelected && okSelf ? a : undefined);
-    const canPredict = !!pa && !!pb && (b ? okCross : this.selfingSelected && okSelf);
+    const canPredict = !!predictionExpectation(g.state, parentA, parentB) && !!pa && !!pb && (b ? okCross : this.selfingSelected && okSelf);
     this.predictionBox.hidden = !canPredict;
+    setText(this.predictionHint, g.state.playStyle === 'learning' ? '맞히면 이번 계약의 솎아내기 +1이에요. 틀려도 벌점은 없어요.' : '먼저 예측하고 교배 뒤 기대 확률과 실제 개체 수를 비교해 보세요.');
     this.predictionButtons.forEach((btn, i) => btn.setAttribute('aria-pressed', String(this.prediction === (['ruby', 'gold', 'even'] as ColorPrediction[])[i])));
-    const parentA = pa ? g.plantById(pa) : undefined;
-    const parentB = pb ? g.plantById(pb) : undefined;
     const knownParents = !!parentA?.revealed && !!parentB?.revealed;
     const dist = pa && pb && knownParents ? g.preview(pa, pb) : null;
-    this.renderPreview(dist, !!this.prediction && g.state.jokers.some((j) => j.id === 'punnettNote'), !!pa && !!pb && !knownParents);
+    this.renderPreview(dist, g.state.playStyle === 'challenge' && g.state.jokers.some((j) => j.id === 'punnettNote'), !!pa && !!pb && !knownParents);
     this.renderGuidance(parentA, parentB);
   }
 
@@ -320,10 +334,9 @@ export class CrossView {
   private renderGuidance(a: Plant | undefined, b: Plant | undefined): void {
     const s = this.ctx.game.state;
     const tools = learningTools(s);
-    const expectation = knownColorExpectation(a, b);
     const memory = memoryFor(s.orders[s.orderIdx], s.records, s.discoveries);
     this.exampleBtn.hidden = !tools.example || !this.examplePair();
-    setText(this.helpBtn, this.prediction ? '교배 도움' : '생각 도우미');
+    setText(this.helpBtn, '생각 도우미');
     this.helpBtn.hidden = !tools.helper || !this.canThink(a, b);
     this.memoryBtn.hidden = !tools.memory || !memory;
     this.exampleBtn.disabled = this.ctx.isBusy();
@@ -331,8 +344,8 @@ export class CrossView {
     this.guidanceBox.hidden = !tools.helper || (!tools.coach && !a && !b);
     this.guidanceBox.classList.add('is-brief');
     replaceChildren(this.guidanceBox,
-      h('span', null, a && b ? parentReason(a, b, !!this.prediction) : '부모 둘을 골라 주세요.'),
-      this.prediction && expectation ? h('small', null, colorExpectationText(expectation)) : null,
+      h('span', null, a && b ? parentReason(a, b, false) : '부모 둘을 골라 주세요.'),
+      s.jokers.some(j => j.id === 'punnettNote') ? h('small', null, '퍼넷 노트의 기대 분포는 교배 뒤 [자손 덱]에서 확인해요.') : null,
       tools.autoMemory && memory ? this.memoryLink(memory) : null);
     const key = `${this.ctx.game.getSaveKey()}:${s.seed}:${s.ante}:${s.orderIdx}:${s.orderAttempt}`;
     if (tools.autoHelper && this.canThink(a, b) && !this.prediction && this.autoHelpKey !== key) {
@@ -364,16 +377,7 @@ export class CrossView {
     const a = this.ctx.game.plantById(this.sel[0] ?? '');
     const b = this.ctx.game.plantById(this.sel[1] ?? (this.selfingSelected ? this.sel[0] : '') ?? '');
     const expectation = knownColorExpectation(a, b);
-    if (!this.prediction) {
-      if (expectation && this.canThink(a, b)) openThinkingHelper(this.ctx, [expectation.a, expectation.b]);
-      return;
-    }
-    const lesson = contractExample(s.orders[s.orderIdx], true);
-    this.ctx.modals.open({ title: '교배 도움', content: h('div', { class: 'learning-help' },
-      h('p', null, parentReason(a, b, true)),
-      expectation ? h('p', null, colorExpectationText(expectation)) : null,
-      lesson ? h('ol', null, ...lesson.steps.map((step) => h('li', null, step))) : null,
-      h('p', { class: 'hint' }, '교배 뒤 실제 자손 수와 비교해 보세요.')) });
+    if (expectation && this.canThink(a, b)) openThinkingHelper(this.ctx, [expectation.a, expectation.b]);
   }
 
   private renderPreview(d: Distribution | null, has: boolean, unknownParents = false): void {
@@ -441,7 +445,7 @@ export class CrossView {
     const a = pair?.[0] ?? this.sel[0];
     const b = pair?.[1] ?? (selfing ? this.sel[0] : this.sel[1]);
     if (!a || !b) return;
-    if (!pair && !this.prediction) {
+    if (!pair && g.state.playStyle === 'learning' && predictionExpectation(g.state, g.plantById(a), g.plantById(b)) && !this.prediction) {
       this.ctx.toast.error('교배 결과를 먼저 예측해 주세요.');
       return;
     }
@@ -456,7 +460,8 @@ export class CrossView {
       const stageEl = this.ctx.stage;
       const ra = ea ? rectIn(ea, stageEl) : null;
       const rb = eb ? rectIn(eb, stageEl) : null;
-      g.chooseCross(a, b, pair ? undefined : this.prediction ?? undefined);
+      const expected = predictionExpectation(g.state, g.plantById(a), g.plantById(b));
+      g.chooseCross(a, b, pair && expected ? expectedChoice(expected) : this.prediction ?? undefined);
       if (g.state.phase !== 'play') return;
       audio.play('cross');
       await this.pollen(ra, rb);

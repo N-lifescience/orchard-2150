@@ -12,7 +12,7 @@ import { QUIZ_UI } from './script';
 
 export function openSeasonQuiz(ctx: Ctx, season: number, final: boolean): Promise<boolean> {
   return new Promise((resolve) => {
-    const questions = quizFor(season, ctx.game.state.policy);
+    const questions = quizFor(season, ctx.game.state.policy, ctx.game.state.mode);
     if (!questions.length) {
       ctx.game.passQuiz(season);
       resolve(true);

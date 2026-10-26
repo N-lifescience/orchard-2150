@@ -56,10 +56,11 @@ import {
   UPGRADE_ORDER,
 } from './content';
 import { marketPlant, rarePlant, rescuePlant, seasonMaterials, starterGarden, type PlantSeed } from './plants';
-import { seasonGoals } from './contracts';
-import { countDelivery, deliveryComplete, deliveryProgressText, goalHint } from './learning';
+import { seasonGoals, unitContract } from './contracts';
+import { countDelivery, deliveryComplete, deliveryProgressText, goalHint, meetsCrossRequirement, crossRequirementText } from './learning';
 import { cardSuit, classify, effBrix, handBase, isSurprise, scoreHand, type ScoreCtx } from './rules';
 import { difficultyBonus, inferDifficulty } from './difficulty';
+import { predictionExpectation, expectedChoice } from './prediction';
 import { legacyQuizPassed, quizDueFor } from './quiz';
 
 export const SAVE_KEY = 'seed-atelier-2150:save:v1';
@@ -115,6 +116,7 @@ export interface InternalState extends RunState {
   suppliedSeasons: number[];
   /** 시즌 끝 확인 질문을 모두 맞힌 시즌 (점수·보상·실패 기록과 무관) */
   quizPassed: number[];
+  predictionBonusUsed?: boolean;
 }
 
 /** 계약 Game + 점수 미리보기(상태를 바꾸지 않음) */
@@ -469,7 +471,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
   function startAnte() {
     const r = rng();
     if (!st.suppliedSeasons.includes(st.ante)) {
-      const materials = seasonMaterials(st.ante, st.policy, r).filter((seed) => !st.garden.some((p) => p.name === seed.name));
+      const materials = (st.mode === 'unit-sex' || st.mode === 'unit-chromo' ? [] : seasonMaterials(st.ante, st.policy, r)).filter((seed) => !st.garden.some((p) => p.name === seed.name));
       for (const seed of materials) st.garden.push(makePlant(seed, 'starter', 1));
       if (materials.length) {
         st.gardenCap = Math.max(st.gardenCap, st.garden.length);
@@ -496,6 +498,8 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
     ];
     for (const [idx, current] of st.orders.entries()) {
       current.goals = seasonGoals(st.ante, idx, st.policy);
+      const unit = unitContract(st.mode, st.ante, idx);
+      if (unit) Object.assign(current, unit);
       const color = current.goals.find((goal) => goal.trait.color)?.trait.color;
       if (current.kind !== 'boss') {
         current.requestedColor = color;
@@ -526,6 +530,8 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
     st.seen = [];
     st.cross = null;
     st.prediction = null;
+    st.crossRequirementMet = undefined;
+    st.predictionBonusUsed = false;
     st.requestFulfilled = false;
     st.delivery = {};
     st.orderAttempt = 1;
@@ -626,9 +632,15 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
     };
   }
 
+  function contractCleared(score: number, delivery: Record<string, number>): boolean {
+    const current = order();
+    const learning = st.playStyle === 'learning' && !!current.goals?.length;
+    return (learning || score >= current.target) && deliveryComplete(current, delivery) && st.crossRequirementMet !== false;
+  }
+
   function gameOver(msg: string) {
     const missing = (order().goals ?? []).find((goal) => (st.delivery[goal.id] ?? 0) < goal.count);
-    st.review = { reason: msg, score: st.roundScore, target: order().target, delivery: { ...st.delivery }, hint: missing ? goalHint(missing) : '형질은 납품했어요. 같은 빛깔이나 당도 조합을 모으고, 비법과 연구 레벨의 효과를 확인해 보세요.', attempt: st.orderAttempt };
+    st.review = { reason: msg, score: st.roundScore, target: order().target, delivery: { ...st.delivery }, hint: st.crossRequirementMet === false ? `${crossRequirementText(order())}. 부모의 유전자형과 염색체 조 수를 다시 비교해 보세요.` : missing ? goalHint(missing) : '형질은 납품했어요. 같은 빛깔이나 당도 조합을 모으고, 비법과 연구 레벨의 효과를 확인해 보세요.', attempt: st.orderAttempt };
     recordOrder(false);
     st.phase = st.playStyle === 'learning' ? 'review' : 'gameover';
     toast(msg);
@@ -636,7 +648,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
 
   function recordOrder(cleared: boolean) {
     const current = order();
-    st.records.push({ ante: st.ante, orderIdx: st.orderIdx, name: current.name, prediction: st.prediction ? { ...st.prediction } : null, parents: st.cross ? [plantById(st.cross.a)?.name ?? '', plantById(st.cross.b)?.name ?? ''] : null, parentGenotypes: st.crossInfo?.genotypes, goals: structuredClone(current.goals ?? []), delivery: { ...st.delivery }, score: st.roundScore, target: current.target, attempt: st.orderAttempt, cleared });
+    st.records.push({ ante: st.ante, orderIdx: st.orderIdx, name: current.name, prediction: st.prediction ? { ...st.prediction } : null, parents: st.cross ? [plantById(st.cross.a)?.name ?? '', plantById(st.cross.b)?.name ?? ''] : null, parentGenotypes: st.crossInfo?.genotypes, crossRequirement: current.crossRequirement, crossRequirementMet: st.crossRequirementMet, goals: structuredClone(current.goals ?? []), delivery: { ...st.delivery }, score: st.roundScore, target: current.target, attempt: st.orderAttempt, cleared });
   }
 
   // ── 상점 도우미 ────────────────────────────────────────────
@@ -922,10 +934,10 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
     },
 
     preview(aId, bId) {
-      if (!hasJoker('punnettNote')) return null;
+      if (!hasJoker('punnettNote') || (st.playStyle === 'learning' && st.phase === 'cross')) return null;
       const a = plantById(aId);
       const b = plantById(bId);
-      if (!a || !b || !game.canCross(aId, bId).ok) return null;
+      if (!a?.revealed || !b?.revealed || !game.canCross(aId, bId).ok) return null;
       return expectedDistribution(a.genome, b.genome, 400, mixSeed(st.seed, hashStr(`${aId}|${bId}`)));
     },
 
@@ -939,6 +951,12 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
       }
       const a = plantById(aId)!;
       const b = plantById(bId)!;
+      const expected = predictionExpectation(st, a, b);
+      if (st.playStyle === 'learning' && expected && !['ruby', 'gold', 'even'].includes(prediction ?? '')) {
+        toast('과육색의 기대 확률을 먼저 예측해 주세요.');
+        notify();
+        return;
+      }
       const r = rng();
       const nd = nondisjunctionRate();
       let genomes: Genome[];
@@ -953,19 +971,23 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
       const envMod = boss?.id === 'drought' ? -3 : 0;
       const selfing = aId === bId;
       st.cross = { a: aId, b: bId, selfing };
+      st.crossRequirementMet = meetsCrossRequirement(order(), a, b);
       st.crossInfo = { species: a.genome.species, phenoA: a.pheno, phenoB: b.pheno, genA: a.generation, genB: b.generation, genotypes: [a.revealed ? describeGenotype(a.genome) : '교배 당시 비공개', b.revealed ? describeGenotype(b.genome) : '교배 당시 비공개'] };
       st.pod = genomes.map((g) => makeCard(g, envMod));
       st.podTotal = st.pod.length;
       st.prediction = prediction ? {
         choice: prediction,
+        ...(expected ? { expected: { ruby: expected.ruby, gold: expected.gold }, correct: prediction === expectedChoice(expected), discardBonus: st.playStyle === 'learning' && !st.predictionBonusUsed && prediction === expectedChoice(expected) } : {}),
         ruby: st.pod.filter((c) => c.pheno.color === 'ruby').length,
         gold: st.pod.filter((c) => c.pheno.color === 'gold').length,
       } : null;
+      if (st.prediction?.discardBonus) { st.discardsLeft++; st.predictionBonusUsed = true; }
       st.stats.crosses++;
       if (selfing) {
         st.stats.selfings++;
         discover('selfing');
       }
+      if (a.genome.ploidy > 2 || b.genome.ploidy > 2) discover('polyploid');
       if (a.genome.species === 'stella') discover('dioecy');
       if (envMod !== 0) discover('environment');
       st.phase = 'play';
@@ -987,7 +1009,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
       const cards = handCards(uids);
       if (!cards) return null;
       const res = scoreHand(cards, scoreCtx());
-      res.trace.cleared = st.roundScore + res.trace.total >= order().target && deliveryComplete(order(), countDelivery(order(), st.delivery, cards));
+      res.trace.cleared = contractCleared(st.roundScore + res.trace.total, countDelivery(order(), st.delivery, cards));
       return res.trace;
     },
 
@@ -1016,13 +1038,13 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
       const played = new Set(uids);
       st.hand = st.hand.filter((c) => !played.has(c.uid));
       const target = order().target;
-      t.cleared = st.roundScore >= target && deliveryComplete(order(), st.delivery);
+      t.cleared = contractCleared(st.roundScore, st.delivery);
       if (t.cleared) {
         recordOrder(true);
         st.phase = 'cashout';
       } else if (st.handsLeft <= 0) {
         const points = Math.max(0, target - st.roundScore);
-        gameOver(points ? `출하를 다 썼어요. 목표까지 ${points}점 모자라고, 납품은 ${deliveryProgressText(order(), st.delivery)}이에요.` : `목표 점수는 넘겼지만 필수 형질을 더 납품해야 해요: ${deliveryProgressText(order(), st.delivery)}.`);
+        gameOver(st.crossRequirementMet === false ? `선택한 부모는 목표 기대 분포를 만들지 못해요. ${crossRequirementText(order())}.` : st.playStyle === 'learning' ? `출하를 다 썼어요. 필수 납품은 ${deliveryProgressText(order(), st.delivery)}이에요.` : points ? `출하를 다 썼어요. 목표까지 ${points}점 모자라고, 납품은 ${deliveryProgressText(order(), st.delivery)}이에요.` : `목표 점수는 넘겼지만 필수 형질을 더 납품해야 해요: ${deliveryProgressText(order(), st.delivery)}.`);
       } else {
         drawToHand();
         if (st.hand.length === 0) gameOver('자손 덱에 남은 개체가 없어요.');
@@ -1077,6 +1099,7 @@ export function createGame(opts: CreateGameOptions = {}): GameImpl {
     cashoutLines() {
       const o = order();
       const lines: CashoutLine[] = [{ label: `${o.name} 보상`, amount: o.reward }];
+      if (st.playStyle === 'learning' && st.roundScore >= o.target) lines.push({ label: '점수 목표 달성 보너스', amount: 2 });
       if (o.requestedColor && st.requestFulfilled) lines.push({ label: '의뢰한 빛깔 출하 보너스', amount: 2 });
       if (st.handsLeft > 0) lines.push({ label: `남은 출하 ${st.handsLeft}개`, amount: st.handsLeft });
       const cap = 5 + 5 * countJoker('seedVault');

@@ -187,7 +187,7 @@ export class ShopView {
       idx = 0;
     }
     if (idx === 0) {
-      replaceChildren(this.nextBox, h('div', { class: 'next__kicker' }, '다음'), h('div', { class: 'next__name' }, `시즌 ${ante} 시작`), h('p', { class: 'hint' }, '새 시즌의 주문 세 개가 기다려요. 목표 점수가 올라가요.'));
+      replaceChildren(this.nextBox, h('div', { class: 'next__kicker' }, '다음'), h('div', { class: 'next__name' }, `시즌 ${ante} 시작`), h('p', { class: 'hint' }, `새 시즌의 주문 세 개가 기다려요. ${fmt.scoreGoalLabel(s.playStyle)} 점수가 올라가요.`));
       return;
     }
     const o = s.orders[idx];
@@ -198,7 +198,7 @@ export class ShopView {
       h('div', { class: 'next__name' }, o.name),
       dossier(o.client, 48),
       o.goals?.length ? deliveryGoals(o, {}, true) : null,
-      h('div', { class: 'next__target' }, `목표 ${fmt.score(o.target)} · 보상 $${o.reward}`),
+      h('div', { class: 'next__target' }, `${fmt.scoreGoalLabel(s.playStyle)} ${fmt.score(o.target)} · 보상 $${o.reward}`),
       o.requestedColor ? h('div', { class: 'next__request' }, `요청 과육: ${o.requestedColor === 'ruby' ? '루비빛' : '골드빛'} · 출하 시 +$2`) : null,
       o.boss ? h('div', { class: 'next__rule' }, o.boss.desc) : null,
       idx === 1 && s.orders[2].boss ? h('div', { class: 'next__later' }, `그다음 특별 주문: ${s.orders[2].name}`) : null,

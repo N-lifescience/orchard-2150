@@ -1,6 +1,6 @@
 // 레아의 말풍선 안내 — 한 번에 한 문장, 단계 막대, 실제 조작부 옆 말풍선. 단계는 실제 조작으로만 넘어간다.
 // 화면 전체를 어둡게 하고 지금 말하는 곳만 밝힌다. 모달·이야기 장면이 열리면 잠시 숨는다.
-import type { RunState } from '../contract/game';
+import type { PlayStyle, RunState } from '../contract/game';
 import leaPortrait from '../art/assets/generated/lea-guide.webp';
 import { button, h, replaceChildren, setText } from './h';
 import { COACH_UI } from './story/script';
@@ -10,7 +10,7 @@ const TARGETS: Record<TutorialTarget, string> = {
   goal: '.side__target', limits: '.side__stats', home: '.side__home',
   jokers: '.jokers', reagents: '.reagents', 'shop-cards': '.view--shop .shop__cards',
   'parent-first': '.garden .gslot:nth-child(1)', 'parent-second': '.garden .gslot:nth-child(2)',
-  prediction: '.cross__prediction-actions', cross: '.cross__bar .btn--play', observation: '.play__prediction',
+  prediction: '.cross__prediction-actions', cross: '.cross__actions .btn--play', observation: '.play__prediction',
   pod: '.view--play .pod', sort: '.view--play .sortbox', discard: '.actions .btn--discard',
   hand: '.hand .slot:not(.is-selected)', shipment: '.actions .btn--play', cashout: '.cash .btn--gold',
   selection: '.sel__grid .sslot', shop: '.shop__side .btn--play', review: '.end__btns .btn--play', none: '',
@@ -39,6 +39,7 @@ export class PracticeCoach {
   private hint: HTMLElement;
   private step: TutorialStep | null = null;
   private sentence = 0;
+  private playStyle: PlayStyle = 'learning';
   private target: HTMLElement | null = null;
   private busy = false;
   private raf = 0;
@@ -90,8 +91,9 @@ export class PracticeCoach {
   }
 
   update(step: TutorialStep, state: RunState, feedback: string, busy: boolean): void {
-    const info = tutorialStep(step);
-    const changed = this.step !== step;
+    const info = tutorialStep(step, state.playStyle);
+    const changed = this.step !== step || this.playStyle !== state.playStyle;
+    this.playStyle = state.playStyle;
     this.busy = busy;
     this.overlay.classList.toggle('is-busy', busy);
     this.overlay.dataset.step = step;
@@ -114,12 +116,12 @@ export class PracticeCoach {
   }
 
   private onLastSentence(): boolean {
-    return !!this.step && this.sentence >= tutorialStep(this.step).lines.length - 1;
+    return !!this.step && this.sentence >= tutorialStep(this.step, this.playStyle).lines.length - 1;
   }
 
   private drawSentence(): void {
     if (!this.step) return;
-    const info = tutorialStep(this.step);
+    const info = tutorialStep(this.step, this.playStyle);
     const line = info.lines[Math.min(this.sentence, info.lines.length - 1)];
     setText(this.line, line.text);
     const actions: HTMLElement[] = [];
@@ -201,7 +203,7 @@ export class PracticeCoach {
 
   private resolveTarget(): HTMLElement | null {
     if (!this.step) return null;
-    const info = tutorialStep(this.step);
+    const info = tutorialStep(this.step, this.playStyle);
     const line = info.lines[Math.min(this.sentence, info.lines.length - 1)];
     let target = this.find(line.target ?? info.target) ?? (line.target ? this.find(info.target) : null);
     if (this.step === 'keep' && this.onLastSentence()) {

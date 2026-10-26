@@ -56,18 +56,21 @@ export function starterGarden(mode: RunMode, r: Rng): PlantSeed[] {
       ];
     case 'unit-sex':
       return [
-        stella('은빛 잎 루비 암그루', `R:Rr sex:XX L:Ll ${midQ(r)}`, true),
+        stella('은빛 잎 루비 암그루', `R:Rr sex:XX L:LL ${midQ(r)}`, true),
         stella('초록 잎 골드 암그루', `R:rr sex:XX L:ll ${midQ(r)}`, true),
         stella('은빛 잎 루비 수그루', `R:Rr sex:XY L:L ${midQ(r)}`, true),
         stella('초록 잎 골드 수그루', `R:rr sex:XY L:l ${midQ(r)}`, true),
         lumi('엘레나 로시의 루비 별', ROSSI_RUBY, true),
+        lumi('엘레나 로시의 골드', ROSSI_GOLD, true),
       ];
     case 'unit-chromo':
       return [
-        lumi('거대 루미 (4n)', 'R:RRrr S:SSss B:bbbb Q1:++-- Q2:+++- Q3:+-+- Q4:--++ Q5:++-- Q6:+---', true),
+        lumi('골드 연구 계통 (4n)', 'R:rrrr S:ssss B:bbbb Q1:++++ Q2:++++ Q3:++++ Q4:++++ Q5:++++ Q6:++++', true),
+        lumi('루비 연구 계통 (4n)', 'R:RRRR S:SSSS B:bbbb Q1:++++ Q2:++++ Q3:++++ Q4:++++ Q5:++++ Q6:++++', true),
         lumi('엘레나 로시의 루비 별', ROSSI_RUBY, true),
         lumi('엘레나 로시의 골드', ROSSI_GOLD, true),
-        lumi('마테오 비앙키의 향기', BIANCHI_SCENT, false),
+        lumi('레아의 이형접합 계통', `R:Rr S:Ss B:bb ${midQ(r)}`, true),
+        lumi('마테오 비앙키의 향기', BIANCHI_SCENT, true),
       ];
     case 'unit-edit':
       return [

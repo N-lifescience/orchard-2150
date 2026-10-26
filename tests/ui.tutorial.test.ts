@@ -56,6 +56,20 @@ describe('실제 조작으로만 넘어가는 첫 계약 튜토리얼', () => {
     expect(targetsIn('complete')).toContain('home');
   });
 
+  it('수업 첫 안내는 납품 완료와 점수 추가 보상을 구별한다', () => {
+    const lines = tutorialStep('parent-first', 'learning').lines.map(line => line.text);
+    expect(lines[0]).toBe('루비 과육 3개체를 납품하면 계약이 끝나요.');
+    expect(lines[1]).toBe('300점 이상이면 보상으로 $2를 더 받아요.');
+    expect(lines).not.toContain('루비 과육 3개체와 300점을 채워요.');
+  });
+
+  it('도전 첫 안내의 기존 점수와 납품 조건은 그대로다', () => {
+    expect(tutorialStep('parent-first', 'challenge').lines.map(line => line.text)).toEqual([
+      '루비 과육 3개체와 300점을 채워요.',
+      'RR인 할머니의 루비 별을 눌러 주세요.',
+    ]);
+  });
+
   it('예측 단계는 교배 결과를 미리 말하지 않는다', () => {
     const text = tutorialStep('predict').lines.map((line) => line.text).join(' ');
     expect(text).not.toMatch(/모두 Rr|모두 루비|전부 루비|52개체 모두/);
@@ -118,7 +132,7 @@ describe('실제 조작으로만 넘어가는 첫 계약 튜토리얼', () => {
     const startingGarden = game.state.garden.length;
     const [ruby, gold] = game.state.garden;
     game.chooseCross(ruby.id, gold.id, 'ruby');
-    expect(game.state.prediction).toEqual({ choice: 'ruby', ruby: 52, gold: 0 });
+    expect(game.state.prediction).toMatchObject({ choice: 'ruby', ruby: 52, gold: 0, correct: true });
     game.sortHand('brix');
     const result = game.play(game.state.hand.slice(0, 5).map((card) => card.uid));
     expect(result.cleared).toBe(true);

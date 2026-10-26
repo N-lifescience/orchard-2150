@@ -27,7 +27,7 @@ export class ClientVisit {
     this.workbench.inert = true;
 
     const order = s.orders[s.orderIdx];
-    const lines = clientLines(order);
+    const lines = clientLines(order, s.playStyle);
     const name = characterName(order.client) ?? order.client.split(' · ')[0];
     const portrait = characterPortrait(order.client, 360);
     portrait.classList.add('client__portrait');

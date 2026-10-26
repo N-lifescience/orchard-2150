@@ -106,6 +106,7 @@ export interface DeliveryGoal {
   detail: string;
   count: number;
   trait: {
+    ploidy?: number;
     color?: FruitColor;
     marked?: boolean;
     species?: SpeciesId;
@@ -135,6 +136,8 @@ export interface OrderRecord {
   prediction: PredictionRecord | null;
   parents: [string, string] | null;
   parentGenotypes?: [string, string];
+  crossRequirement?: CrossRequirement;
+  crossRequirementMet?: boolean;
   goals: DeliveryGoal[];
   delivery: Record<string, number>;
   score: number;
@@ -143,7 +146,13 @@ export interface OrderRecord {
   cleared: boolean;
 }
 
+export type CrossRequirement =
+  | { kind: 'sex-linked'; daughtersMarked: 0 | 1; sonsMarked: 0 | 1 }
+  | { kind: 'uniform'; ploidy: 2 | 3 | 4; color: FruitColor };
+
 export interface OrderInfo {
+  /** 단원 연습: 표본 운과 별개로, 부모가 만드는 기대 분포를 확인한다. */
+  crossRequirement?: CrossRequirement;
   kind: 'small' | 'big' | 'boss';
   name: string; // '지역 납품', '도시 계약', 특별 주문 이름
   client: string; // 의뢰인 한 줄
@@ -158,6 +167,10 @@ export interface OrderInfo {
 export type ColorPrediction = FruitColor | 'even';
 export interface PredictionRecord {
   choice: ColorPrediction;
+  /** 옛 저장의 관찰 전용 기록에는 없을 수 있다. */
+  expected?: { ruby: number; gold: number };
+  correct?: boolean;
+  discardBonus?: boolean;
   ruby: number;
   gold: number;
 }
@@ -219,6 +232,7 @@ export interface RunState {
   prediction: PredictionRecord | null;
   requestFulfilled: boolean;
   delivery: Record<string, number>;
+  crossRequirementMet?: boolean;
   orderAttempt: number;
   review: OrderReview | null;
   records: OrderRecord[];

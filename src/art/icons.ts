@@ -1,3 +1,4 @@
+import { H } from './dom';
 import { JOKERS, REAGENTS } from '../game/content';
 import { atlases, sprite } from './raster';
 
@@ -8,6 +9,16 @@ export const REAGENT_ICON_IDS: string[] = ['genetest', 'colchicine', 'scissors',
 export function jokerIcon(id: string, size = 64): HTMLElement {
   const index = JOKER_ICON_IDS.indexOf(id);
   const def = JOKERS.find((def) => def.id === id);
+  if (id === 'heterosis') {
+    const icon = H('span', 'sa-icon sa-icon--joker sa-icon--alleles');
+    icon.style.width = `${size}px`;
+    icon.style.height = `${size}px`;
+    icon.setAttribute('role', 'img');
+    icon.setAttribute('aria-label', def?.name ?? '이형접합 표지');
+    icon.dataset.icon = id;
+    icon.append(H('b', undefined, 'R'), H('b', undefined, 'r'));
+    return icon;
+  }
   const icon = sprite(atlases.jokers, index < 0 ? 23 : index, size, def?.name ?? '육종 도구', 'sa-icon sa-icon--joker');
   icon.dataset.icon = def?.id ?? '_default';
   return icon;

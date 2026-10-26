@@ -1,44 +1,11 @@
 import type { DeliveryGoal, OrderInfo, Plant, SeedCard } from '../contract/game';
-import { deliveryComplete, goalHint, goalMatches } from '../game';
-import { locusLetters } from './cards';
+import { deliveryComplete, goalHint, goalMatches, crossRequirementText } from '../game';
 import { h } from './h';
 import { crossGuidance } from './learningFlow';
 import { traitBadge } from './traitBadge';
 
-/** 공개된 두 부모의 2배체 R 자리만으로 계산한 과육색 확률. */
-export interface ColorExpectation {
-  ruby: number;
-  gold: number;
-  a: string;
-  b: string;
-  offspring: string;
-  reasoning: string;
-}
-
-export function knownColorExpectation(a: Plant | undefined, b: Plant | undefined): ColorExpectation | null {
-  if (!a?.revealed || !b?.revealed || a.genome.species !== b.genome.species) return null;
-  if (a.genome.ploidy !== 2 || b.genome.ploidy !== 2 || a.pheno.aneuploid || b.pheno.aneuploid) return null;
-  if ([a, b].some((p) => Object.values(p.genome.chromosomes).some((copies) => copies.some((copy) => Object.keys(copy.seqs ?? {}).length)))) return null;
-  const aa = locusLetters(a.genome, 'R');
-  const bb = locusLetters(b.genome, 'R');
-  if (!/^[Rr]{2}$/.test(aa) || !/^[Rr]{2}$/.test(bb)) return null;
-  const counts: Record<string, number> = { RR: 0, Rr: 0, rr: 0 };
-  for (const x of aa) for (const y of bb) counts[[x, y].sort().join('')]++;
-  const gold = counts.rr / 4;
-  const offspring = Object.entries(counts).filter(([, n]) => n > 0)
-    .map(([letters, n]) => `${letters} ${n === 4 ? '100%' : `${n * 25}%`}`).join(' · ');
-  const gametes = (letters: string) => letters[0] === letters[1]
-    ? `${letters}는 ${letters[0]}만 전달해요`
-    : 'Rr는 R과 r을 각각 50% 확률로 전달해요';
-  return {
-    ruby: 1 - gold, gold, a: aa, b: bb, offspring,
-    reasoning: `${gametes(aa)}. ${aa === bb ? '' : `${gametes(bb)}. `}자손에게 기능 있는 R이 하나라도 있으면 루비, 없으면 골드예요.`,
-  };
-}
-
-export function colorExpectationText(expectation: ColorExpectation): string {
-  return `기대: 루비 ${Math.round(expectation.ruby * 100)}% · 골드 ${Math.round(expectation.gold * 100)}%`;
-}
+import { knownColorExpectation } from '../game/prediction';
+export { knownColorExpectation, colorExpectationText } from '../game/prediction';
 
 export function parentReason(a: Plant | undefined, b: Plant | undefined, predicted = false): string {
   if (!a || !b) return '부모를 고른 뒤 공개된 유전자형으로 자손의 과육색을 예상해 보세요.';
@@ -52,7 +19,8 @@ export function parentReason(a: Plant | undefined, b: Plant | undefined, predict
 export function deliveryGoals(order: OrderInfo, delivery: Record<string, number>, compact = false): HTMLElement {
   const complete = deliveryComplete(order, delivery);
   return h('div', { class: ['delivery-goals', compact && 'delivery-goals--compact', complete && 'is-complete'] },
-    h('div', { class: 'delivery-goals__head' }, compact ? '필수 납품' : '필수 납품 · 점수와 함께 채우세요'),
+    h('div', { class: 'delivery-goals__head' }, '필수 납품'),
+    order.crossRequirement ? h('p', { class: 'delivery-goals__cross' }, crossRequirementText(order)) : null,
     ...(order.goals ?? []).map((goal) => {
       const sent = Math.min(goal.count, delivery[goal.id] ?? 0);
       const done = sent >= goal.count;

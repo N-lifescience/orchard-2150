@@ -1,4 +1,10 @@
 // 숫자·문구 표기 — DOM 없는 순수 함수 (tests/ui.fmt.test.ts)
+import type { PlayStyle } from '../contract/game';
+
+/** 수업 점수는 추가 보상 기준이며, 도전 점수는 완료 목표다. */
+export function scoreGoalLabel(playStyle: PlayStyle): string {
+  return playStyle === 'learning' ? '보너스 기준' : '목표';
+}
 
 /** 천 단위 쉼표. 소수는 한 자리까지 */
 export function comma(n: number): string {

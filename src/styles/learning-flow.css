@@ -84,8 +84,16 @@
 .stage .difficulty-card__body { gap: 6px; }
 .stage .difficulty-card__facts { gap: 4px; }
 
-/* Keep the choice strip and paid distribution together; only the garden flexes. */
-.stage .cross__right > :not(.garden) { flex-shrink: 0; min-inline-size: 0; }
+/* The catalog owns scrolling; navigation and decisions stay in separate fixed
+   flex rows. Nothing overlays the cards or relies on the student scrolling down. */
+.stage .cross__right { overflow: hidden; }
+.stage .cross__catalog { display: flex; flex-direction: column; gap: 8px; flex: 1 1 0; min-height: 0; min-inline-size: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-gutter: stable; }
+.stage .cross__catalog > * { flex-shrink: 0; }
+.stage .cross__catalog-notes { display: grid; gap: 8px; }
+.stage .cross__decision { display: grid; grid-template-columns: minmax(0, 1fr) 140px; grid-template-areas: 'parents parents' 'forecast actions'; gap: 6px 8px; flex: none; min-inline-size: 0; }
+.stage .cross__decision > .cross__bar { grid-area: parents; }
+.stage .cross__decision-body { grid-area: forecast; display: grid; gap: 6px; min-inline-size: 0; }
+.stage .cross__decision > .cross__actions { grid-area: actions; align-self: end; flex-direction: column; }
 .stage .cross__guidance { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
 .stage .cross__guidance > * { min-inline-size: 0; max-inline-size: 100%; }
 .stage .cross__insights { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
@@ -100,17 +108,57 @@
 .stage .cross__insights .bcol__k { font-size: 12px; }
 .stage .cross__insights .punnett__extra { flex-wrap: wrap; }
 .stage .cross__insights .punnett__extra:empty { display: none; }
-.stage .cross__bar { position: relative; z-index: 2; }
+.stage .cross__bar { position: relative; }
+.stage .cross__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.stage .cross__actions .btn { min-inline-size: 140px; }
+.stage .garden-pages { flex: none; min-height: 44px; }
+.stage .garden-pages[hidden] { display: none; }
 
-/* Parent art fills the height left by the controls, with all live labels retained. */
-.stage .view--cross .garden { container-type: size; isolation: isolate; position: relative; z-index: 0; grid-auto-rows: minmax(0, 1fr); align-content: stretch; align-items: center; }
-.stage .view--cross .gslot { height: 100%; max-height: 420px; min-height: 0; }
-.stage .view--cross .gslot :is(.sa-card, .sa-body, .sa-face) { height: 100%; min-height: 0; }
-.stage .view--cross .gslot .sa-card__art { flex: 1 1 0; height: auto; min-height: 0; max-height: none; }
+/* Inline containment preserves text's intrinsic block size. No percentage-height
+   chain can shrink a card below its name, trait labels, and genotype. */
+.stage .view--cross .garden { container-type: inline-size; flex: 1 0 auto; min-height: min-content; isolation: isolate; position: relative; grid-auto-rows: auto; align-content: center; align-items: start; padding: 4px; }
+.stage .view--cross .gslot { height: auto; max-height: none; min-height: 0; }
+.stage .view--cross .gslot :is(.sa-card, .sa-body, .sa-face) { height: auto; min-height: 0; }
+.stage .view--cross .gslot .sa-card__art { flex: none; height: clamp(80px, 14dvh, 180px); min-height: 0; max-height: none; }
 .stage .view--cross .gslot .sa-card__art img { width: 100%; height: 100%; padding: 12px 8px 4px; object-fit: contain; pointer-events: none; }
 .stage .view--cross .gslot :is(.sa-card__copy, .sa-card__geno) { flex: none; }
+.stage .view--cross .gslot .sa-geno__text { word-break: keep-all; overflow-wrap: normal; hyphens: none; }
 .stage .view--cross .gslot .sa-plant__owner { left: auto; right: 34px; top: 6px; width: 28px !important; height: 28px !important; pointer-events: none; }
 .stage .observation__row meter { min-inline-size: 0; max-inline-size: 100%; }
+
+/* Query the space left after the decision dock, rather than viewport height.
+   Only this flex item uses size containment: the cards retain intrinsic text
+   height. A short catalog spends its height on evidence, with a 48px thumbnail. */
+@media (min-width: 768px) {
+  .stage .cross__catalog { container: cross-catalog / size; }
+  @container cross-catalog (max-height: 420px) {
+    .stage .cross__catalog-notes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-items: start; }
+    .stage .cross__catalog-notes > .hint { margin: 0; }
+    .stage .cross__catalog-notes:not(:has(> .cross__guidance:not([hidden]))) { grid-template-columns: minmax(0, 1fr); }
+    .stage .view--cross .garden { flex: none; align-content: start; }
+    /* The selected outline and parent summary remain; the floating duplicate
+       label must not cover the name now placed at the top of the card. */
+    .stage .view--cross .gslot.is-picked::after { display: none; }
+    .stage .view--cross .gslot .sa-face { display: grid; grid-template-columns: 48px 18px 20px minmax(0, 1fr); gap: 2px; padding: 4px; }
+    .stage .view--cross .gslot .sa-card__copy { display: contents; }
+    .stage .view--cross .gslot .sa-plant__ribbon { grid-column: 1 / -1; grid-row: 1; padding: 2px 4px; }
+    .stage .view--cross .gslot .sa-plant__ribbon::before { display: none; }
+    .stage .view--cross .gslot .sa-card__art { grid-column: 1; grid-row: 2; width: 48px; height: 48px; align-self: center; }
+    .stage .view--cross .gslot .sa-card__art img { padding: 0; }
+    .stage .view--cross .gslot .sa-card__traits { grid-column: 2 / -1; grid-row: 2; align-self: center; }
+    .stage .view--cross .gslot .sa-card__brix { position: static; grid-column: 1; grid-row: 3; flex-direction: row; align-items: baseline; align-self: center; }
+    .stage .view--cross .gslot .sa-card__brixnum { font-size: 14px; }
+    .stage .view--cross .gslot .sa-card__brixunit { font-size: 10px; }
+    .stage .view--cross .gslot .sa-card__suit { position: static; grid-column: 2; grid-row: 3; width: 18px; height: 18px; align-self: center; }
+    .stage .view--cross .gslot .sa-card__suit > .sa-suit { width: 100% !important; height: 100% !important; }
+    .stage .view--cross .gslot :is(.sa-plant__owner, .sa-card__edited) { position: static; grid-column: 3; grid-row: 3; width: 20px !important; height: 20px !important; align-self: center; }
+    .stage .view--cross .gslot .sa-card__badges { grid-column: 4; grid-row: 3; align-self: center; }
+    .stage .view--cross .gslot .sa-face:not(:has(> .sa-plant__owner, > .sa-card__edited)) .sa-card__badges { grid-column: 3 / -1; }
+    .stage .view--cross .gslot .sa-card__geno { grid-column: 1 / -1; grid-row: 4; padding: 3px; }
+    .stage .view--cross .gslot .sa-face:has(> .sa-plant__owner) > .sa-card__edited { grid-row: 4; }
+    .stage .view--cross .gslot .sa-face:has(> .sa-plant__owner):has(> .sa-card__edited) > .sa-card__geno { grid-row: 5; }
+  }
+}
 
 @media (min-width: 768px) and (orientation: portrait) {
   .stage .wiz--difficulty .difficulty-choices { flex: 1; min-height: 0; grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(3, minmax(0, 1fr)); }
@@ -121,6 +169,11 @@
   .stage .wiz--difficulty .difficulty-card__facts { gap: 3px; }
 }
 @media (max-width: 767px) {
+  .stage .cross__right { overflow: visible; }
+  .stage .cross__catalog { flex: none; min-height: auto; overflow: visible; overscroll-behavior-y: auto; scrollbar-gutter: auto; gap: 12px; }
+  .stage .cross__decision { display: flex; flex-direction: column; gap: 12px; }
+  .stage .cross__decision > .cross__actions { align-self: stretch; flex-direction: row; }
+  .stage .cross__actions .btn { flex: 1 1 120px; min-inline-size: 0; }
   .stage .cross__insights:has(> .punnett:not([hidden])) { grid-template-columns: minmax(0, 1fr); }
   .stage .view--cross .garden { container-type: normal; grid-auto-rows: auto; }
   .stage .view--cross .gslot { height: auto; max-height: none; }

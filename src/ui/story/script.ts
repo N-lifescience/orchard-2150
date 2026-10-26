@@ -49,7 +49,7 @@ export const INTRO_CUES: IntroCue[] = [
   { id: 'tag-r07', at: 18.6, until: 23.9, kind: 'tag', lane: 'top-right', text: '엘레나 로시 · 계통 R-07', sub: '루비 · 순계 · 자가수분 7대', barcode: true },
   { id: 'season', at: 24.0, until: 30, kind: 'stamp', lane: 'top', text: '시즌 01 / 08' },
   { id: 'offspring', at: 24.0, until: 26.0, kind: 'counter', lane: 'bottom', text: '자손', from: 0, to: 52 },
-  { id: 'receipt-contract', at: 24.3, until: 26.0, kind: 'receipt', lane: 'right', text: '계약서 01', sub: '루비 과육 3개체 · 300점' },
+  { id: 'receipt-contract', at: 24.3, until: 26.0, kind: 'receipt', lane: 'right', text: '계약서 01', sub: '첫 납품: 루비 과육 3개체' },
   { id: 'final-line', at: 26.0, until: 30, kind: 'line', lane: 'lower', text: '씨앗 하나에, 쉰두 가지 미래.' },
   { id: 'logo', at: 27.9, until: 30, kind: 'logo', lane: 'bottom', text: 'ORCHARD 2150' },
 ];
@@ -76,7 +76,7 @@ export const TITLE_COPY = {
     '할머니 엘레나의 씨앗 금고를 열어 다양한 열매를 되살리고, 2150 국제 품종 박람회 무대에 서세요.',
   ],
   startTitle: '과수원 다시 열기',
-  startBody: '부모를 고르고 자손을 키워, 점수와 납품 조건을 함께 채우세요.',
+  startBody: '부모를 고르고 자손을 키워, 약속한 형질을 납품하세요.',
   practiceHint: '레아와 함께 첫 계약을 실제로 해 봐요. 끝나면 이어서 플레이하거나 새로 시작할 수 있어요.',
   replayIntro: '소개 영상 다시 보기',
   notes: '엘레나의 노트',
@@ -111,7 +111,8 @@ export const TUTORIAL_SCRIPT = {
   'parent-first': {
     label: '첫 부모 고르기', target: 'parent-first',
     lines: [
-      { text: '루비 과육 3개체와 300점을 채워요.', target: 'goal' },
+      { text: '루비 과육 3개체를 납품하면 계약이 끝나요.', target: 'goal' },
+      { text: '300점 이상이면 보상으로 $2를 더 받아요.', target: 'goal' },
       { text: 'RR인 할머니의 루비 별을 눌러 주세요.' },
     ],
   },

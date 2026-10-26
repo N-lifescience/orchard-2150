@@ -33,7 +33,7 @@ describe('자동 진행의 계약 판단', () => {
     const g = createGame({ storage: null });
     g.newRun({ seed: 1, mode: 'quick', policy: 'heritage' });
     const ruby = g.state.garden.find((p) => p.pheno.color === 'ruby')!;
-    g.chooseCross(ruby.id, ruby.id);
+    g.chooseCross(ruby.id, ruby.id, 'ruby');
     g.state.orders[0].goals = [goal({ color: 'gold' }, 2)];
     g.state.delivery = {};
     g.state.hand = [
@@ -53,7 +53,7 @@ describe('자동 진행의 계약 판단', () => {
     const q = goal({ knockout: true }, 1);
     g.state.orders[0].goals = [q];
     const wild = g.state.garden.find((p) => p.pheno.bitter)!;
-    g.chooseCross(wild.id, wild.id);
+    g.chooseCross(wild.id, wild.id, 'ruby');
     g.ackDiscoveries();
     const action = decide(g);
     expect(action.kind).toBe('edit');
@@ -72,7 +72,7 @@ describe('자동 진행의 계약 판단', () => {
     g.newRun({ seed: 1, mode: 'quick', policy: 'heritage', playStyle: 'learning' });
     const ruby = g.state.garden.find((p) => p.revealed && p.pheno.color === 'ruby')!;
     g.state.orders[0].goals = [goal({ color: 'gold' }, 1)];
-    g.chooseCross(ruby.id, ruby.id);
+    g.chooseCross(ruby.id, ruby.id, 'ruby');
     g.state.handsLeft = 1;
     g.play([g.state.hand[0].uid]);
     expect(g.state.phase).toBe('review');

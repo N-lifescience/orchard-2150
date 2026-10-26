@@ -93,7 +93,7 @@ export function runOne(
     crossSpecies: [...species].sort(),
     offspringPloidies: [...ploidies].sort(),
     records,
-    verifiedDeliveries: cleared.every((r) => r.goals.length > 0 && r.score >= r.target && deliveryComplete({ goals: r.goals } as Parameters<typeof deliveryComplete>[0], r.delivery)),
+    verifiedDeliveries: cleared.every((r) => r.goals.length > 0 && ((o.playStyle ?? 'learning') === 'learning' || r.score >= r.target) && r.crossRequirementMet !== false && deliveryComplete({ goals: r.goals } as Parameters<typeof deliveryComplete>[0], r.delivery)),
     ...(why ? { why } : {}),
   };
 }

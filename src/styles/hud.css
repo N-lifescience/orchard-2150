@@ -996,3 +996,12 @@ body { overflow-wrap: anywhere; }
 }
 
 .stage .side .delivery-goal__count { font-size: 16px; }
+
+/* Learning predictions keep their action and evidence readable at every width. */
+.stage .cross__prediction .hint { display: block; margin: 0; font-size: 14px; line-height: 1.5; }
+.stage :is(.cross__prediction-title, .play__prediction-evidence, .play__prediction-reward, .play__cross-check, .delivery-goals__cross) { word-break: keep-all; overflow-wrap: anywhere; text-wrap: pretty; }
+.stage :is(.play__prediction-evidence, .play__prediction-reward, .play__cross-check, .delivery-goals__cross) { margin: 0; line-height: 1.5; }
+.stage .play__prediction-reward, .stage .play__prediction-head .is-correct { color: var(--hud-teal); }
+.stage .delivery-goals__cross { grid-column: 1 / -1; font-size: 14px; color: var(--hud-muted); }
+.stage .play__request .delivery-goals__head { grid-row: auto; }
+.stage .cross__prediction-actions .btn { flex: 1 1 130px; white-space: normal; }

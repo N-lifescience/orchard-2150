@@ -18,7 +18,7 @@ describe('개념 카드 발견', () => {
     for (let seed = 1; seed <= 10 && !found; seed++) {
       const { g, st } = game(seed);
       const neighbor = st.garden[2]; // '레아 모레노의 루비' R:Rr S:Ss
-      g.chooseCross(neighbor.id, neighbor.id);
+      g.chooseCross(neighbor.id, neighbor.id, 'ruby');
       const surprise = st.seen.some((c) => c.pheno.color === 'gold' || !c.pheno.marked);
       expect(st.discoveries.includes('segregation')).toBe(surprise);
       if (surprise) {
@@ -31,7 +31,7 @@ describe('개념 카드 발견', () => {
 
   it('순계 부모끼리(RR SS × rr ss)는 분리가 일어나지 않는다', () => {
     const { g, st } = game(2);
-    g.chooseCross(st.garden[0].id, st.garden[1].id);
+    g.chooseCross(st.garden[0].id, st.garden[1].id, 'ruby');
     expect(st.hand.every((c) => c.pheno.color === 'ruby' && c.pheno.marked)).toBe(true);
     // 부모 둘 중 하나가 루비·무늬이므로 '둘 다 없던' 형질이 아님
     expect(st.stats.recessiveSurprises).toBe(0);
@@ -39,7 +39,7 @@ describe('개념 카드 발견', () => {
 
   it('다유전자: 한 주문에서 당도 6가지 이상을 보면 발견', () => {
     const { g, st } = game(3);
-    g.chooseCross(st.garden[2].id, st.garden[3].id);
+    g.chooseCross(st.garden[2].id, st.garden[3].id, 'ruby');
     for (let k = 0; k < 3 && st.phase === 'play'; k++) g.discard(st.hand.slice(0, 5).map((c) => c.uid));
     const distinct = new Set(st.seen.map((c) => c.pheno.brix)).size;
     expect(st.discoveries.includes('polygenic')).toBe(distinct >= 6);
@@ -51,7 +51,7 @@ describe('개념 카드 발견', () => {
       const { g, st } = game(seed, 'unit-sex');
       const father = st.garden.find((p) => p.pheno.sex === 'M' && p.pheno.marked)!;
       const mother = st.garden.find((p) => p.pheno.sex === 'F' && !p.pheno.marked)!;
-      g.chooseCross(mother.id, father.id);
+      g.chooseCross(mother.id, father.id, 'ruby');
       const daughters = st.seen.filter((c) => c.pheno.sex === 'F');
       expect(daughters.every((c) => c.pheno.marked)).toBe(true);
       const sons = st.seen.filter((c) => c.pheno.sex === 'M');
@@ -72,7 +72,7 @@ describe('개념 카드 발견', () => {
       st.orderIdx = 2;
       const money = st.money;
       const di = st.garden.find((p) => p.pheno.ploidy === 2)!;
-      g.chooseCross(di.id, di.id);
+      g.chooseCross(di.id, di.id, 'ruby');
       const unusual = st.hand.filter((c) => c.pheno.aneuploid);
       if (unusual.length > 0) {
         expect(unusual.every((c) => c.revealed)).toBe(true);
@@ -88,7 +88,7 @@ describe('개념 카드 발견', () => {
 
   it('앤티 1~4 에는 비분리가 없다', () => {
     const { g, st } = game(5);
-    g.chooseCross(st.garden[0].id, st.garden[0].id);
+    g.chooseCross(st.garden[0].id, st.garden[0].id, 'ruby');
     expect([...st.hand, ...st.pod].some((c) => c.pheno.aneuploid)).toBe(false);
   });
 });
@@ -129,7 +129,7 @@ describe('LMO', () => {
     g.useReagent(0, [st.garden[0].id]);
     st.orders[2] = { kind: 'boss', name: 'LMO', client: '', target: 10 ** 9, reward: 5, boss: boss('lmoCheck') };
     st.orderIdx = 2;
-    g.chooseCross(st.garden[0].id, st.garden[0].id);
+    g.chooseCross(st.garden[0].id, st.garden[0].id, 'ruby');
     for (const c of st.hand) expect(c.debuffed).toBe(c.pheno.fluorescent);
     expect(st.hand.some((c) => c.pheno.fluorescent)).toBe(true);
   });
@@ -141,6 +141,8 @@ describe('퍼넷 노트', () => {
     const a = st.garden[0].id;
     expect(g.preview(a, a)).toBeNull();
     st.jokers.push({ uid: 'pn', id: 'punnettNote', counter: 0 });
+    expect(g.preview(a, st.garden[1].id)).toBeNull();
+    g.chooseCross(a, st.garden[1].id, 'ruby');
     const d = g.preview(a, st.garden[1].id)!;
     expect(d.suits['ruby-m']).toBeCloseTo(1, 5); // RR SS × rr ss → 전부 Rr Ss
     expect(g.preview(a, st.garden[1].id)).toEqual(d); // 같은 쌍이면 같은 값(난수 소비 없음)

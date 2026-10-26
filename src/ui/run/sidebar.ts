@@ -22,6 +22,7 @@ export class Sidebar {
   private orderName: HTMLElement;
   private orderClient: HTMLElement;
   private bossRule: HTMLElement;
+  private targetLabel = h('div', { class: 'side__label' });
   private targetEl: HTMLElement;
   private rewardEl: HTMLElement;
   private deliveryEl: HTMLElement;
@@ -99,7 +100,7 @@ export class Sidebar {
       ),
       this.orderBox,
       this.managerEl,
-      h('div', { class: 'side__target', 'data-tutorial': 'goal' }, h('div', { class: 'side__label' }, '목표 점수'), h('div', { class: 'side__target-row' }, this.targetEl, this.rewardEl), this.deliveryEl),
+      h('div', { class: 'side__target', 'data-tutorial': 'goal' }, this.targetLabel, h('div', { class: 'side__target-row' }, this.targetEl, this.rewardEl), this.deliveryEl),
       this.roundBox,
       h(
         'div',
@@ -135,7 +136,7 @@ export class Sidebar {
     setText(this.brandEl, this.ctx.brand || '오차드 2150');
     const briefing: Record<RunState['phase'], string> = {
       title: '', cross: '레아 · 같은 종의 부모 두 개체를 고르세요.',
-      play: '레아 · 점수와 필수 납품을 함께 채우세요.',
+      play: s.playStyle === 'learning' ? '레아 · 목표 분포와 필수 납품을 채우세요.' : '레아 · 점수와 필수 납품을 함께 채우세요.',
       cashout: '레아 · 계약 완료. 보상을 받고 품종을 고르세요.',
       select: '레아 · 다음 계약에 쓸 개체를 남기세요.',
       shop: '레아 · 다음 계약을 보고 필요한 것만 사세요.',
@@ -157,6 +158,7 @@ export class Sidebar {
       setText(this.bossRule, o.boss ? o.boss.desc : '');
       this.orderBox.dataset.kind = o.kind;
     }
+    setText(this.targetLabel, s.playStyle === 'learning' ? '추가 보상 점수 (+$2)' : '목표 점수');
     setText(this.targetEl, fmt.score(o.target));
     setText(this.rewardEl, `보상 $${o.reward}`);
     setText(this.handsEl, s.handsLeft);
@@ -179,7 +181,7 @@ export class Sidebar {
     } else setText(this.moneyEl, fmt.money(s.money));
     if (!this.scoring) {
       this.setRound(s.roundScore, false);
-      this.setFlames(s.roundScore >= o.target && deliveryComplete(o, s.delivery) && (s.phase === 'play' || s.phase === 'cashout'));
+      this.setFlames((s.playStyle === 'learning' || s.roundScore >= o.target) && s.crossRequirementMet !== false && deliveryComplete(o, s.delivery) && (s.phase === 'play' || s.phase === 'cashout'));
     }
   }
 

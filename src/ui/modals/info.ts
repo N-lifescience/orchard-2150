@@ -63,7 +63,7 @@ export function openOrders(ctx: Ctx): void {
           h('div', { class: 'orderbox__client' }, dossier(o.client, 48)),
           o.goals?.length ? deliveryGoals(o, i === s.orderIdx ? s.delivery : {}, true) : null,
           o.requestedColor ? traitBadge({ color: o.requestedColor }, `${o.requestedColor === 'ruby' ? '루비' : '골드'} 과육 출하 시 +$2`) : null,
-          h('div', { class: 'orderbox__target' }, h('span', { class: 'side__label' }, '목표'), h('b', { class: 'num' }, fmt.score(o.target))),
+          h('div', { class: 'orderbox__target' }, h('span', { class: 'side__label' }, s.playStyle === 'learning' ? '추가 보상 점수 (+$2)' : '목표'), h('b', { class: 'num' }, fmt.score(o.target))),
           h('div', { class: 'orderbox__reward' }, `보상 $${o.reward}`),
           o.boss ? h('p', { class: 'orderbox__rule' }, o.boss.desc) : null,
           i < s.orderIdx ? h('div', { class: 'orderbox__stamp' }, '완료') : i === s.orderIdx ? h('div', { class: 'orderbox__stamp is-now' }, '지금') : null,
@@ -77,6 +77,7 @@ export function openPod(ctx: Ctx): void {
   const g = ctx.game;
   const s = g.state;
   const t = podTable(s.pod);
+  const expected = s.cross ? g.preview(s.cross.a, s.cross.b) : null;
   const species = s.pod[0]?.genome.species ?? s.hand[0]?.genome.species ?? 'lumi';
   const cols: number[] = [];
   for (let b = t.min; b <= t.max; b++) cols.push(b);
@@ -92,6 +93,13 @@ export function openPod(ctx: Ctx): void {
       'div',
       { class: 'podv' },
       h('p', { class: 'hint' }, '아직 뽑히지 않은 씨앗의 빛깔과 당도예요. 칸이 진할수록 많아요.'),
+      expected ? h('details', { class: 'podv__expected' },
+        h('summary', null, '퍼넷 노트 — 정상 감수분열의 모의 기대 분포'),
+        h('div', { class: 'podv__bars' }, ...SUITS.map(su => h('div', { class: 'pbar' },
+          suitGlyph(su, species, 20), h('span', null, g.suitName(su)),
+          h('span', { class: 'num' }, `${Math.round(expected.suits[su] * 100)}%`)))),
+        h('p', null, '당도 분포: ', Object.entries(expected.brix).sort(([a], [b]) => Number(a) - Number(b)).map(([brix, probability]) => `${brix} (${Math.round(probability * 100)}%)`).join(', ')),
+      ) : null,
       h(
         'div',
         { class: 'podv__grid', role: 'table', 'aria-label': '빛깔별 당도 분포', style: { '--cols': cols.length + (hasMale ? 1 : 0) } },

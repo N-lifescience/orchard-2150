@@ -1,4 +1,5 @@
-import type { OrderInfo, RunState } from '../contract/game';
+import type { OrderInfo, PlayStyle, RunState } from '../contract/game';
+import { crossRequirementText } from '../game/learning';
 import { BOSS_STORY } from '../game/story';
 import { josa } from './fmt';
 
@@ -9,7 +10,7 @@ export function briefingKey(s: Pick<RunState, 'seed' | 'ante' | 'orderIdx' | 'or
   return `${s.seed}:${s.ante}:${s.orderIdx}:${s.orderAttempt}`;
 }
 
-export function clientLines(order: OrderInfo): ClientLine[] {
+export function clientLines(order: OrderInfo, playStyle: PlayStyle): ClientLine[] {
   const [name] = order.client.split(' · ');
   const lines: ClientLine[] = [{
     heading: '온실을 찾아온 손님',
@@ -21,7 +22,7 @@ export function clientLines(order: OrderInfo): ClientLine[] {
   lines.push({
     heading: '이번에 필요한 품종',
     text: order.goals?.length ? '그림 속 형질이 있는 모종을 부탁드려요.' : '이번에는 좋은 열매를 골라 출하해 주세요.',
-    details: order.goals?.map((goal) => `${goal.label} ${goal.count}개체`),
+    details: [...(order.crossRequirement ? [crossRequirementText(order)] : []), ...(order.goals ?? []).map((goal) => `${goal.label} ${goal.count}개체`)],
   });
   if (order.boss) lines.push({ heading: '이번 계약의 특별 조건', text: order.boss.desc });
   if (order.requestedColor) lines.push({
@@ -30,7 +31,9 @@ export function clientLines(order: OrderInfo): ClientLine[] {
   });
   lines.push({
     heading: '그럼, 잘 부탁드려요',
-    text: `필수 납품과 ${order.target.toLocaleString('ko-KR')}점을 모두 채우면 기본 보상 $${order.reward}를 드려요.`,
+    text: playStyle === 'learning' && order.goals?.length
+      ? `${order.crossRequirement ? '목표 분포에 맞는 부모로 교배하고 필수 납품을 채우면' : '필수 납품을 채우면'} 기본 보상 $${order.reward}를 드려요. ${order.target.toLocaleString('ko-KR')}점 이상이면 $2를 더 드려요.`
+      : `필수 납품과 ${order.target.toLocaleString('ko-KR')}점을 모두 채우면 기본 보상 $${order.reward}를 드려요.`,
   });
   return lines;
 }

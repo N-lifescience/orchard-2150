@@ -1,7 +1,7 @@
 // 시즌 끝 확인 질문 — 레아가 묻고, 모두 맞혀야 다음 시즌(마지막 시즌이면 결말)이 열린다.
 // 횟수 제한이 없고 실패로 치지 않는다(수업·도전 모드 공통). 그 시즌에 실제로 겪은 현상만 묻는다.
 // 문항·해설은 순수 데이터다. 틀렸을 때의 힌트는 정답을 그대로 말하지 않는다.
-import type { ConceptId, PolicyId, Phase } from '../contract/game';
+import type { ConceptId, PolicyId, Phase, RunMode } from '../contract/game';
 
 export interface QuizQuestion {
   id: string;
@@ -95,7 +95,7 @@ export const SEASON_QUIZ: Record<number, QuizQuestion[]> = {
       choices: ['모두 은빛 잎', '모두 초록 잎', '절반은 은빛 잎, 절반은 초록 잎'],
       answer: 0,
       hint: '딸이 아비에게서 받는 성염색체가 X인지 Y인지 먼저 정해 보세요.',
-      explain: '딸은 아비의 X 염색체를 반드시 받아요. 아비의 X에 우성 L이 있으니 딸은 모두 은빛 잎이에요.',
+      explain: '딸은 아비의 X에 있는 L을 받아 모두 은빛 잎이에요. 아들은 어미의 X에 있는 l과 아비의 Y를 받아 모두 초록 잎이에요.',
       note: 'xlinked',
     },
     {
@@ -247,7 +247,19 @@ export const SEASON_QUIZ: Record<number, QuizQuestion[]> = {
 };
 
 /** 이 시즌, 이 운영 팀이 풀 문항 (2~3문항) */
-export function quizFor(season: number, policy: PolicyId): QuizQuestion[] {
+export function quizFor(season: number, policy: PolicyId, mode?: RunMode): QuizQuestion[] {
+  if (mode === 'unit-sex' && season === 3) return SEASON_QUIZ[3].map(q => q.id !== 's3-xlinked' ? q : {
+    ...q,
+    prompt: 'X 염색체의 은빛 잎 L은 우성이에요. 은빛 잎 수그루와 초록 잎 암그루를 교배할 때 딸과 아들의 잎 색으로 옳은 것을 고르세요.',
+    choices: ['딸은 모두 은빛 잎, 아들은 모두 초록 잎', '딸과 아들 모두 은빛 잎', '딸은 모두 초록 잎, 아들은 모두 은빛 잎'],
+  });
+  if (mode === 'unit-chromo' && season === 6) return [
+    SEASON_QUIZ[6][0],
+    { id: 'unit-4n-self', season: 6, prompt: '4배체를 자가수분했어요. 정상 감수분열 뒤 자손의 염색체 조 수를 고르세요.',
+      choices: ['2n', '4n', '8n'], answer: 1,
+      hint: '자가수분에서도 생식세포는 감수분열로 만들어져요. 두 생식세포가 가진 조 수를 더해 보세요.',
+      explain: '4배체가 만든 2n 생식세포끼리 수정하므로 자손은 4n이에요.', note: 'polyploid' },
+  ];
   return (SEASON_QUIZ[season] ?? []).filter((q) => !q.policies || q.policies.includes(policy));
 }
 

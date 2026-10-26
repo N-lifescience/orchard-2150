@@ -58,7 +58,7 @@ describe('교배 예측과 의뢰 빛깔', () => {
   it('교배 전에 고른 예측을 52알 전체의 관찰값과 함께 저장한다', () => {
     const { g, st, storage } = newGame(2);
     g.chooseCross(st.garden[0].id, st.garden[1].id, 'ruby');
-    expect(st.prediction).toEqual({ choice: 'ruby', ruby: 52, gold: 0 });
+    expect(st.prediction).toMatchObject({ choice: 'ruby', ruby: 52, gold: 0, correct: true });
     expect(st.hand.length + st.pod.length).toBe(52);
     const restored = createGame({ storage });
     expect(restored.load()).toBe(true);
@@ -110,7 +110,7 @@ describe('콘텐츠 표', () => {
     const want: [string, string, string, number][] = [
       ['shears', '엘레나 로시의 전지가위', 'common', 2], ['rubyLover', '루비 애호가', 'common', 5], ['goldCollector', '골드 수집가', 'common', 5],
       ['patternArtisan', '무늬 장인', 'common', 5], ['refractometer', '굴절계', 'common', 4], ['purebredCert', '빛깔 인증서', 'uncommon', 6],
-      ['heterosis', '잡종강세', 'uncommon', 6], ['hideAndSeek', '숨바꼭질 대립유전자', 'uncommon', 7], ['selfingMaster', '자가수분 명인', 'uncommon', 6],
+      ['heterosis', '이형접합 표지', 'uncommon', 6], ['hideAndSeek', '숨바꼭질 대립유전자', 'uncommon', 7], ['selfingMaster', '자가수분 명인', 'uncommon', 6],
       ['breedingLog', '교배 일지', 'common', 5], ['mendelGlasses', '멘델의 안경', 'common', 3], ['punnettNote', '퍼넷 노트', 'uncommon', 4],
       ['beeSwarm', '꿀벌 군단', 'uncommon', 6], ['seedVault', '씨앗 금고', 'common', 5], ['pollenTrader', '꽃가루 상인', 'common', 4],
       ['xHeir', 'X의 상속자', 'uncommon', 6], ['colchicineNotes', '콜히친 노트', 'rare', 8], ['karyoScope', '핵형 현미경', 'uncommon', 5],
@@ -335,7 +335,7 @@ describe('게임 흐름', () => {
   it('교배 → 꼬투리 52알, 핸드 8장, 자가수분 개념 발견', () => {
     const { g, st } = newGame(3);
     const a = st.garden[0].id;
-    g.chooseCross(a, a);
+    g.chooseCross(a, a, 'ruby');
     expect(st.phase).toBe('play');
     expect(st.hand).toHaveLength(8);
     expect(st.pod).toHaveLength(44);
@@ -348,7 +348,7 @@ describe('게임 흐름', () => {
 
   it('출하 → 점수 반영, 핸드 다시 8장, 목표 넘기면 cashout', () => {
     const { g, st } = newGame(4);
-    g.chooseCross(st.garden[0].id, st.garden[0].id);
+    g.chooseCross(st.garden[0].id, st.garden[0].id, 'ruby');
     const uids = st.hand.slice(0, 5).map((c) => c.uid);
     const sim = g.simulate(uids)!;
     const trace = g.play(uids);
@@ -366,7 +366,7 @@ describe('게임 흐름', () => {
   it('도전 모드에서 출하를 다 쓰면 gameover, 종료 기록은 저장한다', () => {
     const { g, st, storage } = newGame(5);
     st.playStyle = 'challenge';
-    g.chooseCross(st.garden[0].id, st.garden[1].id);
+    g.chooseCross(st.garden[0].id, st.garden[1].id, 'ruby');
     st.orders[0].target = 10 ** 9;
     while (st.phase === 'play') g.play([st.hand[0].uid]);
     expect(st.phase).toBe('gameover');
@@ -378,13 +378,14 @@ describe('게임 흐름', () => {
     const f = st.garden.find((p) => p.pheno.sex === 'F')!;
     const m = st.garden.find((p) => p.pheno.sex === 'M')!;
     expect(g.canCross(f.id, f.id).ok).toBe(false);
-    g.chooseCross(f.id, m.id);
+    g.chooseCross(f.id, m.id, 'ruby');
     expect(st.discoveries).toContain('dioecy');
     const males = st.hand.filter((c) => c.pheno.sex === 'M');
     const money = st.money;
+    const discards = st.discardsLeft;
     const pick = (males.length > 0 ? males : st.hand).slice(0, 5).map((c) => c.uid);
     g.discard(pick);
-    expect(st.discardsLeft).toBe(2);
+    expect(st.discardsLeft).toBe(discards - 1);
     expect(st.money).toBe(money + Math.min(5, males.length));
     expect(st.hand).toHaveLength(8);
   });
@@ -422,7 +423,7 @@ describe('게임 흐름', () => {
     const { g, st } = newGame(10);
     const a = st.garden[0];
     const b = st.garden[1];
-    g.chooseCross(a.id, b.id);
+    g.chooseCross(a.id, b.id, 'ruby');
     const card = st.hand[0];
     const reag = st.reagents.length;
     st.reagents.push('fertilizer');
@@ -447,7 +448,7 @@ describe('게임 흐름', () => {
 
   it('선발: 온실이 가득 차면 replacePlantId 가 있어야 한다', () => {
     const { g, st } = newGame(11);
-    g.chooseCross(st.garden[0].id, st.garden[0].id);
+    g.chooseCross(st.garden[0].id, st.garden[0].id, 'ruby');
     st.gardenCap = st.garden.length;
     st.phase = 'cashout';
     g.collect();
@@ -466,7 +467,7 @@ describe('게임 흐름', () => {
   it('조직배양 랩: 선발 1포기 더, 같은 카드를 또 고르면 클론', () => {
     const { g, st } = newGame(12);
     st.jokers.push(J('tissueLab', 'tl'));
-    g.chooseCross(st.garden[0].id, st.garden[0].id);
+    g.chooseCross(st.garden[0].id, st.garden[0].id, 'ruby');
     st.phase = 'cashout';
     g.collect();
     expect(g.selectOptions().extraPicks).toBe(1);
@@ -483,7 +484,7 @@ describe('게임 흐름', () => {
     const { g, st } = newGame(13, 'unit-chromo', 'heritage');
     const tetra = st.garden.find((p) => p.pheno.ploidy === 4)!;
     const di = st.garden.find((p) => p.pheno.ploidy === 2)!;
-    g.chooseCross(tetra.id, di.id);
+    g.chooseCross(tetra.id, di.id, 'ruby');
     expect(st.hand.every((c) => c.pheno.seedless)).toBe(true);
     expect(st.discoveries).toContain('triploid');
     st.phase = 'cashout';
@@ -496,7 +497,7 @@ describe('게임 흐름', () => {
 describe('상점', () => {
   function toShop(seed = 20) {
     const { g, st } = newGame(seed);
-    g.chooseCross(st.garden[0].id, st.garden[0].id);
+    g.chooseCross(st.garden[0].id, st.garden[0].id, 'ruby');
     st.phase = 'cashout';
     g.collect();
     g.select(null);
@@ -621,7 +622,7 @@ describe('보스', () => {
     expect(r.ok).toBe(false);
     expect(r.reason).toContain('자가수분');
     expect(g.canCross(a.id, a.id).ok).toBe(true);
-    g.chooseCross(a.id, b.id);
+    g.chooseCross(a.id, b.id, 'ruby');
     expect(st.phase).toBe('cross');
     st.jokers.push(J('climateHouse', 'ch'));
     expect(g.canCross(a.id, b.id).ok).toBe(true);
@@ -629,21 +630,21 @@ describe('보스', () => {
 
   it('가뭄: 모든 열매 카드 brixMod −3, 환경 개념', () => {
     const { g, st } = withBoss('drought');
-    g.chooseCross(st.garden[0].id, st.garden[0].id);
+    g.chooseCross(st.garden[0].id, st.garden[0].id, 'ruby');
     expect(st.hand.every((c) => c.brixMod === -3)).toBe(true);
     expect(st.discoveries).toContain('environment');
   });
 
   it('소믈리에: 효과 당도 13 이하 무효 / 과일 심사위원: 수그루 무효', () => {
     const s = withBoss('sommelier');
-    s.g.chooseCross(s.st.garden[0].id, s.st.garden[1].id);
+    s.g.chooseCross(s.st.garden[0].id, s.st.garden[1].id, 'ruby');
     for (const c of s.st.hand) expect(c.debuffed).toBe((c.pheno.brix ?? 0) + c.brixMod <= 13);
     const { g, st } = newGame(31, 'unit-sex', 'heritage');
     st.orders[2] = { kind: 'boss', name: 'judge', client: '', target: 10 ** 9, reward: 5, boss: boss('judge') };
     st.orderIdx = 2;
     const f = st.garden.find((p) => p.pheno.sex === 'F')!;
     const m = st.garden.find((p) => p.pheno.sex === 'M')!;
-    g.chooseCross(f.id, m.id);
+    g.chooseCross(f.id, m.id, 'ruby');
     for (const c of st.hand) expect(c.debuffed).toBe(c.pheno.sex === 'M');
   });
 
@@ -719,7 +720,7 @@ describe('시약과 편집', () => {
 
   it('붓: 출하 중 교배로 되돌아가고 남은 출하·솎아내기는 그대로', () => {
     const { g, st } = newGame(44);
-    g.chooseCross(st.garden[0].id, st.garden[0].id);
+    g.chooseCross(st.garden[0].id, st.garden[0].id, 'ruby');
     g.play([st.hand[0].uid]);
     const hands = st.handsLeft;
     const score = st.roundScore;
@@ -728,7 +729,7 @@ describe('시약과 편집', () => {
     expect(st.phase).toBe('cross');
     expect(st.handsLeft).toBe(hands);
     expect(st.roundScore).toBe(score);
-    g.chooseCross(st.garden[1].id, st.garden[1].id);
+    g.chooseCross(st.garden[1].id, st.garden[1].id, 'ruby');
     expect(st.phase).toBe('play');
     expect(st.hand).toHaveLength(8);
   });
@@ -753,7 +754,7 @@ describe('저장과 재현성', () => {
     ['손상된 부모', { garden: [null] }],
   ])('손상된 저장(%s)을 거부해도 현재 진행과 저장 원본을 보존한다', (_label, invalid) => {
     const { g, storage } = newGame(5, 'quick');
-    g.chooseCross(g.state.garden[0].id, g.state.garden[1].id);
+    g.chooseCross(g.state.garden[0].id, g.state.garden[1].id, 'ruby');
     const current = g.state;
     const snapshot = structuredClone(current);
     const damaged = JSON.stringify({ ...snapshot, ...invalid });
@@ -781,7 +782,7 @@ describe('저장과 재현성', () => {
     expect(g.save()).toBe(true);
     const previous = backing.getItem(SAVE_KEY);
     blocked = true;
-    expect(() => g.chooseCross(g.state.garden[0].id, g.state.garden[1].id)).not.toThrow();
+    expect(() => g.chooseCross(g.state.garden[0].id, g.state.garden[1].id, 'ruby')).not.toThrow();
     expect(g.state.phase).toBe('play');
     expect(g.hasSave()).toBe(true);
     expect(g.save()).toBe(false);
@@ -803,7 +804,7 @@ describe('저장과 재현성', () => {
 
   it('저장/불러오기 왕복', () => {
     const { g, st, storage } = newGame(50);
-    g.chooseCross(st.garden[0].id, st.garden[1].id);
+    g.chooseCross(st.garden[0].id, st.garden[1].id, 'ruby');
     g.play(st.hand.slice(0, 2).map((c) => c.uid));
     const snapshot = JSON.stringify(g.state);
     expect(g.hasSave()).toBe(true);
@@ -829,7 +830,7 @@ describe('저장과 재현성', () => {
   it('같은 시드 → 같은 판', () => {
     const run = (seed: number) => {
       const { g, st } = newGame(seed);
-      g.chooseCross(st.garden[0].id, st.garden[3].id);
+      g.chooseCross(st.garden[0].id, st.garden[3].id, 'ruby');
       g.discard(st.hand.slice(0, 3).map((c) => c.uid));
       g.play(st.hand.slice(0, 5).map((c) => c.uid));
       return JSON.stringify({ hand: st.hand, orders: st.orders, garden: st.garden, score: st.roundScore });
@@ -843,7 +844,7 @@ describe('저장과 재현성', () => {
     let calls = 0;
     const off = g.subscribe(() => calls++);
     g.newRun({ seed: 1, mode: 'full', policy: 'heritage' });
-    g.chooseCross(g.state.garden[0].id, g.state.garden[0].id);
+    g.chooseCross(g.state.garden[0].id, g.state.garden[0].id, 'ruby');
     expect(calls).toBe(2);
     off();
     g.sortHand('brix');
@@ -852,7 +853,7 @@ describe('저장과 재현성', () => {
 
   it('sortHand: 당도 내림차순 / 빛깔 순', () => {
     const { g, st } = newGame(52);
-    g.chooseCross(st.garden[2].id, st.garden[3].id);
+    g.chooseCross(st.garden[2].id, st.garden[3].id, 'ruby');
     g.sortHand('brix');
     const b = st.hand.map((c) => (c.pheno.brix ?? -1) + c.brixMod);
     expect(b).toEqual([...b].sort((x, y) => y - x));

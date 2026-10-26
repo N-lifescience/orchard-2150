@@ -55,6 +55,7 @@ describe('형질 납품과 수업 재도전', () => {
     const edit = g.editTargets(g.state.garden[0].id).find((t) => t.locus === 'R')!;
     expect(g.applyEdit(0, g.state.garden[0].id, edit.group, edit.copyIndex, edit.locus, 'ATGTAA' + edit.seq.slice(6)).ok).toBe(true);
     g.chooseCross(g.state.garden[0].id, g.state.garden[0].id, 'ruby');
+    g.state.handsLeft = 1;
     while (g.state.phase === 'play') g.play([g.state.hand[0].uid]);
     expect(g.state.phase).toBe('review');
     const restored = createGame({ storage });
@@ -118,7 +119,7 @@ describe('형질 납품과 수업 재도전', () => {
   it('묶음 선택지는 구입 전에 확정되며 구입 결과와 동일하다', () => {
     const g = createGame({ storage: null });
     g.newRun({ seed: 9, mode: 'quick', policy: 'heritage' });
-    g.chooseCross(g.state.garden[0].id, g.state.garden[1].id);
+    g.chooseCross(g.state.garden[0].id, g.state.garden[1].id, 'ruby');
     g.state.phase = 'cashout';
     g.collect();
     g.select(null);
@@ -140,7 +141,7 @@ describe('형질 납품과 수업 재도전', () => {
       g.state.reagents = ['vector'];
       expect(g.useReagent(0, [g.state.garden[0].id]).ok).toBe(true);
       const original = JSON.stringify(g.state.garden.map((p) => p.genome));
-      g.chooseCross(g.state.garden[1].id, g.state.garden[1].id);
+      g.chooseCross(g.state.garden[1].id, g.state.garden[1].id, 'ruby');
       g.state.phase = 'cashout';
       g.collect();
       expect(JSON.stringify(g.state.garden.map((p) => p.genome))).toBe(original);

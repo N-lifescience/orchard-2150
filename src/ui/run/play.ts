@@ -1,4 +1,6 @@
 // 출하 화면 (phase 'play') — 무대 + 손패 + 버튼 + 자손 덱. 점수 연출은 ScoreTrace.steps 를 그대로 재생한다.
+import { predictionEvidence, predictionJudgment } from '../../game/prediction';
+import { crossRequirementText } from '../../game';
 import { traitBadge } from '../traitBadge';
 import { audio } from '../../audio';
 import type { RunState, ScoreStep, ScoreTrace } from '../../contract/game';
@@ -92,15 +94,17 @@ export class PlayView {
     const prediction = s.prediction;
     this.predictionEl.hidden = !prediction;
     if (prediction) {
-      const chosen = prediction.choice === 'ruby' ? '루비가 많음' : prediction.choice === 'gold' ? '골드가 많음' : '비슷함';
+      const chosen = prediction.choice === 'ruby' ? '루비 확률이 높음' : prediction.choice === 'gold' ? '골드 확률이 높음' : '같은 확률';
       const a = s.cross ? this.ctx.game.plantById(s.cross.a) : undefined;
       const b = s.cross ? this.ctx.game.plantById(s.cross.b) : undefined;
       const cold = s.orders[s.orderIdx].boss?.id === 'coldsnap' && !s.jokers.some((j) => j.id === 'climateHouse');
       const expected = cold ? null : knownColorExpectation(a, b);
       replaceChildren(this.predictionEl,
-        h('div', { class: 'play__prediction-head' }, h('b', null, '교배 결과'), h('span', null, `내 예측: ${chosen}`)),
+        h('div', { class: 'play__prediction-head' }, h('b', { class: prediction.correct ? 'is-correct' : '' }, predictionJudgment(prediction)), h('span', null, `내 예측: ${chosen}`)),
+        h('p', { class: 'play__prediction-evidence' }, predictionEvidence(prediction)),
+        prediction.discardBonus ? h('p', { class: 'play__prediction-reward' }, '이번 계약의 솎아내기 +1을 받았어요.') : prediction.correct === false ? h('p', { class: 'hint' }, '틀려도 벌점은 없어요. 기대 확률과 표본 수를 비교해 보세요.') : null,
         h('div', { class: 'play__comparison' },
-          h('span', null, expected ? colorExpectationText(expected) : cold ? '기대: 비분리 때문에 단순 비율 적용 어려움' : '기대: 공개된 정보로 계산하기 어려움'),
+          h('span', null, prediction.expected ? colorExpectationText(prediction.expected) : cold ? '기대: 비분리 때문에 단순 비율 적용 어려움' : '기대: 공개된 정보로 계산하기 어려움'),
           h('div', { class: 'observation', 'aria-label': `관찰 ${prediction.ruby + prediction.gold}개체` }, ...(['ruby', 'gold'] as const).map((color) => h('div', { class: 'observation__row' }, traitBadge({ color }, `${color === 'ruby' ? '루비' : '골드'} ${prediction[color]}개체`), h('meter', { min: 0, max: prediction.ruby + prediction.gold, value: prediction[color], 'aria-label': `${color === 'ruby' ? '루비' : '골드'} 개체 수` })))),
         ),
         h('details', { class: 'play__evidence' },
@@ -134,7 +138,8 @@ export class PlayView {
       const cards = s.hand.filter((c) => sel.includes(c.uid));
       replaceChildren(this.requestEl,
         deliveryGoals(order, s.delivery, true),
-        cards.length ? h('p', { class: 'play__delivery-preview' }, `이대로 출하하면 · ${selectedGoalText(order, s.delivery, cards)}`) : h('p', { class: 'play__delivery-preview' }, '필수 형질과 목표 점수를 모두 채우면 계약이 끝나요.'),
+        order.crossRequirement ? h('p', { class: 'play__cross-check' }, `${s.crossRequirementMet ? '부모 조합 맞음' : '부모 조합 다름'}. ${crossRequirementText(order)}`) : null,
+        cards.length ? h('p', { class: 'play__delivery-preview' }, `이대로 출하하면 · ${selectedGoalText(order, s.delivery, cards)}`) : h('p', { class: 'play__delivery-preview' }, s.playStyle === 'learning' ? '필수 납품을 채우면 계약이 끝나요. 점수 목표를 달성하면 +$2예요.' : '필수 형질과 목표 점수를 모두 채우면 계약이 끝나요.'),
       );
     } else if (order.requestedColor) {
       setText(this.requestEl, `추가 보상: ${order.requestedColor === 'ruby' ? '루비' : '골드'} 과육 · ${s.requestFulfilled ? '출하 완료 (+$2)' : '출하하면 +$2'}`);
